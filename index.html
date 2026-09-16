@@ -47,7 +47,7 @@ button{background:var(--n);color:#fff;border:0;font-weight:800;cursor:pointer}.s
 <div class="tabs">
 <button data-mode="quiz">Kroatien-Quiz</button>
 <button data-mode="estimate">Schätzmeister</button>
-<button data-mode="category">Kategorien</button>
+<button data-mode="category">Kategorien</button><button data-mode="emoji">Emoji-Songs</button>
 </div>
 <div id="hostGame"></div>
 </section>
@@ -68,8 +68,9 @@ button{background:var(--n);color:#fff;border:0;font-weight:800;cursor:pointer}.s
 const D=window.GAME_DATA;
 const $=id=>document.getElementById(id);
 let peer=null, conns={}, conn=null, role=null, room=null, modeName="quiz";
-let timerInt=null, answers={}, used=new Set(), qidx=0, eidx=0;
+let timerInt=null, answers={}, used=new Set(), qidx=0, eidx=0, currentClientKind=null;
 let catName=Object.keys(D.categories)[0];
+let emojiIdx=0, emojiPhase="idle", emojiWinner=null, emojiAttempts={team1:0,team2:0,team3:0};
 
 function show(view){
   ["setup","hostView","captainView","screenView"].forEach(id=>$(id).classList.add("hide"));
@@ -121,7 +122,10 @@ function join(teamRole){
 }
 function onHostMessage(m,c){
   if(m.type==="join"){conns[m.role]=c; refreshConnections();}
-  if(m.type==="answer"){answers[m.role]=m.value; renderHost();}
+  if(m.type==="answer"){
+    if(modeName==="emoji" && (emojiPhase==="title"||emojiPhase==="artist")) handleEmojiAnswer(m.role,m.value);
+    else {answers[m.role]=m.value; renderHost();}
+  }
 }
 function refreshConnections(){
   $("connections").innerHTML=["team1","team2","team3","screen"].map(r=>
@@ -131,6 +135,15 @@ function refreshConnections(){
 function sendAll(msg){Object.values(conns).forEach(c=>{try{c.send(msg)}catch(e){}});}
 function onClientMessage(m){
   if(m.type==="start") startLocal(m);
+  if(m.type==="feedback" && role!=="screen"){
+    const old=$("capGame").querySelector(".emojiFeedback"); if(old)old.remove();
+    $("capGame").insertAdjacentHTML("beforeend","<div class='emojiFeedback'>"+m.html+"</div>");
+  }
+  if(m.type==="reset"){
+    clearInterval(timerInt);
+    if(role==="screen"){$("screenTitle").textContent="Warte auf Jan …";$("screenTimer").textContent="–";$("screenStatus").innerHTML="";}
+    else {$("capTimer").textContent="–";$("capGame").innerHTML="<p class='muted'>Warte auf Jan …</p>";}
+  }
   if(m.type==="reveal"){
     if(role==="screen"){
       $("screenStatus").innerHTML=m.html;
@@ -151,9 +164,14 @@ function countdown(end,el,done){
   tick(); timerInt=setInterval(tick,200);
 }
 function startLocal(m){
+  currentClientKind=m.kind;
   if(role==="screen"){
     $("screenTitle").textContent=m.title;
-    if(m.kind==="quiz" && Array.isArray(m.options)){
+    if(m.kind==="emojiTitle"){
+      $("screenStatus").innerHTML="<div class='big' style='font-size:80px;margin:25px 0'>"+m.emojis+"</div><div class='muted'>Songtitel gesucht</div>";
+    }else if(m.kind==="emojiArtist"){
+      $("screenStatus").innerHTML="<div class='big' style='font-size:70px;margin:18px 0'>"+m.emojis+"</div><div class='status ok' style='font-size:30px'><b>Titel: "+m.songTitle+"</b></div><div class='muted'>Jetzt Interpret – 30 Sekunden</div>";
+    }else if(m.kind==="quiz" && Array.isArray(m.options)){
       $("screenStatus").innerHTML=
         "<div class='grid' style='margin-top:18px'>"+
         m.options.map((x,i)=>
@@ -175,6 +193,10 @@ function startLocal(m){
     h+="<input id='txtAns' type='number' inputmode='numeric' placeholder='Kilometer' style='width:100%'><button id='sendText' class='answer'>ABSCHICKEN</button>";
   } else if(m.kind==="category"){
     h+="<input id='txtAns' autocomplete='off' placeholder='Antwort' style='width:100%'><button id='sendText' class='answer'>ABSCHICKEN</button>";
+  } else if(m.kind==="emojiTitle"){
+    h+="<div class='big' style='font-size:54px;margin:15px 0'>"+m.emojis+"</div><p><b>Songtitel gesucht</b> · maximal 3 Versuche</p><input id='txtAns' autocomplete='off' placeholder='Songtitel' style='width:100%'><button id='sendText' class='answer'>VERSUCH ABSCHICKEN</button>";
+  } else if(m.kind==="emojiArtist"){
+    h+="<div class='big' style='font-size:42px;margin:12px 0'>"+m.emojis+"</div><div class='status ok'><b>Titel: "+m.songTitle+"</b></div><p><b>Interpret gesucht</b> · 30 Sekunden · maximal 3 Versuche</p><input id='txtAns' autocomplete='off' placeholder='Interpret' style='width:100%'><button id='sendText' class='answer'>VERSUCH ABSCHICKEN</button>";
   }
   $("capGame").innerHTML=h;
   document.querySelectorAll(".qanswer").forEach(b=>b.addEventListener("click",()=>submitChoice(Number(b.dataset.value),b)));
@@ -187,7 +209,9 @@ function submitChoice(v,b){
 }
 function submitText(){
   const e=$("txtAns"); if(!e||!e.value.trim())return;
-  conn.send({type:"answer",role,value:e.value.trim()}); lockCaptain("Antwort gesendet ✓");
+  conn.send({type:"answer",role,value:e.value.trim()});
+  if(!(currentClientKind==="emojiTitle"||currentClientKind==="emojiArtist")) lockCaptain("Antwort gesendet ✓");
+  else { e.value=""; e.focus(); }
 }
 function lockCaptain(msg){
   document.querySelectorAll("#capGame button,#capGame input").forEach(x=>x.disabled=true);
@@ -214,11 +238,24 @@ function renderHost(){
     h="<div class='card'><h2>Schätzmeister "+(eidx+1)+"/"+D.estimate.length+"</h2><p class='big'>"+e[0]+"</p><p class='muted'>Lösung: "+Number(e[1]).toLocaleString("de-DE")+" km</p>"+
       "<p><button id='startBtn'>30 SEK. START</button> <button id='revealBtn' class='secondary'>AUSWERTEN</button></p>"+
       answerStatus(false)+"<div id='hostReveal'></div><div class='grid'><button id='prevBtn' class='secondary'>←</button><button id='nextBtn'>NÄCHSTE →</button></div></div>";
-  } else {
+  } else if(modeName==="category"){
     h="<div class='card'><h2>Kategorien-Battle</h2><select id='catSelect' style='width:100%'>"+
       Object.keys(D.categories).map(x=>"<option "+(x===catName?"selected":"")+">"+x+"</option>").join("")+
       "</select><p><select id='turnTeam'><option value='team1'>Team 1</option><option value='team2'>Team 2</option><option value='team3'>Team 3</option></select> <button id='catStart'>35 SEK. START</button></p>"+
       answerStatus(true)+"<div>"+D.categories[catName].map(x=>"<span class='pill "+(used.has(norm(x))?"check":"")+"'>"+x+"</span>").join("")+"</div></div>";
+  }
+  if(modeName==="emoji"){
+    const s=D.emoji[emojiIdx];
+    const phaseText=emojiPhase==="title"?"Titel läuft – bis ein Team richtig antwortet":emojiPhase==="artist"?"Interpret läuft – 30 Sekunden":emojiPhase==="done"?"Runde beendet":"Bereit";
+    h="<div class='card'><h2>Emoji-Songs "+(emojiIdx+1)+"/"+D.emoji.length+"</h2>"+
+      "<div class='big' style='font-size:58px;margin:20px 0'>"+s[0]+"</div>"+
+      "<div class='status'><b>Status:</b> "+phaseText+"</div>"+
+      (emojiPhase==="idle"?"<button id='emojiStart'>TITEL-RATEN STARTEN</button>":"")+
+      (emojiPhase==="title"?"<button id='emojiRevealTitle' class='secondary'>TITEL MANUELL AUFLÖSEN</button>":"")+
+      (emojiPhase==="artist"?"<div class='status ok'><b>Titel: "+s[1]+"</b></div>":"")+
+      (emojiPhase==="done"?"<div class='status ok'><b>"+s[1]+"</b> · "+s[2]+"</div>":"")+
+      "<div class='card'>"+["team1","team2","team3"].map(t=>"<div class='status'><b>"+D.teams[t].name+"</b> · Versuche: "+emojiAttempts[t]+"/3"+(emojiWinner===t?" · 🏆":"")+"</div>").join("")+"</div>"+
+      "<div class='grid'><button id='emojiPrev' class='secondary'>←</button><button id='emojiNext'>NÄCHSTER SONG →</button></div></div>";
   }
   $("hostGame").innerHTML=h;
   bindHostControls();
@@ -232,6 +269,10 @@ function bindHostControls(){
   const cs=$("catSelect"); if(cs)cs.addEventListener("change",()=>{catName=cs.value;used=new Set();answers={};renderHost();});
   const catStart=$("catStart"); if(catStart)catStart.addEventListener("click",startCategory);
   document.querySelectorAll(".acceptCat").forEach(b=>b.addEventListener("click",()=>acceptCategory(b.dataset.team)));
+  const es=$("emojiStart"); if(es)es.addEventListener("click",startEmojiTitle);
+  const er=$("emojiRevealTitle"); if(er)er.addEventListener("click",()=>startEmojiArtist(null));
+  const ep=$("emojiPrev"); if(ep)ep.addEventListener("click",()=>changeEmoji(-1));
+  const en=$("emojiNext"); if(en)en.addEventListener("click",()=>changeEmoji(1));
 }
 function startRound(sec){
   answers={}; const end=Date.now()+sec*1000;
@@ -267,6 +308,71 @@ function startCategory(){
   if(conns[t])conns[t].send(msg); else alert(D.teams[t].name+" ist noch nicht verbunden.");
   if(conns.screen)conns.screen.send(msg); renderHost();
 }
+
+function simpleNorm(s){
+  return String(s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/&/g,"and").replace(/[^a-z0-9]/g,"");
+}
+function emojiCorrect(input,target){
+  const a=simpleNorm(input), b=simpleNorm(target);
+  if(a===b)return true;
+  return editDistance(a,b)<=Math.max(1,Math.min(2,Math.floor(b.length/8)));
+}
+function resetEmojiRound(){
+  emojiPhase="idle"; emojiWinner=null; emojiAttempts={team1:0,team2:0,team3:0}; answers={};
+}
+function changeEmoji(d){
+  emojiIdx=Math.max(0,Math.min(D.emoji.length-1,emojiIdx+d)); resetEmojiRound(); sendAll({type:"reset"}); renderHost();
+}
+function startEmojiTitle(){
+  resetEmojiRound(); emojiPhase="title";
+  const s=D.emoji[emojiIdx];
+  // Effectively no countdown: 24h; ends immediately when first correct title arrives.
+  const end=Date.now()+86400000;
+  sendAll({type:"start",kind:"emojiTitle",end,title:"Emoji-Song: Titel gesucht",emojis:s[0]});
+  renderHost();
+}
+function sendEmojiFeedback(team,msg,good=false){
+  if(conns[team])conns[team].send({type:"feedback",html:"<div class='status "+(good?"ok":"bad")+"'>"+msg+"</div>"});
+}
+function handleEmojiAnswer(team,value){
+  const s=D.emoji[emojiIdx];
+  if(emojiAttempts[team]>=3){sendEmojiFeedback(team,"Keine Versuche mehr.");return;}
+  emojiAttempts[team]++;
+  const target=emojiPhase==="title"?s[1]:s[2];
+  if(emojiCorrect(value,target)){
+    if(emojiPhase==="title"){
+      emojiWinner=team;
+      sendEmojiFeedback(team,"Richtig! +2 Punkte",true);
+      startEmojiArtist(team);
+    }else if(emojiPhase==="artist"){
+      emojiWinner=team;
+      emojiPhase="done";
+      clearInterval(timerInt);
+      sendAll({type:"reveal",html:"<div class='status ok'><b>Interpret: "+s[2]+"</b></div><div class='status'><b>"+D.teams[team].name+" war zuerst richtig: +1 Punkt</b></div>"});
+      renderHost();
+    }
+  }else{
+    sendEmojiFeedback(team,"Leider falsch · noch "+(3-emojiAttempts[team])+" Versuch(e).");
+    renderHost();
+  }
+}
+function startEmojiArtist(titleWinner){
+  const s=D.emoji[emojiIdx];
+  emojiPhase="artist"; emojiWinner=titleWinner;
+  // New 3 attempts for artist for every team.
+  emojiAttempts={team1:0,team2:0,team3:0};
+  const end=Date.now()+30000;
+  sendAll({type:"start",kind:"emojiArtist",end,title:"Interpret gesucht",emojis:s[0],songTitle:s[1]});
+  renderHost();
+  setTimeout(()=>{
+    if(modeName==="emoji" && emojiPhase==="artist"){
+      emojiPhase="done";
+      sendAll({type:"reveal",html:"<div class='status'><b>Zeit abgelaufen.</b></div><div class='status ok'>Interpret: "+s[2]+"</div>"});
+      renderHost();
+    }
+  },30200);
+}
+
 function norm(s){return String(s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]/g,"");}
 function editDistance(a,b){
   const m=a.length,n=b.length,dp=Array.from({length:m+1},()=>Array(n+1).fill(0));
