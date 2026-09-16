@@ -1,56 +1,266 @@
-<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Kroatien-Olympiade Live</title>
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Kroatien-Olympiade LIVE</title>
 <style>
-:root{--n:#17324d;--b:#2d5f8b;--bg:#f3f6f8;--g:#16834b;--r:#b43b3b}*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:var(--bg);color:#17212b}
-header{background:var(--n);color:white;padding:15px 18px;font-weight:800}.wrap{max-width:900px;margin:auto;padding:16px}.card{background:white;border-radius:14px;padding:16px;margin:0 0 14px;box-shadow:0 2px 10px #0001}
-button,input,select{font:inherit;border-radius:10px;border:1px solid #ccd5dd;padding:12px}button{background:var(--n);color:white;border:0;font-weight:750;cursor:pointer}.secondary{background:#e8eef3;color:#17324d}.danger{background:var(--r)}.good{background:var(--g)}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}.big{font-size:42px;font-weight:900;text-align:center}.timer{font-size:64px;font-weight:900;text-align:center;font-variant-numeric:tabular-nums}.muted{color:#687784;font-size:14px}
-.answer{display:block;width:100%;margin:8px 0;text-align:left}.answer.sel{outline:4px solid #91b7d8}.status{padding:10px;border-radius:9px;background:#eef3f7;margin:5px 0}.ok{background:#dff4e7}.bad{background:#f9e0e0}
-.hide{display:none!important}.pill{display:inline-block;padding:5px 9px;background:#e8eef3;border-radius:99px;margin:3px;font-size:13px}.check{opacity:.45;text-decoration:line-through}
-table{width:100%;border-collapse:collapse}td,th{padding:8px;border-bottom:1px solid #e4e9ed;text-align:left}.tabs{display:flex;gap:6px;overflow:auto;margin-bottom:12px}.tabs button{white-space:nowrap}
-</style></head><body><header>🇭🇷 Kroatien-Olympiade LIVE</header><div class="wrap">
-<div id="setup" class="card"><h2>Verbinden</h2><p class="muted">Alle Geräte öffnen dieselbe Seite. Jan erstellt den Raum; die Kapitäne treten mit dem Raumcode bei.</p>
-<div class="grid"><button onclick="host()">JAN – SPIELLEITER</button><button class="secondary" onclick="joinView()">KAPITÄN</button><button class="secondary" onclick="screenView()">TV / BEAMER</button></div>
-<div id="join" class="hide"><p><input id="roomIn" placeholder="Raumcode" maxlength="6" style="width:100%;text-transform:uppercase"></p><div class="grid">
-<button onclick="join('team1')">Team 1</button><button onclick="join('team2')">Team 2</button><button onclick="join('team3')">Team 3</button></div></div></div>
-<div id="host" class="hide"><div class="card"><div class="muted">Raumcode</div><div id="roomCode" class="big"></div><div id="connections"></div></div>
-<div class="tabs"><button onclick="mode('quiz')">Kroatien-Quiz</button><button onclick="mode('estimate')">Schätzmeister</button><button onclick="mode('category')">Kategorien</button></div>
-<div id="hostGame"></div></div>
-<div id="captain" class="hide"><div class="card"><div id="teamName"></div><div id="capTimer" class="timer">–</div><div id="capGame"><p class="muted">Warte auf Jan …</p></div></div></div>
-<div id="screen" class="hide"><div class="card"><div id="screenTitle" class="big">Warte auf Jan …</div><div id="screenTimer" class="timer">–</div><div id="screenStatus"></div></div></div>
+:root{--n:#17324d;--bg:#f3f6f8;--g:#16834b;--r:#b43b3b}
+*{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:var(--bg);color:#17212b}
+header{background:var(--n);color:white;padding:16px 20px;font-weight:900;font-size:20px}
+.wrap{max-width:1000px;margin:auto;padding:18px}.card{background:#fff;border-radius:16px;padding:18px;margin-bottom:14px;box-shadow:0 2px 12px #00000012}
+button,input,select{font:inherit;border-radius:11px;border:1px solid #ccd5dd;padding:13px}
+button{background:var(--n);color:#fff;border:0;font-weight:800;cursor:pointer}.secondary{background:#e5ebf0;color:#17324d}.good{background:var(--g)}.danger{background:var(--r)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}.hide{display:none!important}
+.big{font-size:42px;font-weight:900;text-align:center}.timer{font-size:68px;font-weight:950;text-align:center;font-variant-numeric:tabular-nums}
+.muted{color:#667684}.answer{display:block;width:100%;margin:8px 0;text-align:left}.answer.sel{outline:4px solid #9bbbd6}
+.status{padding:10px;border-radius:9px;background:#edf2f6;margin:6px 0}.ok{background:#def4e7}.bad{background:#fae1e1}
+.pill{display:inline-block;padding:5px 9px;background:#e8eef3;border-radius:99px;margin:3px;font-size:13px}.check{opacity:.42;text-decoration:line-through}
+.tabs{display:flex;gap:7px;overflow:auto;margin-bottom:12px}.tabs button{white-space:nowrap}
+.code{letter-spacing:5px}.teamBtn{min-height:56px}
+</style>
+</head>
+<body>
+<header>🇭🇷 Kroatien-Olympiade LIVE</header>
+<div class="wrap">
+<section id="setup" class="card">
+<h2>Verbinden</h2>
+<p class="muted">Alle Geräte öffnen dieselbe Seite. Jan erstellt den Raum, die Kapitäne treten mit dem Raumcode bei.</p>
+<div class="grid">
+<button id="hostBtn">JAN – SPIELLEITER</button>
+<button id="captainBtn" class="secondary">KAPITÄN</button>
+<button id="screenBtn" class="secondary">TV / BEAMER</button>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.5/dist/peerjs.min.js"></script><script src="data.js"></script>
+<div id="joinBox" class="hide" style="margin-top:16px">
+<input id="roomIn" placeholder="RAUMCODE" maxlength="6" style="width:100%;text-transform:uppercase">
+<div id="teamChoices" class="grid" style="margin-top:10px">
+<button class="teamBtn" data-team="team1">Team 1</button>
+<button class="teamBtn" data-team="team2">Team 2</button>
+<button class="teamBtn" data-team="team3">Team 3</button>
+</div>
+<button id="screenJoinBtn" class="hide" style="width:100%;margin-top:10px">TV / BEAMER VERBINDEN</button>
+</div>
+</section>
+
+<section id="hostView" class="hide">
+<div class="card"><div class="muted">Raumcode</div><div id="roomCode" class="big code"></div><div id="connections"></div></div>
+<div class="tabs">
+<button data-mode="quiz">Kroatien-Quiz</button>
+<button data-mode="estimate">Schätzmeister</button>
+<button data-mode="category">Kategorien</button>
+</div>
+<div id="hostGame"></div>
+</section>
+
+<section id="captainView" class="hide">
+<div class="card"><div id="teamName"></div><div id="capTimer" class="timer">–</div><div id="capGame"><p class="muted">Warte auf Jan …</p></div></div>
+</section>
+
+<section id="screenView" class="hide">
+<div class="card"><div id="screenTitle" class="big">Warte auf Jan …</div><div id="screenTimer" class="timer">–</div><div id="screenStatus"></div></div>
+</section>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.5/dist/peerjs.min.js"></script>
+<script src="data.js"></script>
 <script>
-const D=window.GAME_DATA; let peer,conns={},conn,role=null,room=null,current=null,timerInt=null,answers={},used=new Set(),qidx=0,eidx=0,catName=Object.keys(D.categories)[0];
-const $=id=>document.getElementById(id); const code=()=>Math.random().toString(36).slice(2,8).toUpperCase();
-function show(id){['setup','host','captain','screen'].forEach(x=>$(x).classList.add('hide'));$(id).classList.remove('hide')}
-function joinView(){$('join').classList.remove('hide')} function screenView(){$('join').classList.remove('hide');role='screen'}
-function host(){role='host';room=code();peer=new Peer('kroatien-'+room);peer.on('open',()=>{show('host');$('roomCode').textContent=room;renderHost()});peer.on('connection',c=>{c.on('data',m=>onMsg(m,c));c.on('open',()=>c.send({type:'hello'}))})}
-function join(team){room=$('roomIn').value.trim().toUpperCase(); if(!room)return alert('Raumcode eingeben'); role=role==='screen'?'screen':team;peer=new Peer();peer.on('open',()=>{conn=peer.connect('kroatien-'+room,{reliable:true});conn.on('open',()=>{conn.send({type:'join',role});show(role==='screen'?'screen':'captain');if(role!=='screen'){$('teamName').innerHTML='<b>'+D.teams[role].name+'</b><div class=muted>'+D.teams[role].players+'</div>'}});conn.on('data',onClient)})}
-function onMsg(m,c){if(m.type==='join'){conns[m.role]=c;refreshConnections()} if(m.type==='answer'){answers[m.role]=m.value;renderHost()} }
-function refreshConnections(){$('connections').innerHTML=['team1','team2','team3','screen'].map(r=>'<span class=pill>'+r+': '+(conns[r]?'✓':'–')+'</span>').join('')}
-function sendAll(m){Object.values(conns).forEach(c=>{try{c.send(m)}catch(e){}})}
-function onClient(m){if(m.type==='start'){current=m;startLocal(m)} if(m.type==='reveal'){if(role==='screen')$('screenStatus').innerHTML=m.html} if(m.type==='reset'){clearInterval(timerInt);if(role==='screen'){$('screenTitle').textContent='Warte auf Jan …';$('screenTimer').textContent='–'}else{$('capGame').innerHTML='<p class=muted>Warte auf Jan …</p>';$('capTimer').textContent='–'}}}}
-function countdown(end,el,done){clearInterval(timerInt);function tick(){let s=Math.max(0,Math.ceil((end-Date.now())/1000));el.textContent=s;if(s<=0){clearInterval(timerInt);done&&done()}}tick();timerInt=setInterval(tick,200)}
-function startLocal(m){let end=m.end;if(role==='screen'){$('screenTitle').textContent=m.title;$('screenStatus').innerHTML='<div class=muted>Antworten: noch verborgen</div>';countdown(end,$('screenTimer'))}
-else {let h='<h2>'+m.title+'</h2>';if(m.kind==='quiz')m.options.forEach((x,i)=>h+='<button class="answer secondary" onclick="submitAns('+i+',this)">'+String.fromCharCode(65+i)+' · '+x+'</button>');
-if(m.kind==='estimate')h+='<input id=txtAns type=number inputmode=numeric placeholder="Kilometer" style="width:100%"><button class=answer onclick="submitText()">ABSCHICKEN</button>';
-if(m.kind==='category')h+='<input id=txtAns autocomplete=off placeholder="Antwort" style="width:100%"><button class=answer onclick="submitText()">ABSCHICKEN</button>';
-$('capGame').innerHTML=h;countdown(end,$('capTimer'),()=>lockCaptain())}}
-function submitAns(v,b){document.querySelectorAll('.answer').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');conn.send({type:'answer',value:v});lockCaptain('Antwort gesendet ✓')}
-function submitText(){let e=$('txtAns'); if(!e||!e.value.trim())return;conn.send({type:'answer',value:e.value.trim()});lockCaptain('Antwort gesendet ✓')}
-function lockCaptain(msg='Zeit abgelaufen'){document.querySelectorAll('#capGame button,#capGame input').forEach(x=>x.disabled=true);$('capGame').insertAdjacentHTML('beforeend','<div class=status>'+msg+'</div>')}
-function mode(m){current={mode:m};answers={};renderHost()}
-function renderHost(){if(!current)current={mode:'quiz'};let m=current.mode,h='';
-if(m==='quiz'){let q=D.quiz[qidx];h='<div class=card><h2>Frage '+(qidx+1)+'/20</h2><p>'+q[0]+'</p><div>'+q[1].map((x,i)=>'<span class=pill>'+String.fromCharCode(65+i)+' '+x+'</span>').join('')+'</div><p><button onclick="startRound(30)">30 SEK. START</button> <button class=secondary onclick="revealQuiz()">AUFLÖSEN</button></p>'+answerStatus()+'<div class=grid><button class=secondary onclick="qidx=Math.max(0,qidx-1);answers={};renderHost()">←</button><button onclick="qidx=Math.min(19,qidx+1);answers={};renderHost()">NÄCHSTE →</button></div></div>'}
-if(m==='estimate'){let e=D.estimate[eidx];h='<div class=card><h2>Schätzmeister '+(eidx+1)+'/20</h2><p class=big>'+e[0]+'</p><p class=muted>Lösung: '+e[1].toLocaleString('de-DE')+' km</p><button onclick="startRound(30)">30 SEK. START</button> <button class=secondary onclick="revealEstimate()">AUSWERTEN</button>'+answerStatus()+'<div class=grid><button class=secondary onclick="eidx=Math.max(0,eidx-1);answers={};renderHost()">←</button><button onclick="eidx=Math.min(19,eidx+1);answers={};renderHost()">NÄCHSTE →</button></div></div>'}
-if(m==='category'){h='<div class=card><h2>Kategorien-Battle</h2><select onchange="catName=this.value;used=new Set();renderHost()" style="width:100%">'+Object.keys(D.categories).map(x=>'<option '+(x===catName?'selected':'')+'>'+x+'</option>').join('')+'</select><p><select id=turnTeam><option value=team1>Team 1</option><option value=team2>Team 2</option><option value=team3>Team 3</option></select> <button onclick="startCategory()">5 SEK. START</button></p>'+answerStatus(true)+'<div>'+D.categories[catName].map(x=>'<span class="pill '+(used.has(norm(x))?'check':'')+'">'+x+'</span>').join('')+'</div></div>'}
-$('hostGame').innerHTML=h}
-function answerStatus(cat=false){return '<div class=card>'+['team1','team2','team3'].map(t=>'<div class=status><b>'+D.teams[t].name+':</b> '+(answers[t]===undefined?'—':answers[t])+(cat&&answers[t]!==undefined?' <button class=good onclick="acceptCat(\''+t+'\')">✓</button>':'')+'</div>').join('')+'</div>'}
-function startRound(sec){answers={};let m=current.mode,end=Date.now()+sec*1000,msg={type:'start',kind:m,end,title:''};if(m==='quiz'){let q=D.quiz[qidx];msg.title='Frage '+(qidx+1)+': '+q[0];msg.options=q[1]}if(m==='estimate')msg.title='Schätzmeister: '+D.estimate[eidx][0];sendAll(msg);renderHost()}
-function revealQuiz(){let q=D.quiz[qidx],correct=q[2],html='';['team1','team2','team3'].forEach(t=>{let ok=Number(answers[t])===correct;html+='<div class="status '+(ok?'ok':'bad')+'">'+D.teams[t].name+': '+(answers[t]===undefined?'—':String.fromCharCode(65+Number(answers[t])))+'</div>'});html+='<p><b>Richtig: '+String.fromCharCode(65+correct)+' · '+q[1][correct]+'</b></p>';sendAll({type:'reveal',html});}
-function revealEstimate(){let sol=D.estimate[eidx][1],arr=['team1','team2','team3'].filter(t=>answers[t]!==undefined).map(t=>[t,Number(answers[t]),Math.abs(Number(answers[t])-sol)]).sort((a,b)=>a[2]-b[2]);let pts=[3,2,1],html='<p><b>Lösung: '+sol.toLocaleString('de-DE')+' km</b></p>';arr.forEach((x,i)=>html+='<div class=status>'+pts[i]+' Punkte: '+D.teams[x[0]].name+' – '+x[1].toLocaleString('de-DE')+' km</div>');sendAll({type:'reveal',html});}
-function startCategory(){answers={};let t=$('turnTeam').value,end=Date.now()+5000,msg={type:'start',kind:'category',end,title:catName};if(conns[t])conns[t].send(msg);if(conns.screen)conns.screen.send(msg);renderHost()}
-function norm(s){return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'')}
-function acceptCat(t){let a=answers[t],list=D.categories[catName],match=list.find(x=>norm(x)===norm(a)||norm(x).includes(norm(a))&&norm(a).length>=4);if(!match)return alert('Nicht in der Liste gefunden: '+a);if(used.has(norm(match)))return alert('Schon genannt: '+match);used.add(norm(match));answers={};renderHost()}
-</script></body></html>
+"use strict";
+const D=window.GAME_DATA;
+const $=id=>document.getElementById(id);
+let peer=null, conns={}, conn=null, role=null, room=null, modeName="quiz";
+let timerInt=null, answers={}, used=new Set(), qidx=0, eidx=0;
+let catName=Object.keys(D.categories)[0];
+
+function show(view){
+  ["setup","hostView","captainView","screenView"].forEach(id=>$(id).classList.add("hide"));
+  $(view).classList.remove("hide");
+}
+function roomCode(){return Math.random().toString(36).slice(2,8).toUpperCase();}
+function ensurePeer(){
+  if(typeof Peer==="undefined"){alert("PeerJS konnte nicht geladen werden. Bitte Internetverbindung prüfen.");return false;}
+  return true;
+}
+function openJoin(kind){
+  role=kind;
+  $("joinBox").classList.remove("hide");
+  $("teamChoices").classList.toggle("hide",kind==="screen");
+  $("screenJoinBtn").classList.toggle("hide",kind!=="screen");
+  $("roomIn").focus();
+}
+function host(){
+  if(!ensurePeer())return;
+  role="host"; room=roomCode();
+  peer=new Peer("kroatien-"+room);
+  peer.on("open",()=>{
+    show("hostView"); $("roomCode").textContent=room; refreshConnections(); renderHost();
+  });
+  peer.on("connection",c=>{
+    c.on("data",m=>onHostMessage(m,c));
+  });
+  peer.on("error",e=>alert("Verbindungsfehler: "+e.type));
+}
+function join(teamRole){
+  if(!ensurePeer())return;
+  room=$("roomIn").value.trim().toUpperCase();
+  if(!room){alert("Bitte Raumcode eingeben.");return;}
+  role=teamRole;
+  peer=new Peer();
+  peer.on("open",()=>{
+    conn=peer.connect("kroatien-"+room,{reliable:true});
+    conn.on("open",()=>{
+      conn.send({type:"join",role});
+      if(role==="screen") show("screenView");
+      else{
+        show("captainView");
+        $("teamName").innerHTML="<b>"+D.teams[role].name+"</b><div class='muted'>"+D.teams[role].players+"</div>";
+      }
+    });
+    conn.on("data",onClientMessage);
+    conn.on("error",()=>alert("Verbindung zum Spielleiter fehlgeschlagen."));
+  });
+}
+function onHostMessage(m,c){
+  if(m.type==="join"){conns[m.role]=c; refreshConnections();}
+  if(m.type==="answer"){answers[m.role]=m.value; renderHost();}
+}
+function refreshConnections(){
+  $("connections").innerHTML=["team1","team2","team3","screen"].map(r=>
+    "<span class='pill'>"+(r==="screen"?"TV":D.teams[r].name)+": "+(conns[r]?"✓":"–")+"</span>"
+  ).join("");
+}
+function sendAll(msg){Object.values(conns).forEach(c=>{try{c.send(msg)}catch(e){}});}
+function onClientMessage(m){
+  if(m.type==="start") startLocal(m);
+  if(m.type==="reveal" && role==="screen") $("screenStatus").innerHTML=m.html;
+}
+function countdown(end,el,done){
+  clearInterval(timerInt);
+  const tick=()=>{
+    const s=Math.max(0,Math.ceil((end-Date.now())/1000));
+    el.textContent=s;
+    if(s<=0){clearInterval(timerInt);if(done)done();}
+  };
+  tick(); timerInt=setInterval(tick,200);
+}
+function startLocal(m){
+  if(role==="screen"){
+    $("screenTitle").textContent=m.title;
+    $("screenStatus").innerHTML="<div class='muted'>Antworten noch verborgen</div>";
+    countdown(m.end,$("screenTimer"));
+    return;
+  }
+  let h="<h2>"+m.title+"</h2>";
+  if(m.kind==="quiz"){
+    m.options.forEach((x,i)=>h+="<button class='answer secondary qanswer' data-value='"+i+"'>"+String.fromCharCode(65+i)+" · "+x+"</button>");
+  } else if(m.kind==="estimate"){
+    h+="<input id='txtAns' type='number' inputmode='numeric' placeholder='Kilometer' style='width:100%'><button id='sendText' class='answer'>ABSCHICKEN</button>";
+  } else if(m.kind==="category"){
+    h+="<input id='txtAns' autocomplete='off' placeholder='Antwort' style='width:100%'><button id='sendText' class='answer'>ABSCHICKEN</button>";
+  }
+  $("capGame").innerHTML=h;
+  document.querySelectorAll(".qanswer").forEach(b=>b.addEventListener("click",()=>submitChoice(Number(b.dataset.value),b)));
+  const sb=$("sendText"); if(sb)sb.addEventListener("click",submitText);
+  countdown(m.end,$("capTimer"),()=>lockCaptain("Zeit abgelaufen"));
+}
+function submitChoice(v,b){
+  document.querySelectorAll(".qanswer").forEach(x=>x.classList.remove("sel"));
+  b.classList.add("sel"); conn.send({type:"answer",role,value:v}); lockCaptain("Antwort gesendet ✓");
+}
+function submitText(){
+  const e=$("txtAns"); if(!e||!e.value.trim())return;
+  conn.send({type:"answer",role,value:e.value.trim()}); lockCaptain("Antwort gesendet ✓");
+}
+function lockCaptain(msg){
+  document.querySelectorAll("#capGame button,#capGame input").forEach(x=>x.disabled=true);
+  if(!$("capGame").querySelector(".status"))$("capGame").insertAdjacentHTML("beforeend","<div class='status'>"+msg+"</div>");
+}
+function setMode(m){modeName=m;answers={};renderHost();}
+function answerStatus(category=false){
+  return "<div class='card'>"+["team1","team2","team3"].map(t=>{
+    const val=answers[t]===undefined?"—":String(answers[t]);
+    const accept=category&&answers[t]!==undefined?" <button class='good acceptCat' data-team='"+t+"'>✓</button>":"";
+    return "<div class='status'><b>"+D.teams[t].name+":</b> "+val+accept+"</div>";
+  }).join("")+"</div>";
+}
+function renderHost(){
+  let h="";
+  if(modeName==="quiz"){
+    const q=D.quiz[qidx];
+    h="<div class='card'><h2>Frage "+(qidx+1)+"/"+D.quiz.length+"</h2><p>"+q[0]+"</p>"+
+      q[1].map((x,i)=>"<span class='pill'>"+String.fromCharCode(65+i)+" · "+x+"</span>").join("")+
+      "<p><button id='startBtn'>30 SEK. START</button> <button id='revealBtn' class='secondary'>AUFLÖSEN</button></p>"+
+      answerStatus(false)+"<div class='grid'><button id='prevBtn' class='secondary'>←</button><button id='nextBtn'>NÄCHSTE →</button></div></div>";
+  } else if(modeName==="estimate"){
+    const e=D.estimate[eidx];
+    h="<div class='card'><h2>Schätzmeister "+(eidx+1)+"/"+D.estimate.length+"</h2><p class='big'>"+e[0]+"</p><p class='muted'>Lösung: "+Number(e[1]).toLocaleString("de-DE")+" km</p>"+
+      "<p><button id='startBtn'>30 SEK. START</button> <button id='revealBtn' class='secondary'>AUSWERTEN</button></p>"+
+      answerStatus(false)+"<div class='grid'><button id='prevBtn' class='secondary'>←</button><button id='nextBtn'>NÄCHSTE →</button></div></div>";
+  } else {
+    h="<div class='card'><h2>Kategorien-Battle</h2><select id='catSelect' style='width:100%'>"+
+      Object.keys(D.categories).map(x=>"<option "+(x===catName?"selected":"")+">"+x+"</option>").join("")+
+      "</select><p><select id='turnTeam'><option value='team1'>Team 1</option><option value='team2'>Team 2</option><option value='team3'>Team 3</option></select> <button id='catStart'>5 SEK. START</button></p>"+
+      answerStatus(true)+"<div>"+D.categories[catName].map(x=>"<span class='pill "+(used.has(norm(x))?"check":"")+"'>"+x+"</span>").join("")+"</div></div>";
+  }
+  $("hostGame").innerHTML=h;
+  bindHostControls();
+}
+function bindHostControls(){
+  const start=$("startBtn"), reveal=$("revealBtn"), prev=$("prevBtn"), next=$("nextBtn");
+  if(start)start.addEventListener("click",()=>startRound(30));
+  if(reveal)reveal.addEventListener("click",()=>modeName==="quiz"?revealQuiz():revealEstimate());
+  if(prev)prev.addEventListener("click",()=>{answers={};if(modeName==="quiz")qidx=Math.max(0,qidx-1);else eidx=Math.max(0,eidx-1);renderHost();});
+  if(next)next.addEventListener("click",()=>{answers={};if(modeName==="quiz")qidx=Math.min(D.quiz.length-1,qidx+1);else eidx=Math.min(D.estimate.length-1,eidx+1);renderHost();});
+  const cs=$("catSelect"); if(cs)cs.addEventListener("change",()=>{catName=cs.value;used=new Set();answers={};renderHost();});
+  const catStart=$("catStart"); if(catStart)catStart.addEventListener("click",startCategory);
+  document.querySelectorAll(".acceptCat").forEach(b=>b.addEventListener("click",()=>acceptCategory(b.dataset.team)));
+}
+function startRound(sec){
+  answers={}; const end=Date.now()+sec*1000;
+  if(modeName==="quiz"){
+    const q=D.quiz[qidx]; sendAll({type:"start",kind:"quiz",end,title:"Frage "+(qidx+1)+": "+q[0],options:q[1]});
+  }else{
+    sendAll({type:"start",kind:"estimate",end,title:"Schätzmeister: "+D.estimate[eidx][0]});
+  }
+  renderHost();
+}
+function revealQuiz(){
+  const q=D.quiz[qidx], correct=q[2]; let html="";
+  ["team1","team2","team3"].forEach(t=>{
+    const a=answers[t],ok=Number(a)===correct;
+    html+="<div class='status "+(ok?"ok":"bad")+"'>"+D.teams[t].name+": "+(a===undefined?"—":String.fromCharCode(65+Number(a)))+"</div>";
+  });
+  html+="<p><b>Richtig: "+String.fromCharCode(65+correct)+" · "+q[1][correct]+"</b></p>";
+  sendAll({type:"reveal",html});
+}
+function revealEstimate(){
+  const sol=Number(D.estimate[eidx][1]), pts=[3,2,1];
+  const arr=["team1","team2","team3"].filter(t=>answers[t]!==undefined)
+    .map(t=>[t,Number(answers[t]),Math.abs(Number(answers[t])-sol)]).sort((a,b)=>a[2]-b[2]);
+  let html="<p><b>Lösung: "+sol.toLocaleString("de-DE")+" km</b></p>";
+  arr.forEach((x,i)=>html+="<div class='status'>"+pts[i]+" Punkte: "+D.teams[x[0]].name+" – "+x[1].toLocaleString("de-DE")+" km</div>");
+  sendAll({type:"reveal",html});
+}
+function startCategory(){
+  answers={}; const t=$("turnTeam").value, end=Date.now()+5000;
+  const msg={type:"start",kind:"category",end,title:catName};
+  if(conns[t])conns[t].send(msg); else alert(D.teams[t].name+" ist noch nicht verbunden.");
+  if(conns.screen)conns.screen.send(msg); renderHost();
+}
+function norm(s){return String(s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]/g,"");}
+function acceptCategory(t){
+  const a=answers[t], list=D.categories[catName];
+  const na=norm(a);
+  const match=list.find(x=>norm(x)===na || (na.length>=4 && norm(x).includes(na)));
+  if(!match){alert("Nicht in der Liste gefunden: "+a);return;}
+  if(used.has(norm(match))){alert("Schon genannt: "+match);return;}
+  used.add(norm(match)); answers={}; renderHost();
+}
+
+$("hostBtn").addEventListener("click",host);
+$("captainBtn").addEventListener("click",()=>openJoin("captain"));
+$("screenBtn").addEventListener("click",()=>openJoin("screen"));
+$("screenJoinBtn").addEventListener("click",()=>join("screen"));
+document.querySelectorAll("[data-team]").forEach(b=>b.addEventListener("click",()=>join(b.dataset.team)));
+document.querySelectorAll("[data-mode]").forEach(b=>b.addEventListener("click",()=>setMode(b.dataset.mode)));
+</script>
+</body></html>
