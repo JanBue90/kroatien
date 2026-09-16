@@ -153,7 +153,18 @@ function countdown(end,el,done){
 function startLocal(m){
   if(role==="screen"){
     $("screenTitle").textContent=m.title;
-    $("screenStatus").innerHTML="<div class='muted'>Antworten noch verborgen</div>";
+    if(m.kind==="quiz" && Array.isArray(m.options)){
+      $("screenStatus").innerHTML=
+        "<div class='grid' style='margin-top:18px'>"+
+        m.options.map((x,i)=>
+          "<div class='status' style='font-size:24px;font-weight:800;padding:16px'>"+
+          String.fromCharCode(65+i)+" · "+x+
+          "</div>"
+        ).join("")+
+        "</div><div class='muted' style='margin-top:12px'>Team-Antworten und richtige Lösung bleiben bis zur Auflösung verborgen.</div>";
+    }else{
+      $("screenStatus").innerHTML="<div class='muted'>Antworten noch verborgen</div>";
+    }
     countdown(m.end,$("screenTimer"));
     return;
   }
@@ -206,7 +217,7 @@ function renderHost(){
   } else {
     h="<div class='card'><h2>Kategorien-Battle</h2><select id='catSelect' style='width:100%'>"+
       Object.keys(D.categories).map(x=>"<option "+(x===catName?"selected":"")+">"+x+"</option>").join("")+
-      "</select><p><select id='turnTeam'><option value='team1'>Team 1</option><option value='team2'>Team 2</option><option value='team3'>Team 3</option></select> <button id='catStart'>5 SEK. START</button></p>"+
+      "</select><p><select id='turnTeam'><option value='team1'>Team 1</option><option value='team2'>Team 2</option><option value='team3'>Team 3</option></select> <button id='catStart'>35 SEK. START</button></p>"+
       answerStatus(true)+"<div>"+D.categories[catName].map(x=>"<span class='pill "+(used.has(norm(x))?"check":"")+"'>"+x+"</span>").join("")+"</div></div>";
   }
   $("hostGame").innerHTML=h;
@@ -235,7 +246,7 @@ function revealQuiz(){
   const q=D.quiz[qidx], correct=q[2]; let html="";
   ["team1","team2","team3"].forEach(t=>{
     const a=answers[t],ok=Number(a)===correct;
-    html+="<div class='status "+(ok?"ok":"bad")+"'>"+D.teams[t].name+": "+(a===undefined?"—":String.fromCharCode(65+Number(a)))+"</div>";
+    html+="<div class='status "+(ok?"ok":"bad")+"'>"+D.teams[t].name+": "+(a===undefined?"—":String.fromCharCode(65+Number(a))+" · "+q[1][Number(a)])+"</div>";
   });
   html+="<p><b>Richtig: "+String.fromCharCode(65+correct)+" · "+q[1][correct]+"</b></p>";
   const hr=$("hostReveal"); if(hr)hr.innerHTML="<div class='card'>"+html+"</div>";
@@ -251,17 +262,44 @@ function revealEstimate(){
   sendAll({type:"reveal",html});
 }
 function startCategory(){
-  answers={}; const t=$("turnTeam").value, end=Date.now()+5000;
+  answers={}; const t=$("turnTeam").value, end=Date.now()+35000;
   const msg={type:"start",kind:"category",end,title:catName};
   if(conns[t])conns[t].send(msg); else alert(D.teams[t].name+" ist noch nicht verbunden.");
   if(conns.screen)conns.screen.send(msg); renderHost();
 }
 function norm(s){return String(s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]/g,"");}
+function editDistance(a,b){
+  const m=a.length,n=b.length,dp=Array.from({length:m+1},()=>Array(n+1).fill(0));
+  for(let i=0;i<=m;i++)dp[i][0]=i;
+  for(let j=0;j<=n;j++)dp[0][j]=j;
+  for(let i=1;i<=m;i++)for(let j=1;j<=n;j++){
+    dp[i][j]=Math.min(
+      dp[i-1][j]+1,
+      dp[i][j-1]+1,
+      dp[i-1][j-1]+(a[i-1]===b[j-1]?0:1)
+    );
+  }
+  return dp[m][n];
+}
+function fuzzyMatch(input,list){
+  const ni=norm(input);
+  if(!ni)return null;
+  let best=null,bestDist=999;
+  for(const x of list){
+    const nx=norm(x);
+    if(nx===ni)return x;
+    if(ni.length>=4 && (nx.includes(ni)||ni.includes(nx))) return x;
+    const d=editDistance(ni,nx);
+    if(d<bestDist){bestDist=d;best=x;}
+  }
+  // 1 typo for short answers; up to 2 for medium/long answers.
+  const allowed=ni.length<=4?1:(ni.length<=8?2:2);
+  return bestDist<=allowed?best:null;
+}
 function acceptCategory(t){
   const a=answers[t], list=D.categories[catName];
-  const na=norm(a);
-  const match=list.find(x=>norm(x)===na || (na.length>=4 && norm(x).includes(na)));
-  if(!match){alert("Nicht in der Liste gefunden: "+a);return;}
+  const match=fuzzyMatch(a,list);
+  if(!match){alert("Nicht eindeutig erkannt: "+a+" – bitte manuell prüfen.");return;}
   if(used.has(norm(match))){alert("Schon genannt: "+match);return;}
   used.add(norm(match)); answers={}; renderHost();
 }
