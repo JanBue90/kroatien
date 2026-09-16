@@ -131,7 +131,15 @@ function refreshConnections(){
 function sendAll(msg){Object.values(conns).forEach(c=>{try{c.send(msg)}catch(e){}});}
 function onClientMessage(m){
   if(m.type==="start") startLocal(m);
-  if(m.type==="reveal" && role==="screen") $("screenStatus").innerHTML=m.html;
+  if(m.type==="reveal"){
+    if(role==="screen"){
+      $("screenStatus").innerHTML=m.html;
+    }else{
+      clearInterval(timerInt);
+      $("capTimer").textContent="✓";
+      $("capGame").innerHTML="<h2>Auflösung</h2>"+m.html;
+    }
+  }
 }
 function countdown(end,el,done){
   clearInterval(timerInt);
@@ -189,12 +197,12 @@ function renderHost(){
     h="<div class='card'><h2>Frage "+(qidx+1)+"/"+D.quiz.length+"</h2><p>"+q[0]+"</p>"+
       q[1].map((x,i)=>"<span class='pill'>"+String.fromCharCode(65+i)+" · "+x+"</span>").join("")+
       "<p><button id='startBtn'>30 SEK. START</button> <button id='revealBtn' class='secondary'>AUFLÖSEN</button></p>"+
-      answerStatus(false)+"<div class='grid'><button id='prevBtn' class='secondary'>←</button><button id='nextBtn'>NÄCHSTE →</button></div></div>";
+      answerStatus(false)+"<div id='hostReveal'></div><div class='grid'><button id='prevBtn' class='secondary'>←</button><button id='nextBtn'>NÄCHSTE →</button></div></div>";
   } else if(modeName==="estimate"){
     const e=D.estimate[eidx];
     h="<div class='card'><h2>Schätzmeister "+(eidx+1)+"/"+D.estimate.length+"</h2><p class='big'>"+e[0]+"</p><p class='muted'>Lösung: "+Number(e[1]).toLocaleString("de-DE")+" km</p>"+
       "<p><button id='startBtn'>30 SEK. START</button> <button id='revealBtn' class='secondary'>AUSWERTEN</button></p>"+
-      answerStatus(false)+"<div class='grid'><button id='prevBtn' class='secondary'>←</button><button id='nextBtn'>NÄCHSTE →</button></div></div>";
+      answerStatus(false)+"<div id='hostReveal'></div><div class='grid'><button id='prevBtn' class='secondary'>←</button><button id='nextBtn'>NÄCHSTE →</button></div></div>";
   } else {
     h="<div class='card'><h2>Kategorien-Battle</h2><select id='catSelect' style='width:100%'>"+
       Object.keys(D.categories).map(x=>"<option "+(x===catName?"selected":"")+">"+x+"</option>").join("")+
@@ -230,6 +238,7 @@ function revealQuiz(){
     html+="<div class='status "+(ok?"ok":"bad")+"'>"+D.teams[t].name+": "+(a===undefined?"—":String.fromCharCode(65+Number(a)))+"</div>";
   });
   html+="<p><b>Richtig: "+String.fromCharCode(65+correct)+" · "+q[1][correct]+"</b></p>";
+  const hr=$("hostReveal"); if(hr)hr.innerHTML="<div class='card'>"+html+"</div>";
   sendAll({type:"reveal",html});
 }
 function revealEstimate(){
@@ -238,6 +247,7 @@ function revealEstimate(){
     .map(t=>[t,Number(answers[t]),Math.abs(Number(answers[t])-sol)]).sort((a,b)=>a[2]-b[2]);
   let html="<p><b>Lösung: "+sol.toLocaleString("de-DE")+" km</b></p>";
   arr.forEach((x,i)=>html+="<div class='status'>"+pts[i]+" Punkte: "+D.teams[x[0]].name+" – "+x[1].toLocaleString("de-DE")+" km</div>");
+  const hr=$("hostReveal"); if(hr)hr.innerHTML="<div class='card'>"+html+"</div>";
   sendAll({type:"reveal",html});
 }
 function startCategory(){
