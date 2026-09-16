@@ -1,0 +1,56 @@
+<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Kroatien-Olympiade Live</title>
+<style>
+:root{--n:#17324d;--b:#2d5f8b;--bg:#f3f6f8;--g:#16834b;--r:#b43b3b}*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:var(--bg);color:#17212b}
+header{background:var(--n);color:white;padding:15px 18px;font-weight:800}.wrap{max-width:900px;margin:auto;padding:16px}.card{background:white;border-radius:14px;padding:16px;margin:0 0 14px;box-shadow:0 2px 10px #0001}
+button,input,select{font:inherit;border-radius:10px;border:1px solid #ccd5dd;padding:12px}button{background:var(--n);color:white;border:0;font-weight:750;cursor:pointer}.secondary{background:#e8eef3;color:#17324d}.danger{background:var(--r)}.good{background:var(--g)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}.big{font-size:42px;font-weight:900;text-align:center}.timer{font-size:64px;font-weight:900;text-align:center;font-variant-numeric:tabular-nums}.muted{color:#687784;font-size:14px}
+.answer{display:block;width:100%;margin:8px 0;text-align:left}.answer.sel{outline:4px solid #91b7d8}.status{padding:10px;border-radius:9px;background:#eef3f7;margin:5px 0}.ok{background:#dff4e7}.bad{background:#f9e0e0}
+.hide{display:none!important}.pill{display:inline-block;padding:5px 9px;background:#e8eef3;border-radius:99px;margin:3px;font-size:13px}.check{opacity:.45;text-decoration:line-through}
+table{width:100%;border-collapse:collapse}td,th{padding:8px;border-bottom:1px solid #e4e9ed;text-align:left}.tabs{display:flex;gap:6px;overflow:auto;margin-bottom:12px}.tabs button{white-space:nowrap}
+</style></head><body><header>🇭🇷 Kroatien-Olympiade LIVE</header><div class="wrap">
+<div id="setup" class="card"><h2>Verbinden</h2><p class="muted">Alle Geräte öffnen dieselbe Seite. Jan erstellt den Raum; die Kapitäne treten mit dem Raumcode bei.</p>
+<div class="grid"><button onclick="host()">JAN – SPIELLEITER</button><button class="secondary" onclick="joinView()">KAPITÄN</button><button class="secondary" onclick="screenView()">TV / BEAMER</button></div>
+<div id="join" class="hide"><p><input id="roomIn" placeholder="Raumcode" maxlength="6" style="width:100%;text-transform:uppercase"></p><div class="grid">
+<button onclick="join('team1')">Team 1</button><button onclick="join('team2')">Team 2</button><button onclick="join('team3')">Team 3</button></div></div></div>
+<div id="host" class="hide"><div class="card"><div class="muted">Raumcode</div><div id="roomCode" class="big"></div><div id="connections"></div></div>
+<div class="tabs"><button onclick="mode('quiz')">Kroatien-Quiz</button><button onclick="mode('estimate')">Schätzmeister</button><button onclick="mode('category')">Kategorien</button></div>
+<div id="hostGame"></div></div>
+<div id="captain" class="hide"><div class="card"><div id="teamName"></div><div id="capTimer" class="timer">–</div><div id="capGame"><p class="muted">Warte auf Jan …</p></div></div></div>
+<div id="screen" class="hide"><div class="card"><div id="screenTitle" class="big">Warte auf Jan …</div><div id="screenTimer" class="timer">–</div><div id="screenStatus"></div></div></div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.5/dist/peerjs.min.js"></script><script src="data.js"></script>
+<script>
+const D=window.GAME_DATA; let peer,conns={},conn,role=null,room=null,current=null,timerInt=null,answers={},used=new Set(),qidx=0,eidx=0,catName=Object.keys(D.categories)[0];
+const $=id=>document.getElementById(id); const code=()=>Math.random().toString(36).slice(2,8).toUpperCase();
+function show(id){['setup','host','captain','screen'].forEach(x=>$(x).classList.add('hide'));$(id).classList.remove('hide')}
+function joinView(){$('join').classList.remove('hide')} function screenView(){$('join').classList.remove('hide');role='screen'}
+function host(){role='host';room=code();peer=new Peer('kroatien-'+room);peer.on('open',()=>{show('host');$('roomCode').textContent=room;renderHost()});peer.on('connection',c=>{c.on('data',m=>onMsg(m,c));c.on('open',()=>c.send({type:'hello'}))})}
+function join(team){room=$('roomIn').value.trim().toUpperCase(); if(!room)return alert('Raumcode eingeben'); role=role==='screen'?'screen':team;peer=new Peer();peer.on('open',()=>{conn=peer.connect('kroatien-'+room,{reliable:true});conn.on('open',()=>{conn.send({type:'join',role});show(role==='screen'?'screen':'captain');if(role!=='screen'){$('teamName').innerHTML='<b>'+D.teams[role].name+'</b><div class=muted>'+D.teams[role].players+'</div>'}});conn.on('data',onClient)})}
+function onMsg(m,c){if(m.type==='join'){conns[m.role]=c;refreshConnections()} if(m.type==='answer'){answers[m.role]=m.value;renderHost()} }
+function refreshConnections(){$('connections').innerHTML=['team1','team2','team3','screen'].map(r=>'<span class=pill>'+r+': '+(conns[r]?'✓':'–')+'</span>').join('')}
+function sendAll(m){Object.values(conns).forEach(c=>{try{c.send(m)}catch(e){}})}
+function onClient(m){if(m.type==='start'){current=m;startLocal(m)} if(m.type==='reveal'){if(role==='screen')$('screenStatus').innerHTML=m.html} if(m.type==='reset'){clearInterval(timerInt);if(role==='screen'){$('screenTitle').textContent='Warte auf Jan …';$('screenTimer').textContent='–'}else{$('capGame').innerHTML='<p class=muted>Warte auf Jan …</p>';$('capTimer').textContent='–'}}}}
+function countdown(end,el,done){clearInterval(timerInt);function tick(){let s=Math.max(0,Math.ceil((end-Date.now())/1000));el.textContent=s;if(s<=0){clearInterval(timerInt);done&&done()}}tick();timerInt=setInterval(tick,200)}
+function startLocal(m){let end=m.end;if(role==='screen'){$('screenTitle').textContent=m.title;$('screenStatus').innerHTML='<div class=muted>Antworten: noch verborgen</div>';countdown(end,$('screenTimer'))}
+else {let h='<h2>'+m.title+'</h2>';if(m.kind==='quiz')m.options.forEach((x,i)=>h+='<button class="answer secondary" onclick="submitAns('+i+',this)">'+String.fromCharCode(65+i)+' · '+x+'</button>');
+if(m.kind==='estimate')h+='<input id=txtAns type=number inputmode=numeric placeholder="Kilometer" style="width:100%"><button class=answer onclick="submitText()">ABSCHICKEN</button>';
+if(m.kind==='category')h+='<input id=txtAns autocomplete=off placeholder="Antwort" style="width:100%"><button class=answer onclick="submitText()">ABSCHICKEN</button>';
+$('capGame').innerHTML=h;countdown(end,$('capTimer'),()=>lockCaptain())}}
+function submitAns(v,b){document.querySelectorAll('.answer').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');conn.send({type:'answer',value:v});lockCaptain('Antwort gesendet ✓')}
+function submitText(){let e=$('txtAns'); if(!e||!e.value.trim())return;conn.send({type:'answer',value:e.value.trim()});lockCaptain('Antwort gesendet ✓')}
+function lockCaptain(msg='Zeit abgelaufen'){document.querySelectorAll('#capGame button,#capGame input').forEach(x=>x.disabled=true);$('capGame').insertAdjacentHTML('beforeend','<div class=status>'+msg+'</div>')}
+function mode(m){current={mode:m};answers={};renderHost()}
+function renderHost(){if(!current)current={mode:'quiz'};let m=current.mode,h='';
+if(m==='quiz'){let q=D.quiz[qidx];h='<div class=card><h2>Frage '+(qidx+1)+'/20</h2><p>'+q[0]+'</p><div>'+q[1].map((x,i)=>'<span class=pill>'+String.fromCharCode(65+i)+' '+x+'</span>').join('')+'</div><p><button onclick="startRound(30)">30 SEK. START</button> <button class=secondary onclick="revealQuiz()">AUFLÖSEN</button></p>'+answerStatus()+'<div class=grid><button class=secondary onclick="qidx=Math.max(0,qidx-1);answers={};renderHost()">←</button><button onclick="qidx=Math.min(19,qidx+1);answers={};renderHost()">NÄCHSTE →</button></div></div>'}
+if(m==='estimate'){let e=D.estimate[eidx];h='<div class=card><h2>Schätzmeister '+(eidx+1)+'/20</h2><p class=big>'+e[0]+'</p><p class=muted>Lösung: '+e[1].toLocaleString('de-DE')+' km</p><button onclick="startRound(30)">30 SEK. START</button> <button class=secondary onclick="revealEstimate()">AUSWERTEN</button>'+answerStatus()+'<div class=grid><button class=secondary onclick="eidx=Math.max(0,eidx-1);answers={};renderHost()">←</button><button onclick="eidx=Math.min(19,eidx+1);answers={};renderHost()">NÄCHSTE →</button></div></div>'}
+if(m==='category'){h='<div class=card><h2>Kategorien-Battle</h2><select onchange="catName=this.value;used=new Set();renderHost()" style="width:100%">'+Object.keys(D.categories).map(x=>'<option '+(x===catName?'selected':'')+'>'+x+'</option>').join('')+'</select><p><select id=turnTeam><option value=team1>Team 1</option><option value=team2>Team 2</option><option value=team3>Team 3</option></select> <button onclick="startCategory()">5 SEK. START</button></p>'+answerStatus(true)+'<div>'+D.categories[catName].map(x=>'<span class="pill '+(used.has(norm(x))?'check':'')+'">'+x+'</span>').join('')+'</div></div>'}
+$('hostGame').innerHTML=h}
+function answerStatus(cat=false){return '<div class=card>'+['team1','team2','team3'].map(t=>'<div class=status><b>'+D.teams[t].name+':</b> '+(answers[t]===undefined?'—':answers[t])+(cat&&answers[t]!==undefined?' <button class=good onclick="acceptCat(\''+t+'\')">✓</button>':'')+'</div>').join('')+'</div>'}
+function startRound(sec){answers={};let m=current.mode,end=Date.now()+sec*1000,msg={type:'start',kind:m,end,title:''};if(m==='quiz'){let q=D.quiz[qidx];msg.title='Frage '+(qidx+1)+': '+q[0];msg.options=q[1]}if(m==='estimate')msg.title='Schätzmeister: '+D.estimate[eidx][0];sendAll(msg);renderHost()}
+function revealQuiz(){let q=D.quiz[qidx],correct=q[2],html='';['team1','team2','team3'].forEach(t=>{let ok=Number(answers[t])===correct;html+='<div class="status '+(ok?'ok':'bad')+'">'+D.teams[t].name+': '+(answers[t]===undefined?'—':String.fromCharCode(65+Number(answers[t])))+'</div>'});html+='<p><b>Richtig: '+String.fromCharCode(65+correct)+' · '+q[1][correct]+'</b></p>';sendAll({type:'reveal',html});}
+function revealEstimate(){let sol=D.estimate[eidx][1],arr=['team1','team2','team3'].filter(t=>answers[t]!==undefined).map(t=>[t,Number(answers[t]),Math.abs(Number(answers[t])-sol)]).sort((a,b)=>a[2]-b[2]);let pts=[3,2,1],html='<p><b>Lösung: '+sol.toLocaleString('de-DE')+' km</b></p>';arr.forEach((x,i)=>html+='<div class=status>'+pts[i]+' Punkte: '+D.teams[x[0]].name+' – '+x[1].toLocaleString('de-DE')+' km</div>');sendAll({type:'reveal',html});}
+function startCategory(){answers={};let t=$('turnTeam').value,end=Date.now()+5000,msg={type:'start',kind:'category',end,title:catName};if(conns[t])conns[t].send(msg);if(conns.screen)conns.screen.send(msg);renderHost()}
+function norm(s){return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'')}
+function acceptCat(t){let a=answers[t],list=D.categories[catName],match=list.find(x=>norm(x)===norm(a)||norm(x).includes(norm(a))&&norm(a).length>=4);if(!match)return alert('Nicht in der Liste gefunden: '+a);if(used.has(norm(match)))return alert('Schon genannt: '+match);used.add(norm(match));answers={};renderHost()}
+</script></body></html>
