@@ -117,10 +117,13 @@ button,select,input{max-width:100%;min-width:0}
 .tour-score{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:7px;margin-top:12px}.tour-score .status{text-align:center}
 #playerTourPhoto{width:100%;max-height:42vh;object-fit:contain;border-radius:14px;background:#101820;margin:8px 0}
 @media(max-width:700px){#playerView.tour-active #buzzBtn{height:110px!important;min-height:110px!important;font-size:30px!important}#playerView.tour-active .card{padding:10px}.tour-photo{max-height:50vh}}
+
+/* v22 standings */
+.tour-tv-score{display:grid;grid-template-columns:repeat(6,minmax(90px,1fr));gap:7px;margin:12px auto 18px;max-width:1100px}.tour-tv-score .status{text-align:center;margin:0;padding:8px}.tour-standings{max-width:900px;margin:20px auto}.tour-standings-row{display:grid;grid-template-columns:70px 1fr 100px;gap:12px;align-items:center;font-size:26px;padding:14px 18px}.tour-standings-row:nth-child(1){font-size:34px;background:#fff0b8}.tour-standings-row:nth-child(2){font-size:31px}.tour-standings-row:nth-child(3){font-size:29px}@media(max-width:700px){.tour-tv-score{grid-template-columns:repeat(3,1fr)}.tour-standings-row{grid-template-columns:45px 1fr 60px;font-size:20px;padding:10px}}
 </style>
 </head>
 <body>
-<header>🇭🇷 Kroatien-Olympiade LIVE <span style="font-size:12px;opacity:.65">v20</span></header>
+<header>🇭🇷 Kroatien-Olympiade LIVE <span style="font-size:12px;opacity:.65">v22</span></header>
 <div class="wrap">
 <section id="setup" class="card">
 <h2>Verbinden</h2>
@@ -197,7 +200,7 @@ let clientTourRound=null, clientTourPhase=null;
 let promiIdx=0, promiReveal=0, promiSolved=false, promiTimer=null;
 let promiRounds=JSON.parse(localStorage.getItem("promiRounds")||"null")||Array.from({length:12},(_,i)=>({brother:"",celebrity:"",mix:"",brotherImg:"",celebrityImg:""}));
 const TOUR_ROUNDS=[{"place":"Stuttgart","year":2023,"img":"tour_12.jpg"},{"place":"München","year":2012,"img":"tour_07.jpg"},{"place":"Amsterdam","year":2015,"img":"tour_13.jpg"},{"place":"Breslau","year":2017,"img":"tour_18.jpg"},{"place":"Münster","year":2014,"img":"tour_08.jpg"},{"place":"Frankfurt","year":2022,"img":"tour_02.jpg"},{"place":"Breslau","year":2017,"img":"tour_17.jpg"},{"place":"Berlin","year":2016,"img":"tour_14.jpg"},{"place":"Stuttgart","year":2023,"img":"tour_11.jpg"},{"place":"Bremen","year":2023,"img":"tour_15.jpg"},{"place":"München","year":2012,"img":"tour_06.jpg"},{"place":"Frankfurt","year":2022,"img":"tour_03.jpg"},{"place":"Brügge","year":2025,"img":"tour_01.jpg"},{"place":"Hamburg","year":2020,"img":"tour_04.jpg"},{"place":"Bremen","year":2023,"img":"tour_16.jpg"},{"place":"Sophia","year":2019,"img":"tour_09.jpg"},{"place":"Sophia","year":2019,"img":"tour_10.jpg"},{"place":"Krakau","year":2018,"img":"tour_05.jpg"}];
-let tourIdx=0,tourPhase="idle",tourScores={},tourLocationWinner=null;
+let tourIdx=0,tourPhase="idle",tourScores={},tourLocationWinner=null,tourStandingsShown=false;
 
 let emojiIdx=0, emojiPhase="idle", emojiWinner=null, emojiAttempts={team1:0,team2:0,team3:0}, emojiPoints={team1:0,team2:0,team3:0};
 
@@ -328,10 +331,10 @@ function onClientMessage(m){
       clearInterval(timerInt); $("screenTimer").textContent="";
       if(m.phase==="idle"){
         $("screenTitle").innerHTML="📸 NÄCHSTES FOTO <span style='font-size:22px'>"+(m.idx+1)+"/"+m.total+"</span>";
-        $("screenStatus").innerHTML="<div style='text-align:center;font-size:34px;font-weight:900;padding:80px 10px'>🔒 BUZZER BEREIT<br><span style='font-size:22px'>Warte auf den Rundenstart …</span></div>";
+        $("screenStatus").innerHTML=tourMiniScoreHtml()+"<div style='text-align:center;font-size:34px;font-weight:900;padding:80px 10px'>🔒 BUZZER BEREIT<br><span style='font-size:22px'>Warte auf den Rundenstart …</span></div>";
       } else {
         $("screenTitle").innerHTML="📸 WO WAR DAS? <span style='font-size:22px'>"+(m.idx+1)+"/"+m.total+"</span>";
-        $("screenStatus").innerHTML="<img class='tour-photo' src='"+m.round.img+"'>"+(m.phase==="year"?"<div class='status ok' style='text-align:center;font-size:28px'><b>✓ "+m.round.place+"</b><br>Welches Jahr?</div>":m.phase==="done"?"<div class='status ok' style='text-align:center;font-size:30px'><b>"+m.round.place+" · "+m.round.year+"</b></div>":"<div style='text-align:center;font-size:26px;font-weight:900;margin-top:12px'>WO WAR DIESE KEGELTOUR?</div>");
+        $("screenStatus").innerHTML=tourMiniScoreHtml()+"<img class='tour-photo' src='"+m.round.img+"'>"+(m.phase==="year"?"<div class='status ok' style='text-align:center;font-size:28px'><b>✓ "+m.round.place+"</b><br>Welches Jahr?</div>":m.phase==="done"?"<div class='status ok' style='text-align:center;font-size:30px'><b>"+m.round.place+" · "+m.round.year+"</b></div>":"<div style='text-align:center;font-size:26px;font-weight:900;margin-top:12px'>WO WAR DIESE KEGELTOUR?</div>");
       }
     } else if(role&&role.startsWith("player:")){
       clearInterval(timerInt); $("playerCountdown").textContent="";
@@ -344,6 +347,12 @@ function onClientMessage(m){
         $("playerTourHint").innerHTML=m.phase==="year"?(pn===m.winner?"📅 Ort richtig: <b>"+m.round.place+"</b> – DU darfst jetzt das Jahr raten!":"✅ Ort gelöst: <b>"+m.round.place+"</b> – <b>"+m.winner+"</b> rät jetzt allein das Jahr."):m.phase==="done"?"✅ <b>"+m.round.place+" · "+m.round.year+"</b>":"📍 Ort erkennen und buzzern!";
       }
     }
+  }
+  if(m.type==="tourStandings"){
+    clearInterval(timerInt);
+    if(role==="screen"){$("screenTitle").textContent="🏆 ZWISCHENSTAND";$("screenTimer").textContent="";$("screenStatus").innerHTML=m.html;}
+    else if(role&&role.startsWith("player:")){$("buzzBtn").classList.add("hide");$("playerTourBox").classList.add("hide");$("playerBuzzBoard").classList.remove("hide");$("playerAlert").className="status ok";$("playerAlert").innerHTML="🏆 <b>Zwischenstand</b>";$("playerCountdown").textContent="";$("playerRanking").innerHTML=m.html;}
+    return;
   }
   if(m.type==="promiState" && role==="screen"){
     const r=m.round;
@@ -359,7 +368,7 @@ function onClientMessage(m){
     const ci=m.order.indexOf(m.current);
     $("screenTitle").innerHTML=m.current?"🎤 <b>"+m.current+"</b> ist dran":(m.open?"🔴 BUZZER IST OFFEN":"🔒 BUZZER GESPERRT");
     if(m.answerEnd){countdown(m.answerEnd,$("screenTimer"));}else{clearInterval(timerInt);if(m.expired){$("screenTimer").textContent="0";}else{$("screenTimer").textContent=m.open?"JETZT!":"";}}
-    const tourTop=(clientTourRound && clientTourPhase!=="idle") ? "<img class='tour-photo' style='max-height:48vh;margin-bottom:14px' src='"+clientTourRound.img+"'>"+(clientTourPhase==="year"?"<div class='status ok' style='text-align:center;font-size:26px'><b>✓ "+clientTourRound.place+"</b> · Welches Jahr?</div>":clientTourPhase==="done"?"<div class='status ok' style='text-align:center;font-size:28px'><b>"+clientTourRound.place+" · "+clientTourRound.year+"</b></div>":"<div style='text-align:center;font-size:24px;font-weight:900;margin:8px 0'>WO WAR DIESE KEGELTOUR?</div>") : "";
+    const tourTop=(clientTourRound && clientTourPhase!=="idle") ? tourMiniScoreHtml()+"<img class='tour-photo' style='max-height:48vh;margin-bottom:14px' src='"+clientTourRound.img+"'>"+(clientTourPhase==="year"?"<div class='status ok' style='text-align:center;font-size:26px'><b>✓ "+clientTourRound.place+"</b> · Welches Jahr?</div>":clientTourPhase==="done"?"<div class='status ok' style='text-align:center;font-size:28px'><b>"+clientTourRound.place+" · "+clientTourRound.year+"</b></div>":"<div style='text-align:center;font-size:24px;font-weight:900;margin:8px 0'>WO WAR DIESE KEGELTOUR?</div>") : "";
     $("screenStatus").innerHTML=tourTop+(m.expired?"<div class='status' style='text-align:center;font-size:24px;background:#fff0c9'><b>⏱ ZEIT ABGELAUFEN – SPIELLEITER ENTSCHEIDET</b></div>":"")+(m.order.length
       ? "<div style='text-align:center;font-size:20px;margin-bottom:12px'><b>BUZZER-REIHENFOLGE</b></div>"+
         m.order.map((n,i)=>{
@@ -493,7 +502,7 @@ function renderHost(){
       (tourPhase==="idle"?"<button id='tourStart' class='good' style='width:100%'>RUNDE STARTEN + BUZZER FREIGEBEN</button>":"")+
       (tourPhase==="location"?"<div class='status ok' style='font-size:22px'><b>Gesucht: ORT (2 Punkte)</b><br>"+(cur?"Antwortet: <b>"+cur+"</b>":"Warte auf Buzzer …")+(cur?"<div id='buzzAnswerCountdown' class='big' style='font-size:54px;text-align:center;margin-top:8px'>"+(buzzExpired?"0":buzzAnswerEnd?Math.max(0,Math.ceil((buzzAnswerEnd-Date.now())/1000)):"10")+"</div>":"")+(buzzExpired?"<div style='text-align:center;background:#fff0c9;padding:10px;border-radius:12px'><b>⏱ ZEIT ABGELAUFEN – DU ENTSCHEIDEST</b></div>":"")+"</div>"+(cur?"<div class='grid'><button id='tourLocWrong' class='danger'>ORT FALSCH → NÄCHSTER</button><button id='tourLocRight' class='good'>ORT RICHTIG +2</button></div>":""):"")+
       (tourPhase==="year"?"<div class='status ok' style='font-size:22px'><b>✓ "+r.place+"</b><br><b>"+tourLocationWinner+"</b> darf jetzt das JAHR raten (+1).<div id='buzzAnswerCountdown' class='big' style='font-size:54px;text-align:center;margin-top:8px'>"+(buzzExpired?"0":buzzAnswerEnd?Math.max(0,Math.ceil((buzzAnswerEnd-Date.now())/1000)):"10")+"</div>"+(buzzExpired?"<div style='text-align:center;background:#fff0c9;padding:10px;border-radius:12px'><b>⏱ ZEIT ABGELAUFEN – DU ENTSCHEIDEST</b></div>":"")+"</div><div class='grid'><button id='tourYearWrong' class='danger'>JAHR FALSCH</button><button id='tourYearRight' class='good'>JAHR RICHTIG +1</button></div>":"")+
-      (tourPhase==="done"?"<div class='status ok' style='font-size:25px;text-align:center'><b>AUFLÖSUNG: "+r.place+" · "+r.year+"</b></div><button id='tourNext' style='width:100%'>NÄCHSTES FOTO →</button>":"")+
+      (tourPhase==="done"?"<div class='status ok' style='font-size:25px;text-align:center'><b>AUFLÖSUNG: "+r.place+" · "+r.year+"</b></div>"+(tourStandingsShown?tourStandingsHtml()+"<button id='tourNext' style='width:100%'>NÄCHSTES FOTO →</button>":"<button id='tourStandings' class='good' style='width:100%;font-size:20px'>ZWISCHENSTAND EINBLENDEN</button>"):"")+
       "<h3>Punktestand</h3><div class='tour-score'>"+scoreNames.map(n=>"<div class='status'><b>"+n+"</b><br><span style='font-size:24px;font-weight:900'>"+(tourScores[n]||0)+"</span></div>").join("")+"</div></div>";
   }
   if(modeName==="promimix"){
@@ -545,6 +554,7 @@ function bindHostControls(){
   const tlr=$("tourLocRight");if(tlr)tlr.addEventListener("click",tourLocationRight);
   const tyw=$("tourYearWrong");if(tyw)tyw.addEventListener("click",()=>tourFinish(false));
   const tyr=$("tourYearRight");if(tyr)tyr.addEventListener("click",()=>tourFinish(true));
+  const tst=$("tourStandings");if(tst)tst.addEventListener("click",tourShowStandings);
   const tn=$("tourNext");if(tn)tn.addEventListener("click",tourNextRound);
   const pr=$("pmReveal");if(pr)pr.addEventListener("click",pmOpenOne);
   const pa=$("pmAuto");if(pa)pa.addEventListener("click",pmAuto);
@@ -599,12 +609,18 @@ function startCategory(){
 }
 
 
+function tourScoreNames(){return ["Kevin","Markus","Stefan","Kay","Michel","Patrick","Mario","Fabian","Timo","Andre","Klemm","Swen"];}
+function tourSortedScores(){return tourScoreNames().map((n,i)=>({name:n,score:tourScores[n]||0,ord:i})).sort((a,b)=>b.score-a.score||a.ord-b.ord);}
+function tourMiniScoreHtml(){return "<div class='tour-tv-score'>"+tourSortedScores().map((x,i)=>"<div class='status'><b>"+(i+1)+". "+x.name+"</b><br><span style='font-size:21px;font-weight:900'>"+x.score+" P.</span></div>").join("")+"</div>";}
+function tourStandingsHtml(){return "<div class='tour-standings'><div class='big' style='margin-bottom:18px'>🏆 ZWISCHENSTAND</div>"+tourSortedScores().map((x,i)=>"<div class='status tour-standings-row'><b>"+(i+1)+".</b><b>"+x.name+"</b><b style='text-align:right'>"+x.score+" P.</b></div>").join("")+"</div>";}
+function tourShowStandings(){if(tourPhase!=="done")return;tourStandingsShown=true;const msg={type:"tourStandings",html:tourStandingsHtml()};if(conns.screen)conns.screen.send(msg);playerConnections().forEach(([k,c])=>c.send(msg));renderHost();}
+
 function tourSendState(){
   const msg={type:"tourState",idx:tourIdx,total:TOUR_ROUNDS.length,round:TOUR_ROUNDS[tourIdx],phase:tourPhase,winner:tourLocationWinner};
   if(conns.screen)conns.screen.send(msg); playerConnections().forEach(([k,c])=>c.send(msg));
 }
 function tourStartRound(){
-  clearInterval(buzzAnswerTimer);buzzOrder=[];buzzAnswerIndex=0;buzzAnswerEnd=0;buzzExpired=false;tourLocationWinner=null;tourPhase="location";buzzOpen=true;
+  clearInterval(buzzAnswerTimer);buzzOrder=[];buzzAnswerIndex=0;buzzAnswerEnd=0;buzzExpired=false;tourLocationWinner=null;tourStandingsShown=false;tourPhase="location";buzzOpen=true;
   tourSendState(); playerConnections().forEach(([k,c])=>{c.send({type:"buzzReset"});c.send({type:"buzzState",open:true});});
   if(conns.screen)conns.screen.send(buzzBoardMessage());renderHost();
 }
@@ -621,7 +637,7 @@ function tourFinish(yearCorrect){
   tourPhase="done";buzzOpen=false;tourSendState();broadcastBuzzOrder();renderHost();
 }
 function tourNextRound(){
-  clearInterval(buzzAnswerTimer);tourIdx=(tourIdx+1)%TOUR_ROUNDS.length;tourPhase="idle";buzzOrder=[];buzzAnswerIndex=0;buzzAnswerEnd=0;buzzExpired=false;buzzOpen=false;tourLocationWinner=null;
+  clearInterval(buzzAnswerTimer);tourIdx=(tourIdx+1)%TOUR_ROUNDS.length;tourPhase="idle";buzzOrder=[];buzzAnswerIndex=0;buzzAnswerEnd=0;buzzExpired=false;buzzOpen=false;tourLocationWinner=null;tourStandingsShown=false;
   playerConnections().forEach(([k,c])=>c.send({type:"buzzReset"}));tourSendState();if(conns.screen)conns.screen.send(buzzBoardMessage());renderHost();
 }
 function escAttr(s){return String(s||"").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;");}
