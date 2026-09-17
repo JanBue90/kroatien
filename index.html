@@ -172,6 +172,7 @@ button,select,input{max-width:100%;min-width:0}
 <script>
 "use strict";
 const D=window.GAME_DATA;
+// v27 Kategorien-Fortschritt + Quiz-Punktestand/Auto-Auflösung.
 // v26 Kategorien-Datenfix: Bei Ein-Buchstaben-KFZ werden die Staedte geraten; fehlender Bond-Titel ergaenzt.
 (()=>{
   const keys=Object.keys(D.categories||{});
@@ -206,6 +207,7 @@ if(!Array.isArray(D.emoji)){
 const $=id=>document.getElementById(id);
 let peer=null, conns={}, conn=null, role=null, room=null, modeName="quiz";
 let timerInt=null, answers={}, used=new Set(), qidx=0, eidx=0, currentClientKind=null;
+let quizScores={team1:0,team2:0,team3:0}, quizAwarded=new Set(), clientQuizScores={team1:0,team2:0,team3:0};
 let catName=Object.keys(D.categories)[0];
 let catOut=new Set();
 let buzzOrder=[], buzzOpen=false, buzzAnswerIndex=0, buzzAnswerTimer=null, buzzAnswerEnd=0, buzzExpired=false;
@@ -305,7 +307,10 @@ function onHostMessage(m,c){
   }
   if(m.type==="answer"){
     if(modeName==="emoji" && (emojiPhase==="title"||emojiPhase==="artist")) handleEmojiAnswer(m.role,m.value);
-    else {answers[m.role]=m.value; renderHost();}
+    else {
+      answers[m.role]=m.value; renderHost();
+      if(modeName==="quiz" && ["team1","team2","team3"].every(t=>answers[t]!==undefined)) revealQuiz(true);
+    }
   }
 }
 function refreshConnections(){
@@ -402,10 +407,10 @@ function onClientMessage(m){
     clearInterval(timerInt);
     if(role==="screen"){
       $("screenTimer").textContent="";
-      $("screenStatus").innerHTML="<div class='status bad' style='text-align:center;font-size:30px'><b>❌ FALSCH</b><br>"+m.team+": <b>"+m.answer+"</b><br><span style='font-size:22px'>"+m.team+" ist für diese Kategorie raus.</span></div><div class='muted' style='text-align:center;font-size:20px;margin-top:18px'>Warte auf das nächste Team …</div>";
+      $("screenStatus").innerHTML="<div class='status bad' style='text-align:center;font-size:30px'><b>❌ FALSCH</b><br>"+m.team+": <b>"+m.answer+"</b><br><span style='font-size:22px'>"+m.team+" ist für diese Kategorie raus.</span></div><div class='muted' style='text-align:center;font-size:20px;margin-top:18px'>Warte auf das nächste Team …</div>"+categoryProgressHtml(m.usedCount,m.totalCount);
     } else if(role && role.startsWith("team")){
       $("capTimer").textContent="";
-      $("capGame").innerHTML="<div class='status bad' style='font-size:22px;text-align:center'><b>❌ "+m.team+":</b><br>„"+m.answer+"“<br><br><b>FALSCH – "+m.team+" ist für diese Kategorie raus.</b></div><div class='status' style='text-align:center;font-size:20px'><b>Das nächste Team ist dran.</b></div>";
+      $("capGame").innerHTML="<div class='status bad' style='font-size:22px;text-align:center'><b>❌ "+m.team+":</b><br>„"+m.answer+"“<br><br><b>FALSCH – "+m.team+" ist für diese Kategorie raus.</b></div><div class='status' style='text-align:center;font-size:20px'><b>Das nächste Team ist dran.</b></div>"+categoryProgressHtml(m.usedCount,m.totalCount);
     }
     return;
   }
@@ -413,10 +418,10 @@ function onClientMessage(m){
     clearInterval(timerInt);
     if(role==="screen"){
       $("screenTimer").textContent="";
-      $("screenStatus").innerHTML="<div class='status ok' style='text-align:center;font-size:30px'><b>✅ RICHTIG</b><br>"+m.team+": <b>"+m.answer+"</b><br><span style='font-size:22px'>Gültige Lösung"+(m.matches.length>1?"en":"")+": "+m.matches.join(" + ")+"</span></div><div class='muted' style='text-align:center;font-size:20px;margin-top:18px'>Warte auf das nächste Team …</div>";
+      $("screenStatus").innerHTML="<div class='status ok' style='text-align:center;font-size:30px'><b>✅ RICHTIG</b><br>"+m.team+": <b>"+m.answer+"</b><br><span style='font-size:22px'>Gültige Lösung"+(m.matches.length>1?"en":"")+": "+m.matches.join(" + ")+"</span></div><div class='muted' style='text-align:center;font-size:20px;margin-top:18px'>Warte auf das nächste Team …</div>"+categoryProgressHtml(m.usedCount,m.totalCount);
     } else if(role && role.startsWith("team")){
       $("capTimer").textContent="";
-      $("capGame").innerHTML="<div class='status ok' style='font-size:22px;text-align:center'><b>✅ "+m.team+":</b><br>„"+m.answer+"“<br><br><b>Gültige Lösung"+(m.matches.length>1?"en":"")+": "+m.matches.join(" + ")+"</b></div><div class='status' style='text-align:center;font-size:20px'><b>Das nächste Team ist dran.</b></div>";
+      $("capGame").innerHTML="<div class='status ok' style='font-size:22px;text-align:center'><b>✅ "+m.team+":</b><br>„"+m.answer+"“<br><br><b>Gültige Lösung"+(m.matches.length>1?"en":"")+": "+m.matches.join(" + ")+"</b></div><div class='status' style='text-align:center;font-size:20px'><b>Das nächste Team ist dran.</b></div>"+categoryProgressHtml(m.usedCount,m.totalCount);
     }
   }
   if(m.type==="reset"){
@@ -425,11 +430,13 @@ function onClientMessage(m){
     else {$("capTimer").textContent="–";$("capGame").innerHTML="<p class='muted'>Warte auf Jan …</p>";}
   }
   if(m.type==="reveal"){
-    if(role==="screen"){
+    clearInterval(timerInt);
+    if(m.scores) clientQuizScores=m.scores;
+    if(role==="screen"){ $("screenTimer").textContent="";
       $("screenStatus").innerHTML=m.html;
     }else{
       clearInterval(timerInt);
-      $("capTimer").textContent="✓";
+      $("capTimer").textContent="";
       $("capGame").innerHTML="<h2>Auflösung</h2>"+m.html;
     }
   }
@@ -443,8 +450,16 @@ function countdown(end,el,done){
   };
   tick(); timerInt=setInterval(tick,200);
 }
+function quizScoreHtml(scores){
+  scores=scores||quizScores;
+  return "<div class='status' style='margin-top:18px;text-align:center'><b>🏆 Punktestand</b><div class='grid' style='margin-top:8px'>"+["team1","team2","team3"].map(t=>"<div><b>"+D.teams[t].name+"</b><br><span style='font-size:26px;font-weight:900'>"+(scores[t]||0)+"</span></div>").join("")+"</div></div>";
+}
+function categoryProgressHtml(count,total){
+  return "<div class='status' style='margin-top:18px;text-align:center;font-size:22px'><b>"+count+"/"+total+" genannt</b></div>";
+}
 function startLocal(m){
   currentClientKind=m.kind;
+  if(m.kind==="quiz" && m.scores) clientQuizScores=m.scores;
   if(role==="screen"){
     $("screenTitle").textContent=m.title;
     if(m.kind==="emojiTitle"){
@@ -459,7 +474,7 @@ function startLocal(m){
           String.fromCharCode(65+i)+" · "+x+
           "</div>"
         ).join("")+
-        "</div><div class='muted' style='margin-top:12px'>Team-Antworten und richtige Lösung bleiben bis zur Auflösung verborgen.</div>";
+        "</div><div class='muted' style='margin-top:12px'>Team-Antworten und richtige Lösung bleiben bis zur Auflösung verborgen.</div>"+quizScoreHtml(clientQuizScores);
     }else{
       $("screenStatus").innerHTML="<div class='muted'>Antworten noch verborgen</div>";
     }
@@ -469,10 +484,11 @@ function startLocal(m){
   let h="<h2>"+m.title+"</h2>";
   if(m.kind==="quiz"){
     m.options.forEach((x,i)=>h+="<button class='answer secondary qanswer' data-value='"+i+"'>"+String.fromCharCode(65+i)+" · "+x+"</button>");
+    h+=quizScoreHtml(clientQuizScores);
   } else if(m.kind==="estimate"){
     h+="<input id='txtAns' type='number' inputmode='numeric' placeholder='Kilometer' style='width:100%'><button id='sendText' class='answer'>ABSCHICKEN</button>";
   } else if(m.kind==="category"){
-    h+="<input id='txtAns' autocomplete='off' placeholder='Antwort' style='width:100%'><button id='sendText' class='answer'>ABSCHICKEN</button>";
+    h+="<input id='txtAns' autocomplete='off' placeholder='Antwort' style='width:100%'><button id='sendText' class='answer'>ABSCHICKEN</button>"+categoryProgressHtml(m.usedCount||0,m.totalCount||0);
   } else if(m.kind==="emojiTitle"){
     h+="<div class='big' style='font-size:54px;margin:15px 0'>"+m.emojis+"</div><p><b>Songtitel gesucht</b> · maximal 3 Versuche</p><input id='txtAns' autocomplete='off' placeholder='Songtitel' style='width:100%'><button id='sendText' class='answer'>VERSUCH ABSCHICKEN</button>";
   } else if(m.kind==="emojiArtist"){
@@ -485,7 +501,7 @@ function startLocal(m){
 }
 function submitChoice(v,b){
   document.querySelectorAll(".qanswer").forEach(x=>x.classList.remove("sel"));
-  b.classList.add("sel"); conn.send({type:"answer",role,value:v}); lockCaptain("Antwort gesendet ✓");
+  b.classList.add("sel"); conn.send({type:"answer",role,value:v}); clearInterval(timerInt); $("capTimer").textContent=""; lockCaptain("Antwort gesendet ✓");
 }
 function submitText(){
   const e=$("txtAns"); if(!e||!e.value.trim())return;
@@ -520,7 +536,7 @@ function renderHost(){
     h="<div class='card'><h2>Frage "+(qidx+1)+"/"+D.quiz.length+"</h2><p>"+q[0]+"</p>"+
       q[1].map((x,i)=>"<span class='pill'>"+String.fromCharCode(65+i)+" · "+x+"</span>").join("")+
       "<p><button id='startBtn'>30 SEK. START</button> <button id='revealBtn' class='secondary'>AUFLÖSEN</button></p>"+
-      answerStatus(false)+"<div id='hostReveal'></div><div class='grid'><button id='prevBtn' class='secondary'>←</button><button id='nextBtn'>NÄCHSTE →</button></div></div>";
+      answerStatus(false)+"<div id='hostReveal'></div>"+quizScoreHtml(quizScores)+"<div class='grid'><button id='prevBtn' class='secondary'>←</button><button id='nextBtn'>NÄCHSTE →</button></div></div>";
   } else if(modeName==="estimate"){
     const e=D.estimate[eidx];
     h="<div class='card'><h2>Schätzmeister "+(eidx+1)+"/"+D.estimate.length+"</h2><p class='big'>"+e[0]+"</p><p class='muted'>Lösung: "+Number(e[1]).toLocaleString("de-DE")+" km</p>"+
@@ -530,7 +546,7 @@ function renderHost(){
     h="<div class='card'><h2>Kategorien-Battle</h2><select id='catSelect' style='width:100%'>"+
       Object.keys(D.categories).map(x=>"<option "+(x===catName?"selected":"")+">"+x+"</option>").join("")+
       "</select><p><select id='turnTeam'>"+["team1","team2","team3"].map(t=>"<option value='"+t+"' "+(catOut.has(t)?"disabled":"")+">"+D.teams[t].name+(catOut.has(t)?" — RAUS":"")+"</option>").join("")+"</select> <button id='catStart'>35 SEK. START</button></p>"+
-      answerStatus(true)+"<div>"+D.categories[catName].map(x=>"<span class='pill "+(used.has(norm(x))?"check":"")+"'>"+x+"</span>").join("")+"</div></div>";
+      answerStatus(true)+"<div>"+D.categories[catName].map(x=>"<span class='pill "+(used.has(norm(x))?"check":"")+"'>"+x+"</span>").join("")+"</div>"+categoryProgressHtml(used.size,D.categories[catName].length)+"</div>";
   }
   if(modeName==="tourpics"){
     const r=TOUR_ROUNDS[tourIdx], cur=buzzOrder[buzzAnswerIndex]||null;
@@ -615,21 +631,28 @@ function bindHostControls(){
 function startRound(sec){
   answers={}; const end=Date.now()+sec*1000;
   if(modeName==="quiz"){
-    const q=D.quiz[qidx]; sendAll({type:"start",kind:"quiz",end,title:"Frage "+(qidx+1)+": "+q[0],options:q[1]});
+    const q=D.quiz[qidx]; sendAll({type:"start",kind:"quiz",end,title:"Frage "+(qidx+1)+": "+q[0],options:q[1],scores:{...quizScores}});
   }else{
     sendAll({type:"start",kind:"estimate",end,title:"Schätzmeister: "+D.estimate[eidx][0]});
   }
   renderHost();
 }
-function revealQuiz(){
-  const q=D.quiz[qidx], correct=q[2]; let html="";
+function revealQuiz(auto=false){
+  const q=D.quiz[qidx], correct=q[2];
+  if(!quizAwarded.has(qidx)){
+    ["team1","team2","team3"].forEach(t=>{if(answers[t]!==undefined && Number(answers[t])===correct)quizScores[t]=(quizScores[t]||0)+1;});
+    quizAwarded.add(qidx);
+  }
+  let html="";
   ["team1","team2","team3"].forEach(t=>{
     const a=answers[t],ok=Number(a)===correct;
     html+="<div class='status "+(ok?"ok":"bad")+"'>"+D.teams[t].name+": "+(a===undefined?"—":String.fromCharCode(65+Number(a))+" · "+q[1][Number(a)])+"</div>";
   });
-  html+="<p><b>Richtig: "+String.fromCharCode(65+correct)+" · "+q[1][correct]+"</b></p>";
+  html+="<p><b>Richtig: "+String.fromCharCode(65+correct)+" · "+q[1][correct]+"</b></p>"+quizScoreHtml(quizScores);
   const hr=$("hostReveal"); if(hr)hr.innerHTML="<div class='card'>"+html+"</div>";
-  sendAll({type:"reveal",html});
+  sendAll({type:"reveal",html,scores:{...quizScores}});
+  renderHost();
+  const hr2=$("hostReveal"); if(hr2)hr2.innerHTML="<div class='card'>"+html+"</div>";
 }
 function revealEstimate(){
   const sol=Number(D.estimate[eidx][1]), pts=[3,2,1];
@@ -644,7 +667,7 @@ function startCategory(){
   answers={}; const t=$("turnTeam").value;
   if(!t || catOut.has(t)){alert("Dieses Team ist für diese Kategorie bereits raus.");renderHost();return;}
   const end=Date.now()+35000;
-  const msg={type:"start",kind:"category",end,title:catName};
+  const msg={type:"start",kind:"category",end,title:catName,usedCount:used.size,totalCount:D.categories[catName].length};
   if(conns[t])conns[t].send(msg); else alert(D.teams[t].name+" ist noch nicht verbunden.");
   if(conns.screen)conns.screen.send(msg); renderHost();
 }
@@ -834,7 +857,7 @@ function rejectCategory(t){
   const a=answers[t];
   if(a===undefined)return;
   catOut.add(t);
-  const msg={type:"categoryRejected",team:D.teams[t].name,answer:String(a)};
+  const msg={type:"categoryRejected",team:D.teams[t].name,answer:String(a),usedCount:used.size,totalCount:D.categories[catName].length};
   ["team1","team2","team3"].forEach(k=>{if(conns[k])conns[k].send(msg);});
   if(conns.screen)conns.screen.send(msg);
   answers={}; renderHost();
@@ -862,7 +885,7 @@ function acceptCategory(t){
   const fresh=matches.filter(x=>!used.has(norm(x)));
   if(!fresh.length){alert("Schon genannt: "+matches.join(" + "));return;}
   fresh.forEach(x=>used.add(norm(x)));
-  const msg={type:"categoryAccepted",team:D.teams[t].name,answer:String(a),matches:fresh};
+  const msg={type:"categoryAccepted",team:D.teams[t].name,answer:String(a),matches:fresh,usedCount:used.size,totalCount:D.categories[catName].length};
   ["team1","team2","team3"].forEach(k=>{if(conns[k])conns[k].send(msg);});
   if(conns.screen)conns.screen.send(msg);
   answers={}; renderHost();
