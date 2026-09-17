@@ -15,7 +15,7 @@ button{background:var(--n);color:#fff;border:0;font-weight:800;cursor:pointer}.s
 .big{font-size:42px;font-weight:900;text-align:center}.timer{font-size:68px;font-weight:950;text-align:center;font-variant-numeric:tabular-nums}
 .muted{color:#667684}.answer{display:block;width:100%;margin:8px 0;text-align:left}.answer.sel{outline:4px solid #9bbbd6}
 .status{padding:10px;border-radius:9px;background:#edf2f6;margin:6px 0}.ok{background:#def4e7}.bad{background:#fae1e1}
-.pill{display:inline-block;padding:5px 9px;background:#e8eef3;border-radius:99px;margin:3px;font-size:13px}.check{opacity:.42;text-decoration:line-through}
+.pill{display:inline-block;padding:5px 9px;background:#e8eef3;border-radius:99px;margin:3px;font-size:13px}.check{opacity:1;text-decoration:line-through;background:#dff5e7!important;border:2px solid #22a35a;color:#116534;font-weight:900}
 .tabs{display:flex;gap:7px;overflow:auto;margin-bottom:12px}.tabs button{white-space:nowrap}
 .code{letter-spacing:5px}.teamBtn{min-height:56px}
 
@@ -385,6 +385,16 @@ function onClientMessage(m){
     const old=$("capGame").querySelector(".emojiFeedback"); if(old)old.remove();
     $("capGame").insertAdjacentHTML("beforeend","<div class='emojiFeedback'>"+m.html+"</div>");
   }
+  if(m.type==="categoryAccepted"){
+    clearInterval(timerInt);
+    if(role==="screen"){
+      $("screenTimer").textContent="";
+      $("screenStatus").innerHTML="<div class='status ok' style='text-align:center;font-size:30px'><b>✅ RICHTIG</b><br>"+m.team+": <b>"+m.answer+"</b><br><span style='font-size:22px'>Gültige Lösung"+(m.matches.length>1?"en":"")+": "+m.matches.join(" + ")+"</span></div><div class='muted' style='text-align:center;font-size:20px;margin-top:18px'>Warte auf das nächste Team …</div>";
+    } else if(role && role.startsWith("team")){
+      $("capTimer").textContent="";
+      $("capGame").innerHTML="<div class='status ok' style='font-size:22px;text-align:center'><b>✅ "+m.team+":</b><br>„"+m.answer+"“<br><br><b>Gültige Lösung"+(m.matches.length>1?"en":"")+": "+m.matches.join(" + ")+"</b></div><div class='status' style='text-align:center;font-size:20px'><b>Das nächste Team ist dran.</b></div>";
+    }
+  }
   if(m.type==="reset"){
     clearInterval(timerInt);
     if(role==="screen"){$("screenTitle").textContent="Warte auf Jan …";$("screenTimer").textContent="–";$("screenStatus").innerHTML="";}
@@ -456,7 +466,10 @@ function submitChoice(v,b){
 function submitText(){
   const e=$("txtAns"); if(!e||!e.value.trim())return;
   conn.send({type:"answer",role,value:e.value.trim()});
-  if(!(currentClientKind==="emojiTitle"||currentClientKind==="emojiArtist")) lockCaptain("Antwort gesendet ✓");
+  if(currentClientKind==="category"){
+    clearInterval(timerInt); $("capTimer").textContent="";
+    lockCaptain("Antwort gesendet ✓<br><b>Das nächste Team ist dran.</b>");
+  } else if(!(currentClientKind==="emojiTitle"||currentClientKind==="emojiArtist")) lockCaptain("Antwort gesendet ✓");
   else { e.value=""; e.focus(); }
 }
 function lockCaptain(msg){
@@ -782,12 +795,24 @@ function fuzzyMatch(input,list){
   const allowed=ni.length<=4?1:(ni.length<=8?2:2);
   return bestDist<=allowed?best:null;
 }
+function categoryMatches(input,list){
+  const ni=norm(input); if(!ni)return [];
+  // Eine eindeutige Teilantwort wie „Müller“ darf mehrere vollständige Lösungen treffen.
+  let matches=list.filter(x=>{const nx=norm(x);return nx===ni || (ni.length>=4 && nx.split(" ").includes(ni)) || (ni.length>=4 && nx.includes(ni));});
+  if(matches.length)return matches;
+  const one=fuzzyMatch(input,list); return one?[one]:[];
+}
 function acceptCategory(t){
   const a=answers[t], list=D.categories[catName];
-  const match=fuzzyMatch(a,list);
-  if(!match){alert("Nicht eindeutig erkannt: "+a+" – bitte manuell prüfen.");return;}
-  if(used.has(norm(match))){alert("Schon genannt: "+match);return;}
-  used.add(norm(match)); answers={}; renderHost();
+  const matches=categoryMatches(a,list);
+  if(!matches.length){alert("Nicht eindeutig erkannt: "+a+" – bitte manuell prüfen.");return;}
+  const fresh=matches.filter(x=>!used.has(norm(x)));
+  if(!fresh.length){alert("Schon genannt: "+matches.join(" + "));return;}
+  fresh.forEach(x=>used.add(norm(x)));
+  const msg={type:"categoryAccepted",team:D.teams[t].name,answer:String(a),matches:fresh};
+  ["team1","team2","team3"].forEach(k=>{if(conns[k])conns[k].send(msg);});
+  if(conns.screen)conns.screen.send(msg);
+  answers={}; renderHost();
 }
 
 $("hostBtn").addEventListener("click",()=>{
