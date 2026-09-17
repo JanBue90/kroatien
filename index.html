@@ -195,6 +195,7 @@ const $=id=>document.getElementById(id);
 let peer=null, conns={}, conn=null, role=null, room=null, modeName="quiz";
 let timerInt=null, answers={}, used=new Set(), qidx=0, eidx=0, currentClientKind=null;
 let catName=Object.keys(D.categories)[0];
+let catOut=new Set();
 let buzzOrder=[], buzzOpen=false, buzzAnswerIndex=0, buzzAnswerTimer=null, buzzAnswerEnd=0, buzzExpired=false;
 let clientTourRound=null, clientTourPhase=null;
 let promiIdx=0, promiReveal=0, promiSolved=false, promiTimer=null;
@@ -385,6 +386,17 @@ function onClientMessage(m){
     const old=$("capGame").querySelector(".emojiFeedback"); if(old)old.remove();
     $("capGame").insertAdjacentHTML("beforeend","<div class='emojiFeedback'>"+m.html+"</div>");
   }
+  if(m.type==="categoryRejected"){
+    clearInterval(timerInt);
+    if(role==="screen"){
+      $("screenTimer").textContent="";
+      $("screenStatus").innerHTML="<div class='status bad' style='text-align:center;font-size:30px'><b>❌ FALSCH</b><br>"+m.team+": <b>"+m.answer+"</b><br><span style='font-size:22px'>"+m.team+" ist für diese Kategorie raus.</span></div><div class='muted' style='text-align:center;font-size:20px;margin-top:18px'>Warte auf das nächste Team …</div>";
+    } else if(role && role.startsWith("team")){
+      $("capTimer").textContent="";
+      $("capGame").innerHTML="<div class='status bad' style='font-size:22px;text-align:center'><b>❌ "+m.team+":</b><br>„"+m.answer+"“<br><br><b>FALSCH – "+m.team+" ist für diese Kategorie raus.</b></div><div class='status' style='text-align:center;font-size:20px'><b>Das nächste Team ist dran.</b></div>";
+    }
+    return;
+  }
   if(m.type==="categoryAccepted"){
     clearInterval(timerInt);
     if(role==="screen"){
@@ -484,8 +496,9 @@ function setMode(m){
 function answerStatus(category=false){
   return "<div class='card'>"+["team1","team2","team3"].map(t=>{
     const val=answers[t]===undefined?"—":String(answers[t]);
-    const accept=category&&answers[t]!==undefined?" <button class='good acceptCat' data-team='"+t+"'>✓</button>":"";
-    return "<div class='status'><b>"+D.teams[t].name+":</b> "+val+accept+"</div>";
+    const decide=category&&answers[t]!==undefined?" <button class='good acceptCat' data-team='"+t+"' title='Richtig'>✓</button> <button class='danger rejectCat' data-team='"+t+"' title='Falsch – Team scheidet aus'>✕</button>":"";
+    const out=category&&catOut.has(t)?" <span style='color:#c62828;font-weight:900'>— RAUS</span>":"";
+    return "<div class='status'><b>"+D.teams[t].name+":</b> "+val+decide+out+"</div>";
   }).join("")+"</div>";
 }
 function renderHost(){
@@ -504,7 +517,7 @@ function renderHost(){
   } else if(modeName==="category"){
     h="<div class='card'><h2>Kategorien-Battle</h2><select id='catSelect' style='width:100%'>"+
       Object.keys(D.categories).map(x=>"<option "+(x===catName?"selected":"")+">"+x+"</option>").join("")+
-      "</select><p><select id='turnTeam'><option value='team1'>Team 1</option><option value='team2'>Team 2</option><option value='team3'>Team 3</option></select> <button id='catStart'>35 SEK. START</button></p>"+
+      "</select><p><select id='turnTeam'>"+["team1","team2","team3"].map(t=>"<option value='"+t+"' "+(catOut.has(t)?"disabled":"")+">"+D.teams[t].name+(catOut.has(t)?" — RAUS":"")+"</option>").join("")+"</select> <button id='catStart'>35 SEK. START</button></p>"+
       answerStatus(true)+"<div>"+D.categories[catName].map(x=>"<span class='pill "+(used.has(norm(x))?"check":"")+"'>"+x+"</span>").join("")+"</div></div>";
   }
   if(modeName==="tourpics"){
@@ -559,9 +572,10 @@ function bindHostControls(){
   if(reveal)reveal.addEventListener("click",()=>modeName==="quiz"?revealQuiz():revealEstimate());
   if(prev)prev.addEventListener("click",()=>{answers={};if(modeName==="quiz")qidx=Math.max(0,qidx-1);else eidx=Math.max(0,eidx-1);renderHost();});
   if(next)next.addEventListener("click",()=>{answers={};if(modeName==="quiz")qidx=Math.min(D.quiz.length-1,qidx+1);else eidx=Math.min(D.estimate.length-1,eidx+1);renderHost();});
-  const cs=$("catSelect"); if(cs)cs.addEventListener("change",()=>{catName=cs.value;used=new Set();answers={};renderHost();});
+  const cs=$("catSelect"); if(cs)cs.addEventListener("change",()=>{catName=cs.value;used=new Set();catOut=new Set();answers={};renderHost();});
   const catStart=$("catStart"); if(catStart)catStart.addEventListener("click",startCategory);
   document.querySelectorAll(".acceptCat").forEach(b=>b.addEventListener("click",()=>acceptCategory(b.dataset.team)));
+  document.querySelectorAll(".rejectCat").forEach(b=>b.addEventListener("click",()=>rejectCategory(b.dataset.team)));
   const ts=$("tourStart");if(ts)ts.addEventListener("click",tourStartRound);
   const tlw=$("tourLocWrong");if(tlw)tlw.addEventListener("click",tourLocationWrong);
   const tlr=$("tourLocRight");if(tlr)tlr.addEventListener("click",tourLocationRight);
@@ -615,7 +629,9 @@ function revealEstimate(){
   sendAll({type:"reveal",html});
 }
 function startCategory(){
-  answers={}; const t=$("turnTeam").value, end=Date.now()+35000;
+  answers={}; const t=$("turnTeam").value;
+  if(!t || catOut.has(t)){alert("Dieses Team ist für diese Kategorie bereits raus.");renderHost();return;}
+  const end=Date.now()+35000;
   const msg={type:"start",kind:"category",end,title:catName};
   if(conns[t])conns[t].send(msg); else alert(D.teams[t].name+" ist noch nicht verbunden.");
   if(conns.screen)conns.screen.send(msg); renderHost();
@@ -801,6 +817,15 @@ function categoryMatches(input,list){
   let matches=list.filter(x=>{const nx=norm(x);return nx===ni || (ni.length>=4 && nx.split(" ").includes(ni)) || (ni.length>=4 && nx.includes(ni));});
   if(matches.length)return matches;
   const one=fuzzyMatch(input,list); return one?[one]:[];
+}
+function rejectCategory(t){
+  const a=answers[t];
+  if(a===undefined)return;
+  catOut.add(t);
+  const msg={type:"categoryRejected",team:D.teams[t].name,answer:String(a)};
+  ["team1","team2","team3"].forEach(k=>{if(conns[k])conns[k].send(msg);});
+  if(conns.screen)conns.screen.send(msg);
+  answers={}; renderHost();
 }
 function acceptCategory(t){
   const a=answers[t], list=D.categories[catName];
