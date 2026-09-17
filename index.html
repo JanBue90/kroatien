@@ -829,8 +829,24 @@ function rejectCategory(t){
 }
 function acceptCategory(t){
   const a=answers[t], list=D.categories[catName];
-  const matches=categoryMatches(a,list);
-  if(!matches.length){alert("Nicht eindeutig erkannt: "+a+" – bitte manuell prüfen.");return;}
+  let matches=categoryMatches(a,list);
+
+  // Wenn die Eingabe nicht eindeutig erkannt wird, kann der Spielleiter
+  // sie manuell einer gültigen Lösung zuordnen (z. B. „Kinmich“ -> „Kimmich“).
+  if(!matches.length){
+    const manual=prompt(
+      "Nicht eindeutig erkannt: "+a+"\n\n"+
+      "Welche gültige Lösung ist gemeint?\n"+
+      "Du kannst z. B. nur den Nachnamen eingeben (z. B. Kimmich)."
+    );
+    if(manual===null || !manual.trim())return;
+    matches=categoryMatches(manual,list);
+    if(!matches.length){
+      alert("Auch diese Zuordnung wurde nicht gefunden: "+manual+"\nBitte prüfe die Schreibweise oder werte die Antwort mit dem roten X als falsch.");
+      return;
+    }
+  }
+
   const fresh=matches.filter(x=>!used.has(norm(x)));
   if(!fresh.length){alert("Schon genannt: "+matches.join(" + "));return;}
   fresh.forEach(x=>used.add(norm(x)));
