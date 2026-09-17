@@ -52,10 +52,49 @@ button,select,input{max-width:100%;min-width:0}
   #setup .grid{grid-template-columns:1fr!important}
 }
 
+@keyframes nextFlash{0%,100%{transform:scale(1)}50%{transform:scale(1.025);box-shadow:0 0 24px rgba(255,180,0,.65)}}.next-warning{background:#fff0b8!important;border:3px solid #f0a000!important;animation:nextFlash .8s infinite;font-weight:900}.current-warning{background:#dff5e7!important;border:3px solid #22a35a!important;font-weight:900}#playerRanking .status{margin:6px 0}
+/* v15 TV / spectator polish */
+#screenView{min-height:calc(100vh - 70px)}
+#screenView>.card{
+  max-width:1400px;margin:18px auto;padding:34px;border-radius:28px;
+  box-shadow:0 14px 45px rgba(0,0,0,.12);min-height:75vh;
+}
+#screenTitle{text-align:center;font-size:42px;line-height:1.1;margin:8px 0 18px}
+#screenTimer{
+  text-align:center;font-size:88px;font-weight:900;line-height:1;
+  margin:12px auto 24px;min-height:88px;
+}
+#screenStatus{max-width:1100px;margin:0 auto}
+#screenStatus .status{
+  border-radius:18px;padding:14px 20px;margin:8px 0;
+  box-shadow:0 4px 12px rgba(0,0,0,.05);
+}
+.tv-current{
+  background:#dff5e7!important;border:4px solid #22a35a!important;
+  transform:scale(1.02);box-shadow:0 8px 30px rgba(34,163,90,.22)!important;
+}
+.tv-next{
+  background:#fff0b8!important;border:3px solid #f0a000!important;
+}
+.tv-rank{
+  display:grid;grid-template-columns:70px 1fr auto;align-items:center;gap:14px;
+}
+.tv-rank-no{font-size:28px;font-weight:900;text-align:center}
+.tv-rank-name{font-size:28px;font-weight:900}
+.tv-rank-tag{font-size:18px;font-weight:900}
+@media(max-width:700px){
+  #screenView>.card{margin:6px;padding:18px;min-height:85vh}
+  #screenTitle{font-size:30px}
+  #screenTimer{font-size:64px;min-height:64px}
+  .tv-rank{grid-template-columns:48px 1fr auto;gap:8px}
+  .tv-rank-no,.tv-rank-name{font-size:20px}
+  .tv-rank-tag{font-size:13px}
+}
+
 </style>
 </head>
 <body>
-<header>🇭🇷 Kroatien-Olympiade LIVE <span style="font-size:12px;opacity:.65">v13</span></header>
+<header>🇭🇷 Kroatien-Olympiade LIVE <span style="font-size:12px;opacity:.65">v15</span></header>
 <div class="wrap">
 <section id="setup" class="card">
 <h2>Verbinden</h2>
@@ -93,7 +132,7 @@ button,select,input{max-width:100%;min-width:0}
 <div class="card"><div id="teamName"></div><div id="capTimer" class="timer">–</div><div id="capGame"><p class="muted">Warte auf Jan …</p></div></div>
 </section>
 
-<section id="playerView" class="hide"><div class="card"><div id="playerName" class="big" style="font-size:28px"></div><div id="buzzState" class="muted" style="text-align:center;margin:12px 0">Warte auf Jan …</div><button id="buzzBtn" class="danger" disabled style="width:100%;height:220px;font-size:46px;border-radius:28px">BUZZER</button></div></section>
+<section id="playerView" class="hide"><div class="card"><div id="playerName" class="big" style="font-size:28px"></div><div id="buzzState" class="muted" style="text-align:center;margin:12px 0">Warte auf Jan …</div><button id="buzzBtn" class="danger" disabled style="width:100%;height:220px;font-size:46px;border-radius:28px">BUZZER</button><div id="playerBuzzBoard" class="hide" style="margin-top:12px"><div id="playerAlert" class="status" style="text-align:center;font-size:22px"></div><div id="playerCountdown" class="big" style="text-align:center;font-size:82px;margin:10px 0;font-weight:900"></div><div id="playerRanking"></div></div></div></section>
 <section id="screenView" class="hide">
 <div class="card"><div id="screenTitle" class="big">Warte auf Jan …</div><div id="screenTimer" class="timer">–</div><div id="screenStatus"></div></div>
 </section>
@@ -228,19 +267,34 @@ function refreshConnections(){
 function sendAll(msg){Object.values(conns).forEach(c=>{try{c.send(msg)}catch(e){}});}
 function onClientMessage(m){
   if(m.type==="buzzState" && role && role.startsWith("player:")){$("buzzBtn").disabled=!m.open;$("buzzState").textContent=m.open?"🟢 BUZZER FREI!":"🔒 Buzzer gesperrt";}
-  if(m.type==="buzzReset" && role && role.startsWith("player:")){$("buzzBtn").disabled=true;$("buzzState").textContent="Neue Runde – warte auf Jan …";}
+  if(m.type==="buzzReset" && role && role.startsWith("player:")){$("buzzBtn").classList.remove("hide");$("buzzBtn").disabled=true;$("playerBuzzBoard").classList.add("hide");$("playerRanking").innerHTML="";$("playerCountdown").textContent="";$("buzzState").textContent="Neue Runde – warte auf Jan …";}
   if(m.type==="buzzPosition" && role && role.startsWith("player:")){
-    const name=role.slice(7),p=m.order.indexOf(name);
+    const name=role.slice(7),p=m.order.indexOf(name),cur=m.order.indexOf(m.current);
     if(p>=0){
-      $("buzzBtn").disabled=true;
-      $("buzzState").innerHTML="<b>Du bist "+(p+1)+".</b>"+(m.current===name?"<div style='font-size:28px;margin-top:8px'>DU BIST DRAN!</div>":"");
-      if(m.current===name && m.answerEnd)countdown(m.answerEnd,$("capTimer")||$("buzzState"));
+      $("buzzBtn").classList.add("hide");$("playerBuzzBoard").classList.remove("hide");
+      $("buzzState").innerHTML="<b>Du hast gebuzzert: Platz "+(p+1)+"</b>";
+      $("playerRanking").innerHTML="<h3>Buzzer-Reihenfolge</h3>"+m.order.map((n,i)=>"<div class='status' style='font-size:18px;"+(n===m.current?"background:#dff5e7":"")+"'><b>"+(i+1)+". "+n+(n===m.current?" ← DRAN":"")+"</b></div>").join("");
+      const a=$("playerAlert");
+      if(m.current===name){a.className="status current-warning";a.innerHTML="🔥 DU BIST DRAN! JETZT ANTWORTEN!";}
+      else if(cur>=0&&p===cur+1){a.className="status next-warning";a.innerHTML="⚠️ ACHTUNG – DU BIST ALS NÄCHSTER DRAN!";}
+      else{a.className="status";a.innerHTML=m.current?"Aktuell antwortet: <b>"+m.current+"</b>":"Warte auf die Auswertung …";}
+      if(m.answerEnd)countdown(m.answerEnd,$("playerCountdown"));else $("playerCountdown").textContent="";
     }
   }
   if(m.type==="buzzBoard" && role==="screen"){
-    $("screenTitle").textContent=m.current?"Antwortet: "+m.current:(m.open?"🔴 BUZZER OFFEN":"🔒 BUZZER");
-    if(m.answerEnd){countdown(m.answerEnd,$("screenTimer"));}else{$("screenTimer").textContent="";}
-    $("screenStatus").innerHTML=m.order.length?m.order.map((n,i)=>"<div class='status' style='font-size:"+(n===m.current?34:22)+"px;"+(n===m.current?"background:#def4e7":"")+"'><b>"+(i+1)+". "+n+(n===m.current?" ← DRAN":"")+"</b></div>").join(""):"<div class='big' style='font-size:30px'>Noch niemand gebuzzert</div>";
+    const ci=m.order.indexOf(m.current);
+    $("screenTitle").innerHTML=m.current?"🎤 <b>"+m.current+"</b> ist dran":(m.open?"🔴 BUZZER IST OFFEN":"🔒 BUZZER GESPERRT");
+    if(m.answerEnd){countdown(m.answerEnd,$("screenTimer"));}else{$("screenTimer").textContent=m.open?"JETZT!":"";}
+    $("screenStatus").innerHTML=m.order.length
+      ? "<div style='text-align:center;font-size:20px;margin-bottom:12px'><b>BUZZER-REIHENFOLGE</b></div>"+
+        m.order.map((n,i)=>{
+          const current=n===m.current, next=ci>=0&&i===ci+1;
+          return "<div class='status tv-rank "+(current?"tv-current":next?"tv-next":"")+"'>"+
+            "<div class='tv-rank-no'>"+(i+1)+".</div>"+
+            "<div class='tv-rank-name'>"+n+"</div>"+
+            "<div class='tv-rank-tag'>"+(current?"JETZT DRAN 🔥":next?"ALS NÄCHSTER ⚠️":"")+"</div></div>";
+        }).join("")
+      : "<div style='text-align:center;margin-top:70px'><div style='font-size:80px'>🔴</div><div class='big' style='font-size:42px'>Bereit zum Buzzern?</div><div class='muted' style='font-size:22px'>Die Reihenfolge erscheint hier live.</div></div>";
   }
   if(m.type==="start") startLocal(m);
   if(m.type==="feedback" && role!=="screen"){
@@ -357,7 +411,7 @@ function renderHost(){
       answerStatus(true)+"<div>"+D.categories[catName].map(x=>"<span class='pill "+(used.has(norm(x))?"check":"")+"'>"+x+"</span>").join("")+"</div></div>";
   }
   if(modeName==="buzzer"){
-    h="<div class='card'><h2>🔴 Buzzer-Spiel</h2><p class='muted'>Alle 12 Spieler buzzern auf dem eigenen Handy. Die Reihenfolge bleibt erhalten, damit bei einer falschen Antwort der Nächste dran ist.</p><div class='grid'><button id='buzzOpenBtn' class='good'>BUZZER FREIGEBEN</button><button id='buzzCloseBtn' class='secondary'>SPERREN</button><button id='buzzResetBtn' class='danger'>NEUE RUNDE</button></div><h3>Reihenfolge</h3>"+(buzzOrder.length?buzzOrder.map((n,i)=>"<div class='status' style='font-size:"+(i===0?26:18)+"px'><b>"+(i+1)+". "+n+"</b></div>").join(""):"<div class='status'>Noch niemand gebuzzert.</div>")+"<div id='buzzTurnBox'>"+(buzzOrder.length?"<div class='status ok' style='font-size:24px'><b>Antwortet: "+buzzOrder[Math.min(buzzAnswerIndex,buzzOrder.length-1)]+"</b><div id='buzzAnswerCountdown' class='big' style='font-size:42px'>"+(buzzAnswerEnd?Math.max(0,Math.ceil((buzzAnswerEnd-Date.now())/1000)):"6")+"</div></div>":"")+"</div>"+
+    h="<div class='card'><h2>🔴 Buzzer-Spiel</h2><p class='muted'>Alle 12 Spieler buzzern auf dem eigenen Handy. Die Reihenfolge bleibt erhalten, damit bei einer falschen Antwort der Nächste dran ist.</p><div class='grid'><button id='buzzOpenBtn' class='good'>BUZZER FREIGEBEN</button><button id='buzzCloseBtn' class='secondary'>SPERREN</button><button id='buzzResetBtn' class='danger'>NEUE RUNDE</button></div><h3>Reihenfolge</h3>"+(buzzOrder.length?buzzOrder.map((n,i)=>"<div class='status' style='font-size:"+(i===0?26:18)+"px'><b>"+(i+1)+". "+n+"</b></div>").join(""):"<div class='status'>Noch niemand gebuzzert.</div>")+"<div id='buzzTurnBox'>"+(buzzOrder.length?"<div class='status ok' style='font-size:24px'><b>Antwortet: "+buzzOrder[Math.min(buzzAnswerIndex,buzzOrder.length-1)]+"</b><div id='buzzAnswerCountdown' class='big' style='font-size:42px'>"+(buzzAnswerEnd?Math.max(0,Math.ceil((buzzAnswerEnd-Date.now())/1000)):"10")+"</div></div>":"")+"</div>"+
       (buzzOrder.length?"<div class='grid'><button id='buzzWrongBtn' class='danger'>FALSCH → NÄCHSTER</button><button id='buzzRightBtn' class='good'>RICHTIG ✓</button></div>":"")+
       "<p><b>Status:</b> "+(buzzOpen?"🟢 Buzzer offen":"🔒 Buzzer gesperrt")+"</p></div>";
   }
@@ -442,7 +496,7 @@ function broadcastBuzzOrder(){if(conns.screen)conns.screen.send(buzzBoardMessage
 function startBuzzAnswerTimer(){
   clearInterval(buzzAnswerTimer);
   if(!buzzOrder[buzzAnswerIndex]){buzzAnswerEnd=0;broadcastBuzzOrder();renderHost();return;}
-  buzzAnswerEnd=Date.now()+6000;
+  buzzAnswerEnd=Date.now()+10000;
   broadcastBuzzOrder(); renderHost();
   buzzAnswerTimer=setInterval(()=>{
     const el=$("buzzAnswerCountdown");
