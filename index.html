@@ -120,7 +120,7 @@ button,select,input{max-width:100%;min-width:0}
 </style>
 </head>
 <body>
-<header>🇭🇷 Kroatien-Olympiade LIVE <span style="font-size:12px;opacity:.65">v18</span></header>
+<header>🇭🇷 Kroatien-Olympiade LIVE <span style="font-size:12px;opacity:.65">v19</span></header>
 <div class="wrap">
 <section id="setup" class="card">
 <h2>Verbinden</h2>
@@ -192,7 +192,8 @@ const $=id=>document.getElementById(id);
 let peer=null, conns={}, conn=null, role=null, room=null, modeName="quiz";
 let timerInt=null, answers={}, used=new Set(), qidx=0, eidx=0, currentClientKind=null;
 let catName=Object.keys(D.categories)[0];
-let buzzOrder=[], buzzOpen=false, buzzAnswerIndex=0, buzzAnswerTimer=null, buzzAnswerEnd=0;
+let buzzOrder=[], buzzOpen=false, buzzAnswerIndex=0, buzzAnswerTimer=null, buzzAnswerEnd=0, buzzExpired=false;
+let clientTourRound=null, clientTourPhase=null;
 let promiIdx=0, promiReveal=0, promiSolved=false, promiTimer=null;
 let promiRounds=JSON.parse(localStorage.getItem("promiRounds")||"null")||Array.from({length:12},(_,i)=>({brother:"",celebrity:"",mix:"",brotherImg:"",celebrityImg:""}));
 const TOUR_ROUNDS=[{"place":"Stuttgart","year":2023,"img":"tour_12.jpg"},{"place":"München","year":2012,"img":"tour_07.jpg"},{"place":"Amsterdam","year":2015,"img":"tour_13.jpg"},{"place":"Breslau","year":2017,"img":"tour_18.jpg"},{"place":"Münster","year":2014,"img":"tour_08.jpg"},{"place":"Frankfurt","year":2022,"img":"tour_02.jpg"},{"place":"Breslau","year":2017,"img":"tour_17.jpg"},{"place":"Berlin","year":2016,"img":"tour_14.jpg"},{"place":"Stuttgart","year":2023,"img":"tour_11.jpg"},{"place":"Bremen","year":2023,"img":"tour_15.jpg"},{"place":"München","year":2012,"img":"tour_06.jpg"},{"place":"Frankfurt","year":2022,"img":"tour_03.jpg"},{"place":"Brügge","year":2025,"img":"tour_01.jpg"},{"place":"Hamburg","year":2020,"img":"tour_04.jpg"},{"place":"Bremen","year":2023,"img":"tour_16.jpg"},{"place":"Sophia","year":2019,"img":"tour_09.jpg"},{"place":"Sophia","year":2019,"img":"tour_10.jpg"},{"place":"Krakau","year":2018,"img":"tour_05.jpg"}];
@@ -306,13 +307,15 @@ function onClientMessage(m){
       $("buzzState").innerHTML="<b>Du hast gebuzzert: Platz "+(p+1)+"</b>";
       $("playerRanking").innerHTML="<h3>Buzzer-Reihenfolge</h3>"+m.order.map((n,i)=>"<div class='status' style='font-size:18px;"+(n===m.current?"background:#dff5e7":"")+"'><b>"+(i+1)+". "+n+(n===m.current?" ← DRAN":"")+"</b></div>").join("");
       const a=$("playerAlert");
-      if(m.current===name){a.className="status current-warning";a.innerHTML="🔥 DU BIST DRAN! JETZT ANTWORTEN!";}
+      if(m.current===name && m.expired){a.className="status";a.innerHTML="⏱ ZEIT ABGELAUFEN – SPIELLEITER ENTSCHEIDET";}
+      else if(m.current===name){a.className="status current-warning";a.innerHTML="🔥 DU BIST DRAN! JETZT ANTWORTEN!";}
       else if(cur>=0&&p===cur+1){a.className="status next-warning";a.innerHTML="⚠️ ACHTUNG – DU BIST ALS NÄCHSTER DRAN!";}
       else{a.className="status";a.innerHTML=m.current?"Aktuell antwortet: <b>"+m.current+"</b>":"Warte auf die Auswertung …";}
-      if(m.answerEnd)countdown(m.answerEnd,$("playerCountdown"));else $("playerCountdown").textContent="";
+      if(m.answerEnd)countdown(m.answerEnd,$("playerCountdown"));else if(m.expired)$("playerCountdown").textContent="0";else $("playerCountdown").textContent="";
     }
   }
   if(m.type==="tourState"){
+    clientTourRound=m.round; clientTourPhase=m.phase;
     if(role==="screen"){
       $("screenTitle").innerHTML="📸 WO WAR DAS? <span style='font-size:22px'>"+(m.idx+1)+"/"+m.total+"</span>";
       $("screenStatus").innerHTML="<img class='tour-photo' src='"+m.round.img+"'>"+(m.phase==="year"?"<div class='status ok' style='text-align:center;font-size:28px'><b>✓ "+m.round.place+"</b><br>Welches Jahr?</div>":m.phase==="done"?"<div class='status ok' style='text-align:center;font-size:30px'><b>"+m.round.place+" · "+m.round.year+"</b></div>":"<div style='text-align:center;font-size:26px;font-weight:900;margin-top:12px'>WO WAR DIESE KEGELTOUR?</div>");
@@ -334,8 +337,9 @@ function onClientMessage(m){
   if(m.type==="buzzBoard" && role==="screen"){
     const ci=m.order.indexOf(m.current);
     $("screenTitle").innerHTML=m.current?"🎤 <b>"+m.current+"</b> ist dran":(m.open?"🔴 BUZZER IST OFFEN":"🔒 BUZZER GESPERRT");
-    if(m.answerEnd){countdown(m.answerEnd,$("screenTimer"));}else{$("screenTimer").textContent=m.open?"JETZT!":"";}
-    $("screenStatus").innerHTML=m.order.length
+    if(m.answerEnd){countdown(m.answerEnd,$("screenTimer"));}else if(m.expired){$("screenTimer").textContent="0";}else{$("screenTimer").textContent=m.open?"JETZT!":"";}
+    const tourTop=clientTourRound ? "<img class='tour-photo' style='max-height:48vh;margin-bottom:14px' src='"+clientTourRound.img+"'>"+(clientTourPhase==="year"?"<div class='status ok' style='text-align:center;font-size:26px'><b>✓ "+clientTourRound.place+"</b> · Welches Jahr?</div>":clientTourPhase==="done"?"<div class='status ok' style='text-align:center;font-size:28px'><b>"+clientTourRound.place+" · "+clientTourRound.year+"</b></div>":"<div style='text-align:center;font-size:24px;font-weight:900;margin:8px 0'>WO WAR DIESE KEGELTOUR?</div>") : "";
+    $("screenStatus").innerHTML=tourTop+(m.expired?"<div class='status' style='text-align:center;font-size:24px;background:#fff0c9'><b>⏱ ZEIT ABGELAUFEN – SPIELLEITER ENTSCHEIDET</b></div>":"")+(m.order.length
       ? "<div style='text-align:center;font-size:20px;margin-bottom:12px'><b>BUZZER-REIHENFOLGE</b></div>"+
         m.order.map((n,i)=>{
           const current=n===m.current, next=ci>=0&&i===ci+1;
@@ -344,7 +348,7 @@ function onClientMessage(m){
             "<div class='tv-rank-name'>"+n+"</div>"+
             "<div class='tv-rank-tag'>"+(current?"JETZT DRAN 🔥":next?"ALS NÄCHSTER ⚠️":"")+"</div></div>";
         }).join("")
-      : "<div style='text-align:center;margin-top:70px'><div style='font-size:80px'>🔴</div><div class='big' style='font-size:42px'>Bereit zum Buzzern?</div><div class='muted' style='font-size:22px'>Die Reihenfolge erscheint hier live.</div></div>";
+      : "<div style='text-align:center;margin-top:30px'><div style='font-size:60px'>🔴</div><div class='big' style='font-size:36px'>Bereit zum Buzzern?</div><div class='muted' style='font-size:20px'>Die Reihenfolge erscheint hier live.</div></div>");
   }
   if(m.type==="start") startLocal(m);
   if(m.type==="feedback" && role!=="screen"){
@@ -466,8 +470,8 @@ function renderHost(){
     h="<div class='card'><h2>📸 Kegeltour-Fotos "+(tourIdx+1)+"/"+TOUR_ROUNDS.length+"</h2><img class='tour-photo tour-host-photo' src='"+r.img+"'>"+
       "<div class='status'><b>Lösung:</b> "+r.place+" · "+r.year+"</div>"+
       (tourPhase==="idle"?"<button id='tourStart' class='good' style='width:100%'>RUNDE STARTEN + BUZZER FREIGEBEN</button>":"")+
-      (tourPhase==="location"?"<div class='status ok' style='font-size:22px'><b>Gesucht: ORT (2 Punkte)</b><br>"+(cur?"Antwortet: <b>"+cur+"</b>":"Warte auf Buzzer …")+"</div>"+(cur?"<div class='grid'><button id='tourLocWrong' class='danger'>ORT FALSCH → NÄCHSTER</button><button id='tourLocRight' class='good'>ORT RICHTIG +2</button></div>":""):"")+
-      (tourPhase==="year"?"<div class='status ok' style='font-size:22px'><b>✓ "+r.place+"</b><br><b>"+tourLocationWinner+"</b> darf jetzt das JAHR raten (+1).</div><div class='grid'><button id='tourYearWrong' class='danger'>JAHR FALSCH</button><button id='tourYearRight' class='good'>JAHR RICHTIG +1</button></div>":"")+
+      (tourPhase==="location"?"<div class='status ok' style='font-size:22px'><b>Gesucht: ORT (2 Punkte)</b><br>"+(cur?"Antwortet: <b>"+cur+"</b>":"Warte auf Buzzer …")+(cur?"<div id='buzzAnswerCountdown' class='big' style='font-size:54px;text-align:center;margin-top:8px'>"+(buzzExpired?"0":buzzAnswerEnd?Math.max(0,Math.ceil((buzzAnswerEnd-Date.now())/1000)):"10")+"</div>":"")+(buzzExpired?"<div style='text-align:center;background:#fff0c9;padding:10px;border-radius:12px'><b>⏱ ZEIT ABGELAUFEN – DU ENTSCHEIDEST</b></div>":"")+"</div>"+(cur?"<div class='grid'><button id='tourLocWrong' class='danger'>ORT FALSCH → NÄCHSTER</button><button id='tourLocRight' class='good'>ORT RICHTIG +2</button></div>":""):"")+
+      (tourPhase==="year"?"<div class='status ok' style='font-size:22px'><b>✓ "+r.place+"</b><br><b>"+tourLocationWinner+"</b> darf jetzt das JAHR raten (+1).<div id='buzzAnswerCountdown' class='big' style='font-size:54px;text-align:center;margin-top:8px'>"+(buzzExpired?"0":buzzAnswerEnd?Math.max(0,Math.ceil((buzzAnswerEnd-Date.now())/1000)):"10")+"</div>"+(buzzExpired?"<div style='text-align:center;background:#fff0c9;padding:10px;border-radius:12px'><b>⏱ ZEIT ABGELAUFEN – DU ENTSCHEIDEST</b></div>":"")+"</div><div class='grid'><button id='tourYearWrong' class='danger'>JAHR FALSCH</button><button id='tourYearRight' class='good'>JAHR RICHTIG +1</button></div>":"")+
       (tourPhase==="done"?"<div class='status ok' style='font-size:25px;text-align:center'><b>AUFLÖSUNG: "+r.place+" · "+r.year+"</b></div><button id='tourNext' style='width:100%'>NÄCHSTES FOTO →</button>":"")+
       "<h3>Punktestand</h3><div class='tour-score'>"+scoreNames.map(n=>"<div class='status'><b>"+n+"</b><br><span style='font-size:24px;font-weight:900'>"+(tourScores[n]||0)+"</span></div>").join("")+"</div></div>";
   }
@@ -579,7 +583,7 @@ function tourSendState(){
   if(conns.screen)conns.screen.send(msg); playerConnections().forEach(([k,c])=>c.send(msg));
 }
 function tourStartRound(){
-  clearInterval(buzzAnswerTimer);buzzOrder=[];buzzAnswerIndex=0;buzzAnswerEnd=0;tourLocationWinner=null;tourPhase="location";buzzOpen=true;
+  clearInterval(buzzAnswerTimer);buzzOrder=[];buzzAnswerIndex=0;buzzAnswerEnd=0;buzzExpired=false;tourLocationWinner=null;tourPhase="location";buzzOpen=true;
   tourSendState(); playerConnections().forEach(([k,c])=>{c.send({type:"buzzReset"});c.send({type:"buzzState",open:true});});
   if(conns.screen)conns.screen.send(buzzBoardMessage());renderHost();
 }
@@ -587,16 +591,16 @@ function tourLocationWrong(){if(tourPhase!=="location")return;nextBuzzAnswer();}
 function tourLocationRight(){
   if(tourPhase!=="location")return; const n=buzzOrder[buzzAnswerIndex];if(!n)return;
   tourScores[n]=(tourScores[n]||0)+2;tourLocationWinner=n;tourPhase="year";buzzOpen=false;
-  clearInterval(buzzAnswerTimer);buzzAnswerEnd=Date.now()+10000;
+  clearInterval(buzzAnswerTimer);buzzExpired=false;buzzAnswerEnd=Date.now()+10000;
   playerConnections().forEach(([k,c])=>c.send({type:"buzzState",open:false}));tourSendState();broadcastBuzzOrder();renderHost();
-  buzzAnswerTimer=setInterval(()=>{const el=$("buzzAnswerCountdown");const left=Math.max(0,Math.ceil((buzzAnswerEnd-Date.now())/1000));if(el)el.textContent=left;if(left<=0){clearInterval(buzzAnswerTimer);tourFinish(false);}},150);
+  buzzAnswerTimer=setInterval(()=>{const el=$("buzzAnswerCountdown");const left=Math.max(0,Math.ceil((buzzAnswerEnd-Date.now())/1000));if(el)el.textContent=left;if(left<=0){clearInterval(buzzAnswerTimer);buzzAnswerEnd=0;buzzExpired=true;broadcastBuzzOrder();renderHost();}},150);
 }
 function tourFinish(yearCorrect){
-  if(tourPhase!=="year")return;clearInterval(buzzAnswerTimer);buzzAnswerEnd=0;if(yearCorrect&&tourLocationWinner)tourScores[tourLocationWinner]=(tourScores[tourLocationWinner]||0)+1;
+  if(tourPhase!=="year")return;clearInterval(buzzAnswerTimer);buzzAnswerEnd=0;buzzExpired=false;if(yearCorrect&&tourLocationWinner)tourScores[tourLocationWinner]=(tourScores[tourLocationWinner]||0)+1;
   tourPhase="done";buzzOpen=false;tourSendState();broadcastBuzzOrder();renderHost();
 }
 function tourNextRound(){
-  clearInterval(buzzAnswerTimer);tourIdx=(tourIdx+1)%TOUR_ROUNDS.length;tourPhase="idle";buzzOrder=[];buzzAnswerIndex=0;buzzAnswerEnd=0;buzzOpen=false;tourLocationWinner=null;
+  clearInterval(buzzAnswerTimer);tourIdx=(tourIdx+1)%TOUR_ROUNDS.length;tourPhase="idle";buzzOrder=[];buzzAnswerIndex=0;buzzAnswerEnd=0;buzzExpired=false;buzzOpen=false;tourLocationWinner=null;
   playerConnections().forEach(([k,c])=>c.send({type:"buzzReset"}));tourSendState();if(conns.screen)conns.screen.send(buzzBoardMessage());renderHost();
 }
 function escAttr(s){return String(s||"").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;");}
@@ -618,26 +622,26 @@ async function pmSave(){
 }
 function playerConnections(){return Object.entries(conns).filter(([k])=>k.startsWith("player:"));}
 function buzzBoardMessage(){
-  return {type:"buzzBoard",order:buzzOrder,open:buzzOpen,current:buzzOrder[buzzAnswerIndex]||null,answerEnd:buzzAnswerEnd};
+  return {type:"buzzBoard",order:buzzOrder,open:buzzOpen,current:buzzOrder[buzzAnswerIndex]||null,answerEnd:buzzAnswerEnd,expired:buzzExpired};
 }
 function openBuzzers(){buzzOpen=true;playerConnections().forEach(([k,c])=>c.send({type:"buzzState",open:true}));if(conns.screen)conns.screen.send(buzzBoardMessage());renderHost();}
 function closeBuzzers(){buzzOpen=false;playerConnections().forEach(([k,c])=>c.send({type:"buzzState",open:false}));if(conns.screen)conns.screen.send(buzzBoardMessage());renderHost();}
-function resetBuzzers(){clearInterval(buzzAnswerTimer);buzzOrder=[];buzzOpen=false;buzzAnswerIndex=0;buzzAnswerEnd=0;playerConnections().forEach(([k,c])=>c.send({type:"buzzReset"}));if(conns.screen)conns.screen.send(buzzBoardMessage());renderHost();}
-function broadcastBuzzOrder(){if(conns.screen)conns.screen.send(buzzBoardMessage());playerConnections().forEach(([k,c])=>c.send({type:"buzzPosition",order:buzzOrder,current:buzzOrder[buzzAnswerIndex]||null,answerEnd:buzzAnswerEnd}));}
+function resetBuzzers(){clearInterval(buzzAnswerTimer);buzzOrder=[];buzzOpen=false;buzzAnswerIndex=0;buzzAnswerEnd=0;buzzExpired=false;playerConnections().forEach(([k,c])=>c.send({type:"buzzReset"}));if(conns.screen)conns.screen.send(buzzBoardMessage());renderHost();}
+function broadcastBuzzOrder(){if(conns.screen)conns.screen.send(buzzBoardMessage());playerConnections().forEach(([k,c])=>c.send({type:"buzzPosition",order:buzzOrder,current:buzzOrder[buzzAnswerIndex]||null,answerEnd:buzzAnswerEnd,expired:buzzExpired}));}
 function startBuzzAnswerTimer(){
   clearInterval(buzzAnswerTimer);
   if(!buzzOrder[buzzAnswerIndex]){buzzAnswerEnd=0;broadcastBuzzOrder();renderHost();return;}
-  buzzAnswerEnd=Date.now()+10000;
+  buzzExpired=false; buzzAnswerEnd=Date.now()+10000;
   broadcastBuzzOrder(); renderHost();
   buzzAnswerTimer=setInterval(()=>{
     const el=$("buzzAnswerCountdown");
     const left=Math.max(0,Math.ceil((buzzAnswerEnd-Date.now())/1000));
     if(el)el.textContent=left;
-    if(left<=0){clearInterval(buzzAnswerTimer);nextBuzzAnswer();}
+    if(left<=0){clearInterval(buzzAnswerTimer);buzzAnswerEnd=0;buzzExpired=true;broadcastBuzzOrder();renderHost();}
   },150);
 }
 function nextBuzzAnswer(){
-  clearInterval(buzzAnswerTimer);
+  clearInterval(buzzAnswerTimer);buzzExpired=false;
   if(buzzAnswerIndex < buzzOrder.length-1){buzzAnswerIndex++;startBuzzAnswerTimer();}
   else {buzzAnswerEnd=0;broadcastBuzzOrder();renderHost();}
 }
