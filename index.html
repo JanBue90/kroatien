@@ -94,7 +94,7 @@ button,select,input{max-width:100%;min-width:0}
 </style>
 </head>
 <body>
-<header>🇭🇷 Kroatien-Olympiade LIVE <span style="font-size:12px;opacity:.65">v15</span></header>
+<header>🇭🇷 Kroatien-Olympiade LIVE <span style="font-size:12px;opacity:.65">v16</span></header>
 <div class="wrap">
 <section id="setup" class="card">
 <h2>Verbinden</h2>
@@ -618,7 +618,12 @@ function acceptCategory(t){
   used.add(norm(match)); answers={}; renderHost();
 }
 
-$("hostBtn").addEventListener("click",host);
+$("hostBtn").addEventListener("click",()=>{
+  const pw=prompt("Spielleiter-Passwort:");
+  if(pw===null)return;
+  if(pw!=="Janyo"){alert("Falsches Passwort.");return;}
+  host();
+});
 $("captainBtn").addEventListener("click",()=>openJoin("captain"));
 $("screenBtn").addEventListener("click",()=>openJoin("screen"));
 $("playerBtn").addEventListener("click",()=>openJoin("player"));
