@@ -1,0 +1,767 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Kroatien-Olympiade LIVE</title>
+<style>
+:root{--n:#17324d;--bg:#f3f6f8;--g:#16834b;--r:#b43b3b}
+*{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:var(--bg);color:#17212b}
+header{background:var(--n);color:white;padding:16px 20px;font-weight:900;font-size:20px}
+.wrap{max-width:1000px;margin:auto;padding:18px}.card{background:#fff;border-radius:16px;padding:18px;margin-bottom:14px;box-shadow:0 2px 12px #00000012}
+button,input,select{font:inherit;border-radius:11px;border:1px solid #ccd5dd;padding:13px}
+button{background:var(--n);color:#fff;border:0;font-weight:800;cursor:pointer}.secondary{background:#e5ebf0;color:#17324d}.good{background:var(--g)}.danger{background:var(--r)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}.hide{display:none!important}
+.big{font-size:42px;font-weight:900;text-align:center}.timer{font-size:68px;font-weight:950;text-align:center;font-variant-numeric:tabular-nums}
+.muted{color:#667684}.answer{display:block;width:100%;margin:8px 0;text-align:left}.answer.sel{outline:4px solid #9bbbd6}
+.status{padding:10px;border-radius:9px;background:#edf2f6;margin:6px 0}.ok{background:#def4e7}.bad{background:#fae1e1}
+.pill{display:inline-block;padding:5px 9px;background:#e8eef3;border-radius:99px;margin:3px;font-size:13px}.check{opacity:.42;text-decoration:line-through}
+.tabs{display:flex;gap:7px;overflow:auto;margin-bottom:12px}.tabs button{white-space:nowrap}
+.code{letter-spacing:5px}.teamBtn{min-height:56px}
+
+/* v13 mobile-first fixes */
+*{box-sizing:border-box}
+html,body{max-width:100%;overflow-x:hidden}
+body{min-width:0}
+header{width:100%;padding:14px 16px;font-size:18px;white-space:normal}
+main{width:min(1180px,100%);max-width:100%;padding:16px;margin:0 auto}
+.card{max-width:100%;overflow:hidden}
+.grid{min-width:0}
+button,select,input{max-width:100%;min-width:0}
+#setup .card{width:100%;max-width:980px;margin:0 auto}
+#setup .grid{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:10px}
+#setup button{white-space:normal;line-height:1.15;padding:15px 8px}
+#playerView .card{max-width:560px;margin:0 auto}
+#buzzBtn{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+@media(max-width:700px){
+  main{padding:10px}
+  header{font-size:17px;padding:12px}
+  .card{padding:16px;border-radius:16px}
+  #setup .grid{grid-template-columns:1fr 1fr!important;gap:8px}
+  #setup button{font-size:14px;padding:14px 6px}
+  #setup h2{font-size:22px}
+  #setup p{font-size:14px;line-height:1.4}
+  #roomIn,#teamSelect,#playerSelect{width:100%;font-size:16px;height:52px}
+  #teamJoinBtn,#screenJoinBtn,#playerJoinBtn{height:56px;font-size:16px}
+  #playerView .card{padding:14px}
+  #playerName{text-align:center;font-size:25px!important}
+  #buzzState{font-size:18px}
+  #buzzBtn{height:55vh!important;min-height:300px;font-size:44px!important;border-radius:24px!important}
+}
+@media(max-width:390px){
+  #setup .grid{grid-template-columns:1fr!important}
+}
+
+@keyframes nextFlash{0%,100%{transform:scale(1)}50%{transform:scale(1.025);box-shadow:0 0 24px rgba(255,180,0,.65)}}.next-warning{background:#fff0b8!important;border:3px solid #f0a000!important;animation:nextFlash .8s infinite;font-weight:900}.current-warning{background:#dff5e7!important;border:3px solid #22a35a!important;font-weight:900}#playerRanking .status{margin:6px 0}
+/* v15 TV / spectator polish */
+#screenView{min-height:calc(100vh - 70px)}
+#screenView>.card{
+  max-width:1400px;margin:18px auto;padding:34px;border-radius:28px;
+  box-shadow:0 14px 45px rgba(0,0,0,.12);min-height:75vh;
+}
+#screenTitle{text-align:center;font-size:42px;line-height:1.1;margin:8px 0 18px}
+#screenTimer{
+  text-align:center;font-size:88px;font-weight:900;line-height:1;
+  margin:12px auto 24px;min-height:88px;
+}
+#screenStatus{max-width:1100px;margin:0 auto}
+#screenStatus .status{
+  border-radius:18px;padding:14px 20px;margin:8px 0;
+  box-shadow:0 4px 12px rgba(0,0,0,.05);
+}
+.tv-current{
+  background:#dff5e7!important;border:4px solid #22a35a!important;
+  transform:scale(1.02);box-shadow:0 8px 30px rgba(34,163,90,.22)!important;
+}
+.tv-next{
+  background:#fff0b8!important;border:3px solid #f0a000!important;
+}
+.tv-rank{
+  display:grid;grid-template-columns:70px 1fr auto;align-items:center;gap:14px;
+}
+.tv-rank-no{font-size:28px;font-weight:900;text-align:center}
+.tv-rank-name{font-size:28px;font-weight:900}
+.tv-rank-tag{font-size:18px;font-weight:900}
+@media(max-width:700px){
+  #screenView>.card{margin:6px;padding:18px;min-height:85vh}
+  #screenTitle{font-size:30px}
+  #screenTimer{font-size:64px;min-height:64px}
+  .tv-rank{grid-template-columns:48px 1fr auto;gap:8px}
+  .tv-rank-no,.tv-rank-name{font-size:20px}
+  .tv-rank-tag{font-size:13px}
+}
+
+
+/* Promi-Mix */
+.pm-stage{max-width:1050px;margin:auto;text-align:center}
+.pm-puzzle{position:relative;width:min(72vw,720px);aspect-ratio:1/1;margin:18px auto;border-radius:24px;overflow:hidden;background:#10283e;box-shadow:0 15px 45px rgba(0,0,0,.22)}
+.pm-puzzle img{width:100%;height:100%;object-fit:cover;display:block}
+.pm-grid{position:absolute;inset:0;display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(4,1fr)}
+.pm-tile{background:#193852;border:1px solid rgba(255,255,255,.45);transition:opacity .35s,transform .35s}
+.pm-tile.open{opacity:0;transform:scale(.92);pointer-events:none}
+.pm-solution{display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:18px;align-items:end;margin-top:20px}
+.pm-photo{background:#edf2f6;border-radius:20px;padding:10px;box-shadow:0 8px 24px rgba(0,0,0,.1)}
+.pm-photo img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:14px}
+.pm-photo .label{font-weight:900;font-size:20px;padding:10px 4px}
+.pm-config{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pm-config input{width:100%}
+@media(max-width:700px){
+ .pm-puzzle{width:100%}
+ .pm-solution{grid-template-columns:1fr}
+ .pm-config{grid-template-columns:1fr}
+}
+
+/* v18 Kegeltour-Fotospiel */
+.tour-photo{display:block;width:100%;max-height:58vh;object-fit:contain;border-radius:18px;background:#101820;box-shadow:0 10px 28px #0002}
+.tour-host-photo{max-height:420px;margin:10px auto}
+.tour-score{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:7px;margin-top:12px}.tour-score .status{text-align:center}
+#playerTourPhoto{width:100%;max-height:42vh;object-fit:contain;border-radius:14px;background:#101820;margin:8px 0}
+@media(max-width:700px){#playerView.tour-active #buzzBtn{height:110px!important;min-height:110px!important;font-size:30px!important}#playerView.tour-active .card{padding:10px}.tour-photo{max-height:50vh}}
+</style>
+</head>
+<body>
+<header>🇭🇷 Kroatien-Olympiade LIVE <span style="font-size:12px;opacity:.65">v18</span></header>
+<div class="wrap">
+<section id="setup" class="card">
+<h2>Verbinden</h2>
+<p class="muted">Alle Geräte öffnen dieselbe Seite. Jan erstellt den Raum, die Kapitäne treten mit dem Raumcode bei.</p>
+<div class="grid">
+<button id="hostBtn">JAN – SPIELLEITER</button>
+<button id="captainBtn" class="secondary">KAPITÄN</button>
+<button id="screenBtn" class="secondary">TV / BEAMER</button><button id="playerBtn" type="button" class="secondary">SPIELER / BUZZER</button>
+</div>
+<div id="joinBox" class="hide" style="margin-top:16px">
+<input id="roomIn" placeholder="RAUMCODE" maxlength="6" style="width:100%;text-transform:uppercase">
+<div id="teamChoices" class="grid" style="margin-top:10px">
+<button class="teamBtn" data-team="team1">Team 1</button>
+<button class="teamBtn" data-team="team2">Team 2</button>
+<button class="teamBtn" data-team="team3">Team 3</button>
+</div>
+<button id="screenJoinBtn" class="hide" style="width:100%;margin-top:10px">TV / BEAMER VERBINDEN</button>
+<div id="playerChoices" class="hide" style="margin-top:10px"><select id="playerSelect" style="width:100%">
+<option>Kevin</option><option>Markus</option><option>Stefan</option><option>Kay</option><option>Michel</option><option>Patrick</option><option>Mario</option><option>Fabian</option><option>Timo</option><option>Andre</option><option>Klemm</option><option>Swen</option>
+</select><button id="playerJoinBtn" type="button" style="width:100%;margin-top:10px">ALS SPIELER VERBINDEN</button></div>
+</div>
+</section>
+
+<section id="hostView" class="hide">
+<div class="card"><div class="muted">Raumcode</div><div id="roomCode" class="big code"></div><div id="connections"></div></div>
+<div class="tabs">
+<button data-mode="quiz">Kroatien-Quiz</button>
+<button data-mode="estimate">Schätzmeister</button>
+<button data-mode="category">Kategorien</button><button data-mode="emoji">Emoji-Songs</button><button data-mode="buzzer">Buzzer-Spiel</button><button data-mode="tourpics">Kegeltour-Fotos</button>
+</div>
+<div id="hostGame"></div>
+</section>
+
+<section id="captainView" class="hide">
+<div class="card"><div id="teamName"></div><div id="capTimer" class="timer">–</div><div id="capGame"><p class="muted">Warte auf Jan …</p></div></div>
+</section>
+
+<section id="playerView" class="hide"><div class="card"><div id="playerName" class="big" style="font-size:28px"></div><div id="playerTourBox" class="hide"><img id="playerTourPhoto" alt="Kegeltour-Foto"><div id="playerTourHint" class="status" style="text-align:center;font-weight:900"></div></div><div id="buzzState" class="muted" style="text-align:center;margin:12px 0">Warte auf Jan …</div><button id="buzzBtn" class="danger" disabled style="width:100%;height:220px;font-size:46px;border-radius:28px">BUZZER</button><div id="playerBuzzBoard" class="hide" style="margin-top:12px"><div id="playerAlert" class="status" style="text-align:center;font-size:22px"></div><div id="playerCountdown" class="big" style="text-align:center;font-size:82px;margin:10px 0;font-weight:900"></div><div id="playerRanking"></div></div></div></section>
+<section id="screenView" class="hide">
+<div class="card"><div id="screenTitle" class="big">Warte auf Jan …</div><div id="screenTimer" class="timer">–</div><div id="screenStatus"></div></div>
+</section>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.5/dist/peerjs.min.js"></script>
+<script src="data.js?v=8"></script>
+<script>
+"use strict";
+const D=window.GAME_DATA;
+if(!Array.isArray(D.emoji)){
+  D.emoji=[
+    ["👁️ 🐅 🥊 🏆","Eye of the Tiger","Survivor"],
+    ["🛣️ ➡️ 🔥 😈","Highway to Hell","AC/DC"],
+    ["🕺 👑 👩 🎶","Dancing Queen","ABBA"],
+    ["🏨 🌴 ☀️ 🇺🇸","Hotel California","Eagles"],
+    ["👧 🔥 🔥 🎤","Girl on Fire","Alicia Keys"],
+    ["🧊 🧊 👶 🎤","Ice Ice Baby","Vanilla Ice"],
+    ["🎂 🍰 🌊 🏖️","Cake by the Ocean","DNCE"],
+    ["🚀 👨 🌙 ⭐","Rocket Man","Elton John"],
+    ["💜 ☔ 🌧️ 👑","Purple Rain","Prince"],
+    ["🖤 🟡 🖤 🟡","Black and Yellow","Wiz Khalifa"],
+    ["☀️ 🚶‍♂️ 😊 🎶","Walking on Sunshine","Katrina and the Waves"],
+    ["👶 👶 👶 🔙","Baby Got Back","Sir Mix-a-Lot"],
+    ["💰 💰 💰 👩","Money, Money, Money","ABBA"],
+    ["🕺 🌙 ⭐ 🌃","Dancing in the Moonlight","Toploader"],
+    ["🙋 ❤️ 🪨 🎸","I Love Rock 'n' Roll","Joan Jett & the Blackhearts"]
+  ];
+}
+const $=id=>document.getElementById(id);
+let peer=null, conns={}, conn=null, role=null, room=null, modeName="quiz";
+let timerInt=null, answers={}, used=new Set(), qidx=0, eidx=0, currentClientKind=null;
+let catName=Object.keys(D.categories)[0];
+let buzzOrder=[], buzzOpen=false, buzzAnswerIndex=0, buzzAnswerTimer=null, buzzAnswerEnd=0;
+let promiIdx=0, promiReveal=0, promiSolved=false, promiTimer=null;
+let promiRounds=JSON.parse(localStorage.getItem("promiRounds")||"null")||Array.from({length:12},(_,i)=>({brother:"",celebrity:"",mix:"",brotherImg:"",celebrityImg:""}));
+const TOUR_ROUNDS=[{"place":"Stuttgart","year":2023,"img":"tour_12.jpg"},{"place":"München","year":2012,"img":"tour_07.jpg"},{"place":"Amsterdam","year":2015,"img":"tour_13.jpg"},{"place":"Breslau","year":2017,"img":"tour_18.jpg"},{"place":"Münster","year":2014,"img":"tour_08.jpg"},{"place":"Frankfurt","year":2022,"img":"tour_02.jpg"},{"place":"Breslau","year":2017,"img":"tour_17.jpg"},{"place":"Berlin","year":2016,"img":"tour_14.jpg"},{"place":"Stuttgart","year":2023,"img":"tour_11.jpg"},{"place":"Bremen","year":2023,"img":"tour_15.jpg"},{"place":"München","year":2012,"img":"tour_06.jpg"},{"place":"Frankfurt","year":2022,"img":"tour_03.jpg"},{"place":"Brügge","year":2025,"img":"tour_01.jpg"},{"place":"Hamburg","year":2020,"img":"tour_04.jpg"},{"place":"Bremen","year":2023,"img":"tour_16.jpg"},{"place":"Sophia","year":2019,"img":"tour_09.jpg"},{"place":"Sophia","year":2019,"img":"tour_10.jpg"},{"place":"Krakau","year":2018,"img":"tour_05.jpg"}];
+let tourIdx=0,tourPhase="idle",tourScores={},tourLocationWinner=null;
+
+let emojiIdx=0, emojiPhase="idle", emojiWinner=null, emojiAttempts={team1:0,team2:0,team3:0}, emojiPoints={team1:0,team2:0,team3:0};
+
+function show(view){
+  ["setup","hostView","captainView","playerView","screenView"].forEach(id=>$(id).classList.add("hide"));
+  $(view).classList.remove("hide");
+}
+function roomCode(){return Math.random().toString(36).slice(2,8).toUpperCase();}
+function ensurePeer(){
+  if(typeof Peer==="undefined"){alert("PeerJS konnte nicht geladen werden. Bitte Internetverbindung prüfen.");return false;}
+  return true;
+}
+function openJoin(kind){
+  role=kind;
+  $("joinBox").classList.remove("hide");
+  $("teamChoices").classList.toggle("hide",kind==="screen"||kind==="player");
+  $("screenJoinBtn").classList.toggle("hide",kind!=="screen");
+  $("playerChoices").classList.toggle("hide",kind!=="player");
+  $("roomIn").focus();
+}
+function host(){
+  if(!ensurePeer())return;
+  role="host"; room=roomCode();
+  peer=new Peer("kroatien-"+room);
+  peer.on("open",()=>{
+    show("hostView"); $("roomCode").textContent=room; refreshConnections(); renderHost();
+  });
+  peer.on("connection",c=>{
+    c.on("data",m=>onHostMessage(m,c));
+  });
+  peer.on("error",e=>alert("Verbindungsfehler: "+e.type));
+}
+function join(teamRole){
+  if(!ensurePeer())return;
+  room=$("roomIn").value.trim().toUpperCase();
+  if(!room){alert("Bitte Raumcode eingeben.");return;}
+  role=teamRole;
+  peer=new Peer();
+  peer.on("open",()=>{
+    conn=peer.connect("kroatien-"+room,{reliable:true});
+    conn.on("open",()=>{
+      conn.send({type:"join",role});
+      if(role==="screen") show("screenView");
+      else{
+        show("captainView");
+        $("teamName").innerHTML="<b>"+D.teams[role].name+"</b><div class='muted'>"+D.teams[role].players+"</div>";
+      }
+    });
+    conn.on("data",onClientMessage);
+    conn.on("error",()=>alert("Verbindung zum Spielleiter fehlgeschlagen."));
+  });
+}
+function joinPlayer(){
+  room=$("roomIn").value.trim().toUpperCase();
+  if(!room){alert("Bitte Raumcode eingeben.");return;}
+  const name=$("playerSelect").value;
+  if(!name){alert("Bitte Spieler auswählen.");return;}
+  role="player:"+name;
+
+  const connectPlayer=()=>{
+    conn=peer.connect("kroatien-"+room,{reliable:true});
+    conn.on("open",()=>{
+      conn.send({type:"join",role,name});
+      show("playerView");
+      $("playerName").textContent=name;
+      $("buzzState").textContent="Verbunden – warte auf Jan …";
+    });
+    conn.on("data",onClientMessage);
+    conn.on("error",()=>alert("Verbindung fehlgeschlagen. Bitte Raumcode prüfen."));
+  };
+
+  if(!peer){
+    if(!window.Peer){alert("PeerJS konnte nicht geladen werden. Internetverbindung prüfen.");return;}
+    peer=new Peer();
+    peer.on("open",connectPlayer);
+    peer.on("error",e=>alert("Verbindung fehlgeschlagen: "+e.type));
+  }else if(peer.open){
+    connectPlayer();
+  }else{
+    peer.once("open",connectPlayer);
+  }
+}
+function onHostMessage(m,c){
+  if(m.type==="join"){conns[m.role]=c; refreshConnections();}
+  if(m.type==="buzz" && buzzOpen && !buzzOrder.includes(m.name)){
+    buzzOrder.push(m.name);
+    if(buzzOrder.length===1){buzzAnswerIndex=0; startBuzzAnswerTimer();}
+    broadcastBuzzOrder(); renderHost();
+  }
+  if(m.type==="answer"){
+    if(modeName==="emoji" && (emojiPhase==="title"||emojiPhase==="artist")) handleEmojiAnswer(m.role,m.value);
+    else {answers[m.role]=m.value; renderHost();}
+  }
+}
+function refreshConnections(){
+  const base=["team1","team2","team3","screen"].map(r=>"<span class='pill'>"+(r==="screen"?"TV":D.teams[r].name)+": "+(conns[r]?"✓":"–")+"</span>").join("");
+  $("connections").innerHTML=base+"<span class='pill'>Spieler: "+Object.keys(conns).filter(x=>x.startsWith("player:")).length+"/12</span>";
+}
+function sendAll(msg){Object.values(conns).forEach(c=>{try{c.send(msg)}catch(e){}});}
+function onClientMessage(m){
+  if(m.type==="buzzState" && role && role.startsWith("player:")){$("buzzBtn").disabled=!m.open;$("buzzState").textContent=m.open?"🟢 BUZZER FREI!":"🔒 Buzzer gesperrt";}
+  if(m.type==="buzzReset" && role && role.startsWith("player:")){$("buzzBtn").classList.remove("hide");$("buzzBtn").disabled=true;$("playerBuzzBoard").classList.add("hide");$("playerRanking").innerHTML="";$("playerCountdown").textContent="";$("buzzState").textContent="Neue Runde – warte auf Jan …";}
+  if(m.type==="buzzPosition" && role && role.startsWith("player:")){
+    const name=role.slice(7),p=m.order.indexOf(name),cur=m.order.indexOf(m.current);
+    if(p>=0){
+      $("buzzBtn").classList.add("hide");$("playerBuzzBoard").classList.remove("hide");
+      $("buzzState").innerHTML="<b>Du hast gebuzzert: Platz "+(p+1)+"</b>";
+      $("playerRanking").innerHTML="<h3>Buzzer-Reihenfolge</h3>"+m.order.map((n,i)=>"<div class='status' style='font-size:18px;"+(n===m.current?"background:#dff5e7":"")+"'><b>"+(i+1)+". "+n+(n===m.current?" ← DRAN":"")+"</b></div>").join("");
+      const a=$("playerAlert");
+      if(m.current===name){a.className="status current-warning";a.innerHTML="🔥 DU BIST DRAN! JETZT ANTWORTEN!";}
+      else if(cur>=0&&p===cur+1){a.className="status next-warning";a.innerHTML="⚠️ ACHTUNG – DU BIST ALS NÄCHSTER DRAN!";}
+      else{a.className="status";a.innerHTML=m.current?"Aktuell antwortet: <b>"+m.current+"</b>":"Warte auf die Auswertung …";}
+      if(m.answerEnd)countdown(m.answerEnd,$("playerCountdown"));else $("playerCountdown").textContent="";
+    }
+  }
+  if(m.type==="tourState"){
+    if(role==="screen"){
+      $("screenTitle").innerHTML="📸 WO WAR DAS? <span style='font-size:22px'>"+(m.idx+1)+"/"+m.total+"</span>";
+      $("screenStatus").innerHTML="<img class='tour-photo' src='"+m.round.img+"'>"+(m.phase==="year"?"<div class='status ok' style='text-align:center;font-size:28px'><b>✓ "+m.round.place+"</b><br>Welches Jahr?</div>":m.phase==="done"?"<div class='status ok' style='text-align:center;font-size:30px'><b>"+m.round.place+" · "+m.round.year+"</b></div>":"<div style='text-align:center;font-size:26px;font-weight:900;margin-top:12px'>WO WAR DIESE KEGELTOUR?</div>");
+    } else if(role&&role.startsWith("player:")){
+      $("playerView").classList.add("tour-active"); $("playerTourBox").classList.remove("hide"); $("playerTourPhoto").src=m.round.img;
+      $("playerTourHint").innerHTML=m.phase==="year"?"📅 Ort richtig: <b>"+m.round.place+"</b> – jetzt geht es ums Jahr!":m.phase==="done"?"✅ <b>"+m.round.place+" · "+m.round.year+"</b>":"📍 Ort erkennen und buzzern!";
+    }
+  }
+  if(m.type==="promiState" && role==="screen"){
+    const r=m.round;
+    $("screenTitle").innerHTML="🎭 PROMI-MIX <span style='font-size:22px'>"+(m.idx+1)+"/12</span>";
+    $("screenTimer").textContent="";
+    if(!m.solved){
+      $("screenStatus").innerHTML="<div class='pm-puzzle'>"+(r.mix?"<img src='"+r.mix+"'>":"<div style='padding-top:40%;font-size:26px;color:white'>Bild folgt …</div>")+"<div class='pm-grid'>"+Array.from({length:16},(_,i)=>"<div class='pm-tile "+(i<m.reveal?"open":"")+"'></div>").join("")+"</div></div><div style='text-align:center;font-size:28px;font-weight:900'>WER IST DER KEGELBRUDER?</div>";
+    }else{
+      $("screenStatus").innerHTML="<div style='text-align:center;font-size:52px;font-weight:900;color:#1b9b55'>✓ RICHTIG!</div><div class='pm-solution'>"+pmPhoto(r.brotherImg,"KEGELBRUDER",r.brother)+pmPhoto(r.mix,"KI-MIX","MORPH")+pmPhoto(r.celebrityImg,"PROMI",r.celebrity)+"</div>";
+    }
+  }
+  if(m.type==="buzzBoard" && role==="screen"){
+    const ci=m.order.indexOf(m.current);
+    $("screenTitle").innerHTML=m.current?"🎤 <b>"+m.current+"</b> ist dran":(m.open?"🔴 BUZZER IST OFFEN":"🔒 BUZZER GESPERRT");
+    if(m.answerEnd){countdown(m.answerEnd,$("screenTimer"));}else{$("screenTimer").textContent=m.open?"JETZT!":"";}
+    $("screenStatus").innerHTML=m.order.length
+      ? "<div style='text-align:center;font-size:20px;margin-bottom:12px'><b>BUZZER-REIHENFOLGE</b></div>"+
+        m.order.map((n,i)=>{
+          const current=n===m.current, next=ci>=0&&i===ci+1;
+          return "<div class='status tv-rank "+(current?"tv-current":next?"tv-next":"")+"'>"+
+            "<div class='tv-rank-no'>"+(i+1)+".</div>"+
+            "<div class='tv-rank-name'>"+n+"</div>"+
+            "<div class='tv-rank-tag'>"+(current?"JETZT DRAN 🔥":next?"ALS NÄCHSTER ⚠️":"")+"</div></div>";
+        }).join("")
+      : "<div style='text-align:center;margin-top:70px'><div style='font-size:80px'>🔴</div><div class='big' style='font-size:42px'>Bereit zum Buzzern?</div><div class='muted' style='font-size:22px'>Die Reihenfolge erscheint hier live.</div></div>";
+  }
+  if(m.type==="start") startLocal(m);
+  if(m.type==="feedback" && role!=="screen"){
+    const old=$("capGame").querySelector(".emojiFeedback"); if(old)old.remove();
+    $("capGame").insertAdjacentHTML("beforeend","<div class='emojiFeedback'>"+m.html+"</div>");
+  }
+  if(m.type==="reset"){
+    clearInterval(timerInt);
+    if(role==="screen"){$("screenTitle").textContent="Warte auf Jan …";$("screenTimer").textContent="–";$("screenStatus").innerHTML="";}
+    else {$("capTimer").textContent="–";$("capGame").innerHTML="<p class='muted'>Warte auf Jan …</p>";}
+  }
+  if(m.type==="reveal"){
+    if(role==="screen"){
+      $("screenStatus").innerHTML=m.html;
+    }else{
+      clearInterval(timerInt);
+      $("capTimer").textContent="✓";
+      $("capGame").innerHTML="<h2>Auflösung</h2>"+m.html;
+    }
+  }
+}
+function countdown(end,el,done){
+  clearInterval(timerInt);
+  const tick=()=>{
+    const s=Math.max(0,Math.ceil((end-Date.now())/1000));
+    el.textContent=s;
+    if(s<=0){clearInterval(timerInt);if(done)done();}
+  };
+  tick(); timerInt=setInterval(tick,200);
+}
+function startLocal(m){
+  currentClientKind=m.kind;
+  if(role==="screen"){
+    $("screenTitle").textContent=m.title;
+    if(m.kind==="emojiTitle"){
+      $("screenStatus").innerHTML="<div class='big' style='font-size:80px;margin:25px 0'>"+m.emojis+"</div><div class='muted'>Songtitel gesucht</div>";
+    }else if(m.kind==="emojiArtist"){
+      $("screenStatus").innerHTML="<div class='big' style='font-size:70px;margin:18px 0'>"+m.emojis+"</div><div class='status ok' style='font-size:30px'><b>Titel: "+m.songTitle+"</b></div><div class='muted'>Jetzt Interpret – 30 Sekunden</div>";
+    }else if(m.kind==="quiz" && Array.isArray(m.options)){
+      $("screenStatus").innerHTML=
+        "<div class='grid' style='margin-top:18px'>"+
+        m.options.map((x,i)=>
+          "<div class='status' style='font-size:24px;font-weight:800;padding:16px'>"+
+          String.fromCharCode(65+i)+" · "+x+
+          "</div>"
+        ).join("")+
+        "</div><div class='muted' style='margin-top:12px'>Team-Antworten und richtige Lösung bleiben bis zur Auflösung verborgen.</div>";
+    }else{
+      $("screenStatus").innerHTML="<div class='muted'>Antworten noch verborgen</div>";
+    }
+    countdown(m.end,$("screenTimer"));
+    return;
+  }
+  let h="<h2>"+m.title+"</h2>";
+  if(m.kind==="quiz"){
+    m.options.forEach((x,i)=>h+="<button class='answer secondary qanswer' data-value='"+i+"'>"+String.fromCharCode(65+i)+" · "+x+"</button>");
+  } else if(m.kind==="estimate"){
+    h+="<input id='txtAns' type='number' inputmode='numeric' placeholder='Kilometer' style='width:100%'><button id='sendText' class='answer'>ABSCHICKEN</button>";
+  } else if(m.kind==="category"){
+    h+="<input id='txtAns' autocomplete='off' placeholder='Antwort' style='width:100%'><button id='sendText' class='answer'>ABSCHICKEN</button>";
+  } else if(m.kind==="emojiTitle"){
+    h+="<div class='big' style='font-size:54px;margin:15px 0'>"+m.emojis+"</div><p><b>Songtitel gesucht</b> · maximal 3 Versuche</p><input id='txtAns' autocomplete='off' placeholder='Songtitel' style='width:100%'><button id='sendText' class='answer'>VERSUCH ABSCHICKEN</button>";
+  } else if(m.kind==="emojiArtist"){
+    h+="<div class='big' style='font-size:42px;margin:12px 0'>"+m.emojis+"</div><div class='status ok'><b>Titel: "+m.songTitle+"</b></div><p><b>Interpret gesucht</b> · 30 Sekunden · maximal 3 Versuche</p><input id='txtAns' autocomplete='off' placeholder='Interpret' style='width:100%'><button id='sendText' class='answer'>VERSUCH ABSCHICKEN</button>";
+  }
+  $("capGame").innerHTML=h;
+  document.querySelectorAll(".qanswer").forEach(b=>b.addEventListener("click",()=>submitChoice(Number(b.dataset.value),b)));
+  const sb=$("sendText"); if(sb)sb.addEventListener("click",submitText);
+  countdown(m.end,$("capTimer"),()=>lockCaptain("Zeit abgelaufen"));
+}
+function submitChoice(v,b){
+  document.querySelectorAll(".qanswer").forEach(x=>x.classList.remove("sel"));
+  b.classList.add("sel"); conn.send({type:"answer",role,value:v}); lockCaptain("Antwort gesendet ✓");
+}
+function submitText(){
+  const e=$("txtAns"); if(!e||!e.value.trim())return;
+  conn.send({type:"answer",role,value:e.value.trim()});
+  if(!(currentClientKind==="emojiTitle"||currentClientKind==="emojiArtist")) lockCaptain("Antwort gesendet ✓");
+  else { e.value=""; e.focus(); }
+}
+function lockCaptain(msg){
+  document.querySelectorAll("#capGame button,#capGame input").forEach(x=>x.disabled=true);
+  if(!$("capGame").querySelector(".status"))$("capGame").insertAdjacentHTML("beforeend","<div class='status'>"+msg+"</div>");
+}
+function setMode(m){
+  modeName=m; answers={};
+  if(m==="emoji" && !["idle","title","artist","done"].includes(emojiPhase)) resetEmojiRound();
+  renderHost();
+}
+function answerStatus(category=false){
+  return "<div class='card'>"+["team1","team2","team3"].map(t=>{
+    const val=answers[t]===undefined?"—":String(answers[t]);
+    const accept=category&&answers[t]!==undefined?" <button class='good acceptCat' data-team='"+t+"'>✓</button>":"";
+    return "<div class='status'><b>"+D.teams[t].name+":</b> "+val+accept+"</div>";
+  }).join("")+"</div>";
+}
+function renderHost(){
+  let h="";
+  if(modeName==="quiz"){
+    const q=D.quiz[qidx];
+    h="<div class='card'><h2>Frage "+(qidx+1)+"/"+D.quiz.length+"</h2><p>"+q[0]+"</p>"+
+      q[1].map((x,i)=>"<span class='pill'>"+String.fromCharCode(65+i)+" · "+x+"</span>").join("")+
+      "<p><button id='startBtn'>30 SEK. START</button> <button id='revealBtn' class='secondary'>AUFLÖSEN</button></p>"+
+      answerStatus(false)+"<div id='hostReveal'></div><div class='grid'><button id='prevBtn' class='secondary'>←</button><button id='nextBtn'>NÄCHSTE →</button></div></div>";
+  } else if(modeName==="estimate"){
+    const e=D.estimate[eidx];
+    h="<div class='card'><h2>Schätzmeister "+(eidx+1)+"/"+D.estimate.length+"</h2><p class='big'>"+e[0]+"</p><p class='muted'>Lösung: "+Number(e[1]).toLocaleString("de-DE")+" km</p>"+
+      "<p><button id='startBtn'>30 SEK. START</button> <button id='revealBtn' class='secondary'>AUSWERTEN</button></p>"+
+      answerStatus(false)+"<div id='hostReveal'></div><div class='grid'><button id='prevBtn' class='secondary'>←</button><button id='nextBtn'>NÄCHSTE →</button></div></div>";
+  } else if(modeName==="category"){
+    h="<div class='card'><h2>Kategorien-Battle</h2><select id='catSelect' style='width:100%'>"+
+      Object.keys(D.categories).map(x=>"<option "+(x===catName?"selected":"")+">"+x+"</option>").join("")+
+      "</select><p><select id='turnTeam'><option value='team1'>Team 1</option><option value='team2'>Team 2</option><option value='team3'>Team 3</option></select> <button id='catStart'>35 SEK. START</button></p>"+
+      answerStatus(true)+"<div>"+D.categories[catName].map(x=>"<span class='pill "+(used.has(norm(x))?"check":"")+"'>"+x+"</span>").join("")+"</div></div>";
+  }
+  if(modeName==="tourpics"){
+    const r=TOUR_ROUNDS[tourIdx], cur=buzzOrder[buzzAnswerIndex]||null;
+    const scoreNames=["Kevin","Markus","Stefan","Kay","Michel","Patrick","Mario","Fabian","Timo","Andre","Klemm","Swen"];
+    h="<div class='card'><h2>📸 Kegeltour-Fotos "+(tourIdx+1)+"/"+TOUR_ROUNDS.length+"</h2><img class='tour-photo tour-host-photo' src='"+r.img+"'>"+
+      "<div class='status'><b>Lösung:</b> "+r.place+" · "+r.year+"</div>"+
+      (tourPhase==="idle"?"<button id='tourStart' class='good' style='width:100%'>RUNDE STARTEN + BUZZER FREIGEBEN</button>":"")+
+      (tourPhase==="location"?"<div class='status ok' style='font-size:22px'><b>Gesucht: ORT (2 Punkte)</b><br>"+(cur?"Antwortet: <b>"+cur+"</b>":"Warte auf Buzzer …")+"</div>"+(cur?"<div class='grid'><button id='tourLocWrong' class='danger'>ORT FALSCH → NÄCHSTER</button><button id='tourLocRight' class='good'>ORT RICHTIG +2</button></div>":""):"")+
+      (tourPhase==="year"?"<div class='status ok' style='font-size:22px'><b>✓ "+r.place+"</b><br><b>"+tourLocationWinner+"</b> darf jetzt das JAHR raten (+1).</div><div class='grid'><button id='tourYearWrong' class='danger'>JAHR FALSCH</button><button id='tourYearRight' class='good'>JAHR RICHTIG +1</button></div>":"")+
+      (tourPhase==="done"?"<div class='status ok' style='font-size:25px;text-align:center'><b>AUFLÖSUNG: "+r.place+" · "+r.year+"</b></div><button id='tourNext' style='width:100%'>NÄCHSTES FOTO →</button>":"")+
+      "<h3>Punktestand</h3><div class='tour-score'>"+scoreNames.map(n=>"<div class='status'><b>"+n+"</b><br><span style='font-size:24px;font-weight:900'>"+(tourScores[n]||0)+"</span></div>").join("")+"</div></div>";
+  }
+  if(modeName==="promimix"){
+    const r=promiRounds[promiIdx];
+    h="<div class='card pm-stage'><h2>🎭 Promi-Mix "+(promiIdx+1)+"/12</h2>"+
+      (!promiSolved
+       ?"<div class='pm-puzzle'>"+(r.mix?"<img src='"+r.mix+"'>":"<div style='padding-top:40%;font-size:24px;color:white'>Noch kein KI-Mix hinterlegt</div>")+"<div class='pm-grid'>"+Array.from({length:16},(_,i)=>"<div class='pm-tile "+(i<promiReveal?"open":"")+"'></div>").join("")+"</div></div>"+
+        "<div class='grid'><button id='pmReveal'>PUZZLETEIL AUFDECKEN</button><button id='pmAuto' class='secondary'>AUTO-AUFDECKEN</button><button id='pmSolve' class='good'>RICHTIG ✓ AUFLÖSEN</button></div>"
+       :"<div style='font-size:42px;font-weight:900;color:#1b9b55'>✓ RICHTIG!</div><div class='pm-solution'>"+
+          pmPhoto(r.brotherImg,"KEGELBRUDER",r.brother||"—")+pmPhoto(r.mix,"KI-MIX","MORPH")+pmPhoto(r.celebrityImg,"PROMI",r.celebrity||"—")+"</div>")+
+      "<div class='grid' style='margin-top:18px'><button id='pmPrev' class='secondary'>← VORHERIGES</button><button id='pmReset' class='secondary'>RUNDE ZURÜCKSETZEN</button><button id='pmNext'>NÄCHSTES →</button></div>"+
+      "<details style='margin-top:18px;text-align:left'><summary><b>Bild "+(promiIdx+1)+" einrichten</b></summary><div class='pm-config' style='margin-top:12px'>"+
+      "<input id='pmBrother' placeholder='Name Kegelbruder' value='"+escAttr(r.brother)+"'><input id='pmCelebrity' placeholder='Name Promi' value='"+escAttr(r.celebrity)+"'>"+
+      "<label>Kegelbruder-Foto<input id='pmBrotherFile' type='file' accept='image/*'></label><label>Promi-Foto<input id='pmCelebrityFile' type='file' accept='image/*'></label>"+
+      "<label style='grid-column:1/-1'>KI-Mix<input id='pmMixFile' type='file' accept='image/*'></label></div><button id='pmSave' style='margin-top:10px'>BILD-DATEN SPEICHERN</button></details></div>";
+  }
+  if(modeName==="buzzer"){
+    h="<div class='card'><h2>🔴 Buzzer-Spiel</h2><p class='muted'>Alle 12 Spieler buzzern auf dem eigenen Handy. Die Reihenfolge bleibt erhalten, damit bei einer falschen Antwort der Nächste dran ist.</p><div class='grid'><button id='buzzOpenBtn' class='good'>BUZZER FREIGEBEN</button><button id='buzzCloseBtn' class='secondary'>SPERREN</button><button id='buzzResetBtn' class='danger'>NEUE RUNDE</button></div><h3>Reihenfolge</h3>"+(buzzOrder.length?buzzOrder.map((n,i)=>"<div class='status' style='font-size:"+(i===0?26:18)+"px'><b>"+(i+1)+". "+n+"</b></div>").join(""):"<div class='status'>Noch niemand gebuzzert.</div>")+"<div id='buzzTurnBox'>"+(buzzOrder.length?"<div class='status ok' style='font-size:24px'><b>Antwortet: "+buzzOrder[Math.min(buzzAnswerIndex,buzzOrder.length-1)]+"</b><div id='buzzAnswerCountdown' class='big' style='font-size:42px'>"+(buzzAnswerEnd?Math.max(0,Math.ceil((buzzAnswerEnd-Date.now())/1000)):"10")+"</div></div>":"")+"</div>"+
+      (buzzOrder.length?"<div class='grid'><button id='buzzWrongBtn' class='danger'>FALSCH → NÄCHSTER</button><button id='buzzRightBtn' class='good'>RICHTIG ✓</button></div>":"")+
+      "<p><b>Status:</b> "+(buzzOpen?"🟢 Buzzer offen":"🔒 Buzzer gesperrt")+"</p></div>";
+  }
+  if(modeName==="emoji"){
+    const s=D.emoji[emojiIdx];
+    const phaseText=emojiPhase==="title"?"Titel läuft – bis ein Team richtig antwortet":emojiPhase==="artist"?"Interpret läuft – 30 Sekunden":emojiPhase==="done"?"Runde beendet":"Bereit";
+    h="<div class='card'><h2>Emoji-Songs "+(emojiIdx+1)+"/"+D.emoji.length+"</h2>"+
+      "<div class='big' style='font-size:58px;margin:20px 0'>"+s[0]+"</div>"+
+      "<div class='status'><b>Status:</b> "+phaseText+"</div>"+
+      (emojiPhase==="idle"?"<button id='emojiStart'>TITEL-RATEN STARTEN</button>":"")+
+      (emojiPhase==="title"?"<button id='emojiRevealTitle' class='secondary'>TITEL MANUELL AUFLÖSEN</button>":"")+
+      (emojiPhase==="artist"?"<div class='status ok'><b>Titel: "+s[1]+"</b></div>":"")+
+      (emojiPhase==="done"?"<div class='status ok'><b>"+s[1]+"</b> · "+s[2]+"</div>":"")+
+      "<div class='card'>"+["team1","team2","team3"].map(t=>"<div class='status'><b>"+D.teams[t].name+"</b> · Punkte: <b style='font-size:22px'>"+("I".repeat(emojiPoints[t])||"–")+"</b> <span class='muted'>("+emojiPoints[t]+")</span> · Versuche: "+emojiAttempts[t]+"/3</div>").join("")+"</div>"+
+      "<div class='grid'><button id='emojiPrev' class='secondary'>←</button><button id='emojiNext'>NÄCHSTER SONG →</button></div></div>";
+  }
+  $("hostGame").innerHTML=h;
+  bindHostControls();
+}
+function bindHostControls(){
+  const start=$("startBtn"), reveal=$("revealBtn"), prev=$("prevBtn"), next=$("nextBtn");
+  if(start)start.addEventListener("click",()=>startRound(30));
+  if(reveal)reveal.addEventListener("click",()=>modeName==="quiz"?revealQuiz():revealEstimate());
+  if(prev)prev.addEventListener("click",()=>{answers={};if(modeName==="quiz")qidx=Math.max(0,qidx-1);else eidx=Math.max(0,eidx-1);renderHost();});
+  if(next)next.addEventListener("click",()=>{answers={};if(modeName==="quiz")qidx=Math.min(D.quiz.length-1,qidx+1);else eidx=Math.min(D.estimate.length-1,eidx+1);renderHost();});
+  const cs=$("catSelect"); if(cs)cs.addEventListener("change",()=>{catName=cs.value;used=new Set();answers={};renderHost();});
+  const catStart=$("catStart"); if(catStart)catStart.addEventListener("click",startCategory);
+  document.querySelectorAll(".acceptCat").forEach(b=>b.addEventListener("click",()=>acceptCategory(b.dataset.team)));
+  const ts=$("tourStart");if(ts)ts.addEventListener("click",tourStartRound);
+  const tlw=$("tourLocWrong");if(tlw)tlw.addEventListener("click",tourLocationWrong);
+  const tlr=$("tourLocRight");if(tlr)tlr.addEventListener("click",tourLocationRight);
+  const tyw=$("tourYearWrong");if(tyw)tyw.addEventListener("click",()=>tourFinish(false));
+  const tyr=$("tourYearRight");if(tyr)tyr.addEventListener("click",()=>tourFinish(true));
+  const tn=$("tourNext");if(tn)tn.addEventListener("click",tourNextRound);
+  const pr=$("pmReveal");if(pr)pr.addEventListener("click",pmOpenOne);
+  const pa=$("pmAuto");if(pa)pa.addEventListener("click",pmAuto);
+  const ps=$("pmSolve");if(ps)ps.addEventListener("click",pmSolve);
+  const pp=$("pmPrev");if(pp)pp.addEventListener("click",()=>pmMove(-1));
+  const pn=$("pmNext");if(pn)pn.addEventListener("click",()=>pmMove(1));
+  const px=$("pmReset");if(px)px.addEventListener("click",pmReset);
+  const psv=$("pmSave");if(psv)psv.addEventListener("click",pmSave);
+  const bo=$("buzzOpenBtn"); if(bo)bo.addEventListener("click",openBuzzers);
+  const bc=$("buzzCloseBtn"); if(bc)bc.addEventListener("click",closeBuzzers);
+  const br=$("buzzResetBtn"); if(br)br.addEventListener("click",resetBuzzers);
+  const bw=$("buzzWrongBtn"); if(bw)bw.addEventListener("click",nextBuzzAnswer);
+  const bry=$("buzzRightBtn"); if(bry)bry.addEventListener("click",finishBuzzAnswer);
+  const es=$("emojiStart"); if(es)es.addEventListener("click",startEmojiTitle);
+  const er=$("emojiRevealTitle"); if(er)er.addEventListener("click",()=>startEmojiArtist(null));
+  const ep=$("emojiPrev"); if(ep)ep.addEventListener("click",()=>changeEmoji(-1));
+  const en=$("emojiNext"); if(en)en.addEventListener("click",()=>changeEmoji(1));
+}
+function startRound(sec){
+  answers={}; const end=Date.now()+sec*1000;
+  if(modeName==="quiz"){
+    const q=D.quiz[qidx]; sendAll({type:"start",kind:"quiz",end,title:"Frage "+(qidx+1)+": "+q[0],options:q[1]});
+  }else{
+    sendAll({type:"start",kind:"estimate",end,title:"Schätzmeister: "+D.estimate[eidx][0]});
+  }
+  renderHost();
+}
+function revealQuiz(){
+  const q=D.quiz[qidx], correct=q[2]; let html="";
+  ["team1","team2","team3"].forEach(t=>{
+    const a=answers[t],ok=Number(a)===correct;
+    html+="<div class='status "+(ok?"ok":"bad")+"'>"+D.teams[t].name+": "+(a===undefined?"—":String.fromCharCode(65+Number(a))+" · "+q[1][Number(a)])+"</div>";
+  });
+  html+="<p><b>Richtig: "+String.fromCharCode(65+correct)+" · "+q[1][correct]+"</b></p>";
+  const hr=$("hostReveal"); if(hr)hr.innerHTML="<div class='card'>"+html+"</div>";
+  sendAll({type:"reveal",html});
+}
+function revealEstimate(){
+  const sol=Number(D.estimate[eidx][1]), pts=[3,2,1];
+  const arr=["team1","team2","team3"].filter(t=>answers[t]!==undefined)
+    .map(t=>[t,Number(answers[t]),Math.abs(Number(answers[t])-sol)]).sort((a,b)=>a[2]-b[2]);
+  let html="<p><b>Lösung: "+sol.toLocaleString("de-DE")+" km</b></p>";
+  arr.forEach((x,i)=>html+="<div class='status'>"+pts[i]+" Punkte: "+D.teams[x[0]].name+" – "+x[1].toLocaleString("de-DE")+" km</div>");
+  const hr=$("hostReveal"); if(hr)hr.innerHTML="<div class='card'>"+html+"</div>";
+  sendAll({type:"reveal",html});
+}
+function startCategory(){
+  answers={}; const t=$("turnTeam").value, end=Date.now()+35000;
+  const msg={type:"start",kind:"category",end,title:catName};
+  if(conns[t])conns[t].send(msg); else alert(D.teams[t].name+" ist noch nicht verbunden.");
+  if(conns.screen)conns.screen.send(msg); renderHost();
+}
+
+
+function tourSendState(){
+  const msg={type:"tourState",idx:tourIdx,total:TOUR_ROUNDS.length,round:TOUR_ROUNDS[tourIdx],phase:tourPhase};
+  if(conns.screen)conns.screen.send(msg); playerConnections().forEach(([k,c])=>c.send(msg));
+}
+function tourStartRound(){
+  clearInterval(buzzAnswerTimer);buzzOrder=[];buzzAnswerIndex=0;buzzAnswerEnd=0;tourLocationWinner=null;tourPhase="location";buzzOpen=true;
+  tourSendState(); playerConnections().forEach(([k,c])=>{c.send({type:"buzzReset"});c.send({type:"buzzState",open:true});});
+  if(conns.screen)conns.screen.send(buzzBoardMessage());renderHost();
+}
+function tourLocationWrong(){if(tourPhase!=="location")return;nextBuzzAnswer();}
+function tourLocationRight(){
+  if(tourPhase!=="location")return; const n=buzzOrder[buzzAnswerIndex];if(!n)return;
+  tourScores[n]=(tourScores[n]||0)+2;tourLocationWinner=n;tourPhase="year";buzzOpen=false;
+  clearInterval(buzzAnswerTimer);buzzAnswerEnd=Date.now()+10000;
+  playerConnections().forEach(([k,c])=>c.send({type:"buzzState",open:false}));tourSendState();broadcastBuzzOrder();renderHost();
+  buzzAnswerTimer=setInterval(()=>{const el=$("buzzAnswerCountdown");const left=Math.max(0,Math.ceil((buzzAnswerEnd-Date.now())/1000));if(el)el.textContent=left;if(left<=0){clearInterval(buzzAnswerTimer);tourFinish(false);}},150);
+}
+function tourFinish(yearCorrect){
+  if(tourPhase!=="year")return;clearInterval(buzzAnswerTimer);buzzAnswerEnd=0;if(yearCorrect&&tourLocationWinner)tourScores[tourLocationWinner]=(tourScores[tourLocationWinner]||0)+1;
+  tourPhase="done";buzzOpen=false;tourSendState();broadcastBuzzOrder();renderHost();
+}
+function tourNextRound(){
+  clearInterval(buzzAnswerTimer);tourIdx=(tourIdx+1)%TOUR_ROUNDS.length;tourPhase="idle";buzzOrder=[];buzzAnswerIndex=0;buzzAnswerEnd=0;buzzOpen=false;tourLocationWinner=null;
+  playerConnections().forEach(([k,c])=>c.send({type:"buzzReset"}));tourSendState();if(conns.screen)conns.screen.send(buzzBoardMessage());renderHost();
+}
+function escAttr(s){return String(s||"").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;");}
+function pmPhoto(src,type,name){return "<div class='pm-photo'>"+(src?"<img src='"+src+"'>":"<div style='aspect-ratio:1/1;display:grid;place-items:center'>Kein Bild</div>")+"<div class='label'><small>"+type+"</small><br>"+name+"</div></div>";}
+function fileToData(file){return new Promise((res,rej)=>{if(!file)return res(null);const rd=new FileReader();rd.onload=()=>res(rd.result);rd.onerror=rej;rd.readAsDataURL(file);});}
+function pmState(){return {type:"promiState",idx:promiIdx,reveal:promiReveal,solved:promiSolved,round:promiRounds[promiIdx]};}
+function sendPromi(){if(conns.screen)conns.screen.send(pmState());}
+function pmOpenOne(){if(promiSolved)return;promiReveal=Math.min(16,promiReveal+1);sendPromi();renderHost();}
+function pmAuto(){clearInterval(promiTimer);promiTimer=setInterval(()=>{if(promiReveal>=16||promiSolved){clearInterval(promiTimer);return;}promiReveal++;sendPromi();renderHost();},1200);}
+function pmSolve(){clearInterval(promiTimer);promiSolved=true;sendPromi();renderHost();}
+function pmReset(){clearInterval(promiTimer);promiReveal=0;promiSolved=false;sendPromi();renderHost();}
+function pmMove(d){clearInterval(promiTimer);promiIdx=(promiIdx+d+12)%12;promiReveal=0;promiSolved=false;sendPromi();renderHost();}
+async function pmSave(){
+ const r=promiRounds[promiIdx];r.brother=$("pmBrother").value.trim();r.celebrity=$("pmCelebrity").value.trim();
+ const a=await fileToData($("pmBrotherFile").files[0]),b=await fileToData($("pmCelebrityFile").files[0]),c=await fileToData($("pmMixFile").files[0]);
+ if(a)r.brotherImg=a;if(b)r.celebrityImg=b;if(c)r.mix=c;
+ try{localStorage.setItem("promiRounds",JSON.stringify(promiRounds));}catch(e){alert("Bilder sind für den Browser-Speicher zu groß. Nutze kleinere Bilder.");return;}
+ alert("Bild "+(promiIdx+1)+" gespeichert.");sendPromi();renderHost();
+}
+function playerConnections(){return Object.entries(conns).filter(([k])=>k.startsWith("player:"));}
+function buzzBoardMessage(){
+  return {type:"buzzBoard",order:buzzOrder,open:buzzOpen,current:buzzOrder[buzzAnswerIndex]||null,answerEnd:buzzAnswerEnd};
+}
+function openBuzzers(){buzzOpen=true;playerConnections().forEach(([k,c])=>c.send({type:"buzzState",open:true}));if(conns.screen)conns.screen.send(buzzBoardMessage());renderHost();}
+function closeBuzzers(){buzzOpen=false;playerConnections().forEach(([k,c])=>c.send({type:"buzzState",open:false}));if(conns.screen)conns.screen.send(buzzBoardMessage());renderHost();}
+function resetBuzzers(){clearInterval(buzzAnswerTimer);buzzOrder=[];buzzOpen=false;buzzAnswerIndex=0;buzzAnswerEnd=0;playerConnections().forEach(([k,c])=>c.send({type:"buzzReset"}));if(conns.screen)conns.screen.send(buzzBoardMessage());renderHost();}
+function broadcastBuzzOrder(){if(conns.screen)conns.screen.send(buzzBoardMessage());playerConnections().forEach(([k,c])=>c.send({type:"buzzPosition",order:buzzOrder,current:buzzOrder[buzzAnswerIndex]||null,answerEnd:buzzAnswerEnd}));}
+function startBuzzAnswerTimer(){
+  clearInterval(buzzAnswerTimer);
+  if(!buzzOrder[buzzAnswerIndex]){buzzAnswerEnd=0;broadcastBuzzOrder();renderHost();return;}
+  buzzAnswerEnd=Date.now()+10000;
+  broadcastBuzzOrder(); renderHost();
+  buzzAnswerTimer=setInterval(()=>{
+    const el=$("buzzAnswerCountdown");
+    const left=Math.max(0,Math.ceil((buzzAnswerEnd-Date.now())/1000));
+    if(el)el.textContent=left;
+    if(left<=0){clearInterval(buzzAnswerTimer);nextBuzzAnswer();}
+  },150);
+}
+function nextBuzzAnswer(){
+  clearInterval(buzzAnswerTimer);
+  if(buzzAnswerIndex < buzzOrder.length-1){buzzAnswerIndex++;startBuzzAnswerTimer();}
+  else {buzzAnswerEnd=0;broadcastBuzzOrder();renderHost();}
+}
+function finishBuzzAnswer(){
+  clearInterval(buzzAnswerTimer);buzzAnswerEnd=0;buzzOpen=false;
+  playerConnections().forEach(([k,c])=>c.send({type:"buzzState",open:false}));
+  broadcastBuzzOrder();renderHost();
+}
+function simpleNorm(s){
+  return String(s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/&/g,"and").replace(/[^a-z0-9]/g,"");
+}
+function emojiCorrect(input,target){
+  const a=simpleNorm(input), b=simpleNorm(target);
+  if(a===b)return true;
+  return editDistance(a,b)<=Math.max(1,Math.min(2,Math.floor(b.length/8)));
+}
+function resetEmojiRound(){
+  emojiPhase="idle"; emojiWinner=null; emojiAttempts={team1:0,team2:0,team3:0}; emojiPoints={team1:0,team2:0,team3:0}; answers={};
+}
+function changeEmoji(d){
+  emojiIdx=Math.max(0,Math.min(D.emoji.length-1,emojiIdx+d)); resetEmojiRound(); sendAll({type:"reset"}); renderHost();
+}
+function startEmojiTitle(){
+  resetEmojiRound(); emojiPhase="title";
+  const s=D.emoji[emojiIdx];
+  // Effectively no countdown: 24h; ends immediately when first correct title arrives.
+  const end=Date.now()+86400000;
+  sendAll({type:"start",kind:"emojiTitle",end,title:"Emoji-Song: Titel gesucht",emojis:s[0]});
+  renderHost();
+}
+function sendEmojiFeedback(team,msg,good=false){
+  if(conns[team])conns[team].send({type:"feedback",html:"<div class='status "+(good?"ok":"bad")+"'>"+msg+"</div>"});
+}
+function handleEmojiAnswer(team,value){
+  const s=D.emoji[emojiIdx];
+  if(emojiAttempts[team]>=3){sendEmojiFeedback(team,"Keine Versuche mehr.");return;}
+  emojiAttempts[team]++;
+  const target=emojiPhase==="title"?s[1]:s[2];
+  if(emojiCorrect(value,target)){
+    if(emojiPhase==="title"){
+      emojiWinner=team;
+      emojiPoints[team]+=2;
+      sendEmojiFeedback(team,"Richtig! +2 Punkte",true);
+      startEmojiArtist(team);
+    }else if(emojiPhase==="artist"){
+      emojiWinner=team;
+      emojiPoints[team]+=1;
+      emojiPhase="done";
+      clearInterval(timerInt);
+      sendAll({type:"reveal",html:"<div class='status ok'><b>Interpret: "+s[2]+"</b></div><div class='status'><b>"+D.teams[team].name+" war zuerst richtig: +1 Punkt</b></div>"});
+      renderHost();
+    }
+  }else{
+    sendEmojiFeedback(team,"Leider falsch · noch "+(3-emojiAttempts[team])+" Versuch(e).");
+    renderHost();
+  }
+}
+function startEmojiArtist(titleWinner){
+  const s=D.emoji[emojiIdx];
+  emojiPhase="artist"; emojiWinner=titleWinner;
+  // New 3 attempts for artist for every team.
+  emojiAttempts={team1:0,team2:0,team3:0};
+  const end=Date.now()+30000;
+  sendAll({type:"start",kind:"emojiArtist",end,title:"Interpret gesucht",emojis:s[0],songTitle:s[1]});
+  renderHost();
+  setTimeout(()=>{
+    if(modeName==="emoji" && emojiPhase==="artist"){
+      emojiPhase="done";
+      sendAll({type:"reveal",html:"<div class='status'><b>Zeit abgelaufen.</b></div><div class='status ok'>Interpret: "+s[2]+"</div>"});
+      renderHost();
+    }
+  },30200);
+}
+
+function norm(s){return String(s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]/g,"");}
+function editDistance(a,b){
+  const m=a.length,n=b.length,dp=Array.from({length:m+1},()=>Array(n+1).fill(0));
+  for(let i=0;i<=m;i++)dp[i][0]=i;
+  for(let j=0;j<=n;j++)dp[0][j]=j;
+  for(let i=1;i<=m;i++)for(let j=1;j<=n;j++){
+    dp[i][j]=Math.min(
+      dp[i-1][j]+1,
+      dp[i][j-1]+1,
+      dp[i-1][j-1]+(a[i-1]===b[j-1]?0:1)
+    );
+  }
+  return dp[m][n];
+}
+function fuzzyMatch(input,list){
+  const ni=norm(input);
+  if(!ni)return null;
+  let best=null,bestDist=999;
+  for(const x of list){
+    const nx=norm(x);
+    if(nx===ni)return x;
+    if(ni.length>=4 && (nx.includes(ni)||ni.includes(nx))) return x;
+    const d=editDistance(ni,nx);
+    if(d<bestDist){bestDist=d;best=x;}
+  }
+  // 1 typo for short answers; up to 2 for medium/long answers.
+  const allowed=ni.length<=4?1:(ni.length<=8?2:2);
+  return bestDist<=allowed?best:null;
+}
+function acceptCategory(t){
+  const a=answers[t], list=D.categories[catName];
+  const match=fuzzyMatch(a,list);
+  if(!match){alert("Nicht eindeutig erkannt: "+a+" – bitte manuell prüfen.");return;}
+  if(used.has(norm(match))){alert("Schon genannt: "+match);return;}
+  used.add(norm(match)); answers={}; renderHost();
+}
+
+$("hostBtn").addEventListener("click",()=>{
+  const pw=prompt("Spielleiter-Passwort:");
+  if(pw===null)return;
+  if(pw!=="Janyo"){alert("Falsches Passwort.");return;}
+  host();
+});
+$("captainBtn").addEventListener("click",()=>openJoin("captain"));
+$("screenBtn").addEventListener("click",()=>openJoin("screen"));
+$("playerBtn").addEventListener("click",()=>openJoin("player"));
+$("playerJoinBtn").addEventListener("click",joinPlayer);
+$("buzzBtn").addEventListener("click",()=>{if(conn&&role.startsWith("player:")){conn.send({type:"buzz",name:role.slice(7)});$("buzzBtn").disabled=true;$("buzzState").textContent="Gesendet …";}});
+$("screenJoinBtn").addEventListener("click",()=>join("screen"));
+document.querySelectorAll("[data-team]").forEach(b=>b.addEventListener("click",()=>join(b.dataset.team)));
+document.querySelectorAll("[data-mode]").forEach(b=>b.addEventListener("click",()=>setMode(b.dataset.mode)));
+</script>
+</body></html>
