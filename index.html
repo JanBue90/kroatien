@@ -120,7 +120,7 @@ button,select,input{max-width:100%;min-width:0}
 </style>
 </head>
 <body>
-<header>🇭🇷 Kroatien-Olympiade LIVE <span style="font-size:12px;opacity:.65">v19</span></header>
+<header>🇭🇷 Kroatien-Olympiade LIVE <span style="font-size:12px;opacity:.65">v20</span></header>
 <div class="wrap">
 <section id="setup" class="card">
 <h2>Verbinden</h2>
@@ -311,17 +311,29 @@ function onClientMessage(m){
       else if(m.current===name){a.className="status current-warning";a.innerHTML="🔥 DU BIST DRAN! JETZT ANTWORTEN!";}
       else if(cur>=0&&p===cur+1){a.className="status next-warning";a.innerHTML="⚠️ ACHTUNG – DU BIST ALS NÄCHSTER DRAN!";}
       else{a.className="status";a.innerHTML=m.current?"Aktuell antwortet: <b>"+m.current+"</b>":"Warte auf die Auswertung …";}
-      if(m.answerEnd)countdown(m.answerEnd,$("playerCountdown"));else if(m.expired)$("playerCountdown").textContent="0";else $("playerCountdown").textContent="";
+      if(m.answerEnd)countdown(m.answerEnd,$("playerCountdown"));else{clearInterval(timerInt);if(m.expired)$("playerCountdown").textContent="0";else $("playerCountdown").textContent="";}
     }
   }
   if(m.type==="tourState"){
     clientTourRound=m.round; clientTourPhase=m.phase;
     if(role==="screen"){
-      $("screenTitle").innerHTML="📸 WO WAR DAS? <span style='font-size:22px'>"+(m.idx+1)+"/"+m.total+"</span>";
-      $("screenStatus").innerHTML="<img class='tour-photo' src='"+m.round.img+"'>"+(m.phase==="year"?"<div class='status ok' style='text-align:center;font-size:28px'><b>✓ "+m.round.place+"</b><br>Welches Jahr?</div>":m.phase==="done"?"<div class='status ok' style='text-align:center;font-size:30px'><b>"+m.round.place+" · "+m.round.year+"</b></div>":"<div style='text-align:center;font-size:26px;font-weight:900;margin-top:12px'>WO WAR DIESE KEGELTOUR?</div>");
+      clearInterval(timerInt); $("screenTimer").textContent="";
+      if(m.phase==="idle"){
+        $("screenTitle").innerHTML="📸 NÄCHSTES FOTO <span style='font-size:22px'>"+(m.idx+1)+"/"+m.total+"</span>";
+        $("screenStatus").innerHTML="<div style='text-align:center;font-size:34px;font-weight:900;padding:80px 10px'>🔒 BUZZER BEREIT<br><span style='font-size:22px'>Warte auf den Rundenstart …</span></div>";
+      } else {
+        $("screenTitle").innerHTML="📸 WO WAR DAS? <span style='font-size:22px'>"+(m.idx+1)+"/"+m.total+"</span>";
+        $("screenStatus").innerHTML="<img class='tour-photo' src='"+m.round.img+"'>"+(m.phase==="year"?"<div class='status ok' style='text-align:center;font-size:28px'><b>✓ "+m.round.place+"</b><br>Welches Jahr?</div>":m.phase==="done"?"<div class='status ok' style='text-align:center;font-size:30px'><b>"+m.round.place+" · "+m.round.year+"</b></div>":"<div style='text-align:center;font-size:26px;font-weight:900;margin-top:12px'>WO WAR DIESE KEGELTOUR?</div>");
+      }
     } else if(role&&role.startsWith("player:")){
-      $("playerView").classList.add("tour-active"); $("playerTourBox").classList.remove("hide"); $("playerTourPhoto").src=m.round.img;
-      $("playerTourHint").innerHTML=m.phase==="year"?"📅 Ort richtig: <b>"+m.round.place+"</b> – jetzt geht es ums Jahr!":m.phase==="done"?"✅ <b>"+m.round.place+" · "+m.round.year+"</b>":"📍 Ort erkennen und buzzern!";
+      clearInterval(timerInt); $("playerCountdown").textContent="";
+      if(m.phase==="idle"){
+        $("playerView").classList.remove("tour-active"); $("playerTourBox").classList.add("hide");
+        $("buzzBtn").classList.remove("hide"); $("buzzBtn").disabled=true; $("buzzState").textContent="🔒 Buzzer bereit – warte auf Rundenstart …";
+      } else {
+        $("playerView").classList.add("tour-active"); $("playerTourBox").classList.remove("hide"); $("playerTourPhoto").src=m.round.img;
+        $("playerTourHint").innerHTML=m.phase==="year"?"📅 Ort richtig: <b>"+m.round.place+"</b> – jetzt geht es ums Jahr!":m.phase==="done"?"✅ <b>"+m.round.place+" · "+m.round.year+"</b>":"📍 Ort erkennen und buzzern!";
+      }
     }
   }
   if(m.type==="promiState" && role==="screen"){
@@ -337,7 +349,7 @@ function onClientMessage(m){
   if(m.type==="buzzBoard" && role==="screen"){
     const ci=m.order.indexOf(m.current);
     $("screenTitle").innerHTML=m.current?"🎤 <b>"+m.current+"</b> ist dran":(m.open?"🔴 BUZZER IST OFFEN":"🔒 BUZZER GESPERRT");
-    if(m.answerEnd){countdown(m.answerEnd,$("screenTimer"));}else if(m.expired){$("screenTimer").textContent="0";}else{$("screenTimer").textContent=m.open?"JETZT!":"";}
+    if(m.answerEnd){countdown(m.answerEnd,$("screenTimer"));}else{clearInterval(timerInt);if(m.expired){$("screenTimer").textContent="0";}else{$("screenTimer").textContent=m.open?"JETZT!":"";}}
     const tourTop=clientTourRound ? "<img class='tour-photo' style='max-height:48vh;margin-bottom:14px' src='"+clientTourRound.img+"'>"+(clientTourPhase==="year"?"<div class='status ok' style='text-align:center;font-size:26px'><b>✓ "+clientTourRound.place+"</b> · Welches Jahr?</div>":clientTourPhase==="done"?"<div class='status ok' style='text-align:center;font-size:28px'><b>"+clientTourRound.place+" · "+clientTourRound.year+"</b></div>":"<div style='text-align:center;font-size:24px;font-weight:900;margin:8px 0'>WO WAR DIESE KEGELTOUR?</div>") : "";
     $("screenStatus").innerHTML=tourTop+(m.expired?"<div class='status' style='text-align:center;font-size:24px;background:#fff0c9'><b>⏱ ZEIT ABGELAUFEN – SPIELLEITER ENTSCHEIDET</b></div>":"")+(m.order.length
       ? "<div style='text-align:center;font-size:20px;margin-bottom:12px'><b>BUZZER-REIHENFOLGE</b></div>"+
