@@ -172,6 +172,18 @@ button,select,input{max-width:100%;min-width:0}
 <script>
 "use strict";
 const D=window.GAME_DATA;
+// v26 Kategorien-Datenfix: Bei Ein-Buchstaben-KFZ werden die Staedte geraten; fehlender Bond-Titel ergaenzt.
+(()=>{
+  const keys=Object.keys(D.categories||{});
+  const kfzKey=keys.find(k=>/kfz|kennzeichen/i.test(k));
+  if(kfzKey){
+    D.categories[kfzKey]=["Augsburg","Berlin","Chemnitz","Düsseldorf","Essen","Frankfurt am Main","Gera","Hannover","Jena","Köln","Leipzig","München","Nürnberg","Potsdam","Regensburg","Stuttgart","Wuppertal","Zwickau"];
+  }
+  const bondKey=keys.find(k=>/bond/i.test(k));
+  if(bondKey && !D.categories[bondKey].some(x=>String(x).toLowerCase()==="die welt ist nicht genug")){
+    D.categories[bondKey].push("Die Welt ist nicht genug");
+  }
+})();
 if(!Array.isArray(D.emoji)){
   D.emoji=[
     ["👁️ 🐅 🥊 🏆","Eye of the Tiger","Survivor"],
