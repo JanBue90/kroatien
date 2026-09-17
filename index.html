@@ -29,7 +29,7 @@ button{background:var(--n);color:#fff;border:0;font-weight:800;cursor:pointer}.s
 <div class="grid">
 <button id="hostBtn">JAN – SPIELLEITER</button>
 <button id="captainBtn" class="secondary">KAPITÄN</button>
-<button id="screenBtn" class="secondary">TV / BEAMER</button>
+<button id="screenBtn" class="secondary">TV / BEAMER</button><button id="playerBtn" class="secondary">SPIELER / BUZZER</button>
 </div>
 <div id="joinBox" class="hide" style="margin-top:16px">
 <input id="roomIn" placeholder="RAUMCODE" maxlength="6" style="width:100%;text-transform:uppercase">
@@ -39,6 +39,9 @@ button{background:var(--n);color:#fff;border:0;font-weight:800;cursor:pointer}.s
 <button class="teamBtn" data-team="team3">Team 3</button>
 </div>
 <button id="screenJoinBtn" class="hide" style="width:100%;margin-top:10px">TV / BEAMER VERBINDEN</button>
+<div id="playerChoices" class="hide" style="margin-top:10px"><select id="playerSelect" style="width:100%">
+<option>Kevin</option><option>Markus</option><option>Stefan</option><option>Kay</option><option>Michel</option><option>Patrick</option><option>Mario</option><option>Fabian</option><option>Timo</option><option>Andre</option><option>Klemm</option><option>Swen</option>
+</select><button id="playerJoinBtn" style="width:100%;margin-top:10px">ALS SPIELER VERBINDEN</button></div>
 </div>
 </section>
 
@@ -47,7 +50,7 @@ button{background:var(--n);color:#fff;border:0;font-weight:800;cursor:pointer}.s
 <div class="tabs">
 <button data-mode="quiz">Kroatien-Quiz</button>
 <button data-mode="estimate">Schätzmeister</button>
-<button data-mode="category">Kategorien</button><button data-mode="emoji">Emoji-Songs</button>
+<button data-mode="category">Kategorien</button><button data-mode="emoji">Emoji-Songs</button><button data-mode="buzzer">Buzzer-Spiel</button>
 </div>
 <div id="hostGame"></div>
 </section>
@@ -56,24 +59,45 @@ button{background:var(--n);color:#fff;border:0;font-weight:800;cursor:pointer}.s
 <div class="card"><div id="teamName"></div><div id="capTimer" class="timer">–</div><div id="capGame"><p class="muted">Warte auf Jan …</p></div></div>
 </section>
 
+<section id="playerView" class="hide"><div class="card"><div id="playerName" class="big" style="font-size:28px"></div><div id="buzzState" class="muted" style="text-align:center;margin:12px 0">Warte auf Jan …</div><button id="buzzBtn" class="danger" disabled style="width:100%;height:220px;font-size:46px;border-radius:28px">BUZZER</button></div></section>
 <section id="screenView" class="hide">
 <div class="card"><div id="screenTitle" class="big">Warte auf Jan …</div><div id="screenTimer" class="timer">–</div><div id="screenStatus"></div></div>
 </section>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.5/dist/peerjs.min.js"></script>
-<script src="data.js"></script>
+<script src="data.js?v=8"></script>
 <script>
 "use strict";
 const D=window.GAME_DATA;
+if(!Array.isArray(D.emoji)){
+  D.emoji=[
+    ["👁️ 🐅 🥊 🏆","Eye of the Tiger","Survivor"],
+    ["🛣️ ➡️ 🔥 😈","Highway to Hell","AC/DC"],
+    ["🕺 👑 👩 🎶","Dancing Queen","ABBA"],
+    ["🏨 🌴 ☀️ 🇺🇸","Hotel California","Eagles"],
+    ["👧 🔥 🔥 🎤","Girl on Fire","Alicia Keys"],
+    ["🧊 🧊 👶 🎤","Ice Ice Baby","Vanilla Ice"],
+    ["🎂 🍰 🌊 🏖️","Cake by the Ocean","DNCE"],
+    ["🚀 👨 🌙 ⭐","Rocket Man","Elton John"],
+    ["💜 ☔ 🌧️ 👑","Purple Rain","Prince"],
+    ["🖤 🟡 🖤 🟡","Black and Yellow","Wiz Khalifa"],
+    ["☀️ 🚶‍♂️ 😊 🎶","Walking on Sunshine","Katrina and the Waves"],
+    ["👶 👶 👶 🔙","Baby Got Back","Sir Mix-a-Lot"],
+    ["💰 💰 💰 👩","Money, Money, Money","ABBA"],
+    ["🕺 🌙 ⭐ 🌃","Dancing in the Moonlight","Toploader"],
+    ["🙋 ❤️ 🪨 🎸","I Love Rock 'n' Roll","Joan Jett & the Blackhearts"]
+  ];
+}
 const $=id=>document.getElementById(id);
 let peer=null, conns={}, conn=null, role=null, room=null, modeName="quiz";
 let timerInt=null, answers={}, used=new Set(), qidx=0, eidx=0, currentClientKind=null;
 let catName=Object.keys(D.categories)[0];
-let emojiIdx=0, emojiPhase="idle", emojiWinner=null, emojiAttempts={team1:0,team2:0,team3:0};
+let buzzOrder=[], buzzOpen=false;
+let emojiIdx=0, emojiPhase="idle", emojiWinner=null, emojiAttempts={team1:0,team2:0,team3:0}, emojiPoints={team1:0,team2:0,team3:0};
 
 function show(view){
-  ["setup","hostView","captainView","screenView"].forEach(id=>$(id).classList.add("hide"));
+  ["setup","hostView","captainView","playerView","screenView"].forEach(id=>$(id).classList.add("hide"));
   $(view).classList.remove("hide");
 }
 function roomCode(){return Math.random().toString(36).slice(2,8).toUpperCase();}
@@ -84,8 +108,9 @@ function ensurePeer(){
 function openJoin(kind){
   role=kind;
   $("joinBox").classList.remove("hide");
-  $("teamChoices").classList.toggle("hide",kind==="screen");
+  $("teamChoices").classList.toggle("hide",kind==="screen"||kind==="player");
   $("screenJoinBtn").classList.toggle("hide",kind!=="screen");
+  $("playerChoices").classList.toggle("hide",kind!=="player");
   $("roomIn").focus();
 }
 function host(){
@@ -120,20 +145,30 @@ function join(teamRole){
     conn.on("error",()=>alert("Verbindung zum Spielleiter fehlgeschlagen."));
   });
 }
+function joinPlayer(){
+  if(!ensurePeer())return; room=$("roomIn").value.trim().toUpperCase();
+  if(!room){alert("Bitte Raumcode eingeben.");return;}
+  const name=$("playerSelect").value; role="player:"+name; peer=new Peer();
+  peer.on("open",()=>{conn=peer.connect("kroatien-"+room,{reliable:true});conn.on("open",()=>{conn.send({type:"join",role,name});show("playerView");$("playerName").textContent=name;});conn.on("data",onClientMessage);});
+}
 function onHostMessage(m,c){
   if(m.type==="join"){conns[m.role]=c; refreshConnections();}
+  if(m.type==="buzz" && buzzOpen && !buzzOrder.includes(m.name)){buzzOrder.push(m.name);broadcastBuzzOrder();renderHost();}
   if(m.type==="answer"){
     if(modeName==="emoji" && (emojiPhase==="title"||emojiPhase==="artist")) handleEmojiAnswer(m.role,m.value);
     else {answers[m.role]=m.value; renderHost();}
   }
 }
 function refreshConnections(){
-  $("connections").innerHTML=["team1","team2","team3","screen"].map(r=>
-    "<span class='pill'>"+(r==="screen"?"TV":D.teams[r].name)+": "+(conns[r]?"✓":"–")+"</span>"
-  ).join("");
+  const base=["team1","team2","team3","screen"].map(r=>"<span class='pill'>"+(r==="screen"?"TV":D.teams[r].name)+": "+(conns[r]?"✓":"–")+"</span>").join("");
+  $("connections").innerHTML=base+"<span class='pill'>Spieler: "+Object.keys(conns).filter(x=>x.startsWith("player:")).length+"/12</span>";
 }
 function sendAll(msg){Object.values(conns).forEach(c=>{try{c.send(msg)}catch(e){}});}
 function onClientMessage(m){
+  if(m.type==="buzzState" && role && role.startsWith("player:")){$("buzzBtn").disabled=!m.open;$("buzzState").textContent=m.open?"🟢 BUZZER FREI!":"🔒 Buzzer gesperrt";}
+  if(m.type==="buzzReset" && role && role.startsWith("player:")){$("buzzBtn").disabled=true;$("buzzState").textContent="Neue Runde – warte auf Jan …";}
+  if(m.type==="buzzPosition" && role && role.startsWith("player:")){const name=role.slice(7),p=m.order.indexOf(name);if(p>=0){$("buzzBtn").disabled=true;$("buzzState").innerHTML="<b>Du bist "+(p+1)+".</b>";}}
+  if(m.type==="buzzBoard" && role==="screen"){$("screenTitle").textContent=m.open?"🔴 BUZZER OFFEN":"🔒 BUZZER";$("screenTimer").textContent="";$("screenStatus").innerHTML=m.order.length?m.order.map((n,i)=>"<div class='status' style='font-size:"+(i===0?34:24)+"px'><b>"+(i+1)+". "+n+"</b></div>").join(""):"<div class='big' style='font-size:30px'>Noch niemand gebuzzert</div>";}
   if(m.type==="start") startLocal(m);
   if(m.type==="feedback" && role!=="screen"){
     const old=$("capGame").querySelector(".emojiFeedback"); if(old)old.remove();
@@ -217,7 +252,11 @@ function lockCaptain(msg){
   document.querySelectorAll("#capGame button,#capGame input").forEach(x=>x.disabled=true);
   if(!$("capGame").querySelector(".status"))$("capGame").insertAdjacentHTML("beforeend","<div class='status'>"+msg+"</div>");
 }
-function setMode(m){modeName=m;answers={};renderHost();}
+function setMode(m){
+  modeName=m; answers={};
+  if(m==="emoji" && !["idle","title","artist","done"].includes(emojiPhase)) resetEmojiRound();
+  renderHost();
+}
 function answerStatus(category=false){
   return "<div class='card'>"+["team1","team2","team3"].map(t=>{
     const val=answers[t]===undefined?"—":String(answers[t]);
@@ -244,6 +283,9 @@ function renderHost(){
       "</select><p><select id='turnTeam'><option value='team1'>Team 1</option><option value='team2'>Team 2</option><option value='team3'>Team 3</option></select> <button id='catStart'>35 SEK. START</button></p>"+
       answerStatus(true)+"<div>"+D.categories[catName].map(x=>"<span class='pill "+(used.has(norm(x))?"check":"")+"'>"+x+"</span>").join("")+"</div></div>";
   }
+  if(modeName==="buzzer"){
+    h="<div class='card'><h2>🔴 Buzzer-Spiel</h2><p class='muted'>Alle 12 Spieler buzzern auf dem eigenen Handy. Die Reihenfolge bleibt erhalten, damit bei einer falschen Antwort der Nächste dran ist.</p><div class='grid'><button id='buzzOpenBtn' class='good'>BUZZER FREIGEBEN</button><button id='buzzCloseBtn' class='secondary'>SPERREN</button><button id='buzzResetBtn' class='danger'>NEUE RUNDE</button></div><h3>Reihenfolge</h3>"+(buzzOrder.length?buzzOrder.map((n,i)=>"<div class='status' style='font-size:"+(i===0?26:18)+"px'><b>"+(i+1)+". "+n+"</b></div>").join(""):"<div class='status'>Noch niemand gebuzzert.</div>")+"<p><b>Status:</b> "+(buzzOpen?"🟢 Buzzer offen":"🔒 Buzzer gesperrt")+"</p></div>";
+  }
   if(modeName==="emoji"){
     const s=D.emoji[emojiIdx];
     const phaseText=emojiPhase==="title"?"Titel läuft – bis ein Team richtig antwortet":emojiPhase==="artist"?"Interpret läuft – 30 Sekunden":emojiPhase==="done"?"Runde beendet":"Bereit";
@@ -254,7 +296,7 @@ function renderHost(){
       (emojiPhase==="title"?"<button id='emojiRevealTitle' class='secondary'>TITEL MANUELL AUFLÖSEN</button>":"")+
       (emojiPhase==="artist"?"<div class='status ok'><b>Titel: "+s[1]+"</b></div>":"")+
       (emojiPhase==="done"?"<div class='status ok'><b>"+s[1]+"</b> · "+s[2]+"</div>":"")+
-      "<div class='card'>"+["team1","team2","team3"].map(t=>"<div class='status'><b>"+D.teams[t].name+"</b> · Versuche: "+emojiAttempts[t]+"/3"+(emojiWinner===t?" · 🏆":"")+"</div>").join("")+"</div>"+
+      "<div class='card'>"+["team1","team2","team3"].map(t=>"<div class='status'><b>"+D.teams[t].name+"</b> · Punkte: <b style='font-size:22px'>"+("I".repeat(emojiPoints[t])||"–")+"</b> <span class='muted'>("+emojiPoints[t]+")</span> · Versuche: "+emojiAttempts[t]+"/3</div>").join("")+"</div>"+
       "<div class='grid'><button id='emojiPrev' class='secondary'>←</button><button id='emojiNext'>NÄCHSTER SONG →</button></div></div>";
   }
   $("hostGame").innerHTML=h;
@@ -269,6 +311,9 @@ function bindHostControls(){
   const cs=$("catSelect"); if(cs)cs.addEventListener("change",()=>{catName=cs.value;used=new Set();answers={};renderHost();});
   const catStart=$("catStart"); if(catStart)catStart.addEventListener("click",startCategory);
   document.querySelectorAll(".acceptCat").forEach(b=>b.addEventListener("click",()=>acceptCategory(b.dataset.team)));
+  const bo=$("buzzOpenBtn"); if(bo)bo.addEventListener("click",openBuzzers);
+  const bc=$("buzzCloseBtn"); if(bc)bc.addEventListener("click",closeBuzzers);
+  const br=$("buzzResetBtn"); if(br)br.addEventListener("click",resetBuzzers);
   const es=$("emojiStart"); if(es)es.addEventListener("click",startEmojiTitle);
   const er=$("emojiRevealTitle"); if(er)er.addEventListener("click",()=>startEmojiArtist(null));
   const ep=$("emojiPrev"); if(ep)ep.addEventListener("click",()=>changeEmoji(-1));
@@ -309,6 +354,11 @@ function startCategory(){
   if(conns.screen)conns.screen.send(msg); renderHost();
 }
 
+function playerConnections(){return Object.entries(conns).filter(([k])=>k.startsWith("player:"));}
+function openBuzzers(){buzzOpen=true;playerConnections().forEach(([k,c])=>c.send({type:"buzzState",open:true}));if(conns.screen)conns.screen.send({type:"buzzBoard",order:buzzOrder,open:true});renderHost();}
+function closeBuzzers(){buzzOpen=false;playerConnections().forEach(([k,c])=>c.send({type:"buzzState",open:false}));if(conns.screen)conns.screen.send({type:"buzzBoard",order:buzzOrder,open:false});renderHost();}
+function resetBuzzers(){buzzOrder=[];buzzOpen=false;playerConnections().forEach(([k,c])=>c.send({type:"buzzReset"}));if(conns.screen)conns.screen.send({type:"buzzBoard",order:[],open:false});renderHost();}
+function broadcastBuzzOrder(){if(conns.screen)conns.screen.send({type:"buzzBoard",order:buzzOrder,open:buzzOpen});playerConnections().forEach(([k,c])=>c.send({type:"buzzPosition",order:buzzOrder}));}
 function simpleNorm(s){
   return String(s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/&/g,"and").replace(/[^a-z0-9]/g,"");
 }
@@ -318,7 +368,7 @@ function emojiCorrect(input,target){
   return editDistance(a,b)<=Math.max(1,Math.min(2,Math.floor(b.length/8)));
 }
 function resetEmojiRound(){
-  emojiPhase="idle"; emojiWinner=null; emojiAttempts={team1:0,team2:0,team3:0}; answers={};
+  emojiPhase="idle"; emojiWinner=null; emojiAttempts={team1:0,team2:0,team3:0}; emojiPoints={team1:0,team2:0,team3:0}; answers={};
 }
 function changeEmoji(d){
   emojiIdx=Math.max(0,Math.min(D.emoji.length-1,emojiIdx+d)); resetEmojiRound(); sendAll({type:"reset"}); renderHost();
@@ -342,10 +392,12 @@ function handleEmojiAnswer(team,value){
   if(emojiCorrect(value,target)){
     if(emojiPhase==="title"){
       emojiWinner=team;
+      emojiPoints[team]+=2;
       sendEmojiFeedback(team,"Richtig! +2 Punkte",true);
       startEmojiArtist(team);
     }else if(emojiPhase==="artist"){
       emojiWinner=team;
+      emojiPoints[team]+=1;
       emojiPhase="done";
       clearInterval(timerInt);
       sendAll({type:"reveal",html:"<div class='status ok'><b>Interpret: "+s[2]+"</b></div><div class='status'><b>"+D.teams[team].name+" war zuerst richtig: +1 Punkt</b></div>"});
@@ -413,6 +465,9 @@ function acceptCategory(t){
 $("hostBtn").addEventListener("click",host);
 $("captainBtn").addEventListener("click",()=>openJoin("captain"));
 $("screenBtn").addEventListener("click",()=>openJoin("screen"));
+$("playerBtn").addEventListener("click",()=>openJoin("player"));
+$("playerJoinBtn").addEventListener("click",joinPlayer);
+$("buzzBtn").addEventListener("click",()=>{if(conn&&role.startsWith("player:")){conn.send({type:"buzz",name:role.slice(7)});$("buzzBtn").disabled=true;$("buzzState").textContent="Gesendet …";}});
 $("screenJoinBtn").addEventListener("click",()=>join("screen"));
 document.querySelectorAll("[data-team]").forEach(b=>b.addEventListener("click",()=>join(b.dataset.team)));
 document.querySelectorAll("[data-mode]").forEach(b=>b.addEventListener("click",()=>setMode(b.dataset.mode)));
