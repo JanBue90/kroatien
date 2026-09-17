@@ -93,7 +93,7 @@ const $=id=>document.getElementById(id);
 let peer=null, conns={}, conn=null, role=null, room=null, modeName="quiz";
 let timerInt=null, answers={}, used=new Set(), qidx=0, eidx=0, currentClientKind=null;
 let catName=Object.keys(D.categories)[0];
-let buzzOrder=[], buzzOpen=false;
+let buzzOrder=[], buzzOpen=false, buzzAnswerIndex=0, buzzAnswerTimer=null, buzzAnswerEnd=0;
 let emojiIdx=0, emojiPhase="idle", emojiWinner=null, emojiAttempts={team1:0,team2:0,team3:0}, emojiPoints={team1:0,team2:0,team3:0};
 
 function show(view){
@@ -153,7 +153,11 @@ function joinPlayer(){
 }
 function onHostMessage(m,c){
   if(m.type==="join"){conns[m.role]=c; refreshConnections();}
-  if(m.type==="buzz" && buzzOpen && !buzzOrder.includes(m.name)){buzzOrder.push(m.name);broadcastBuzzOrder();renderHost();}
+  if(m.type==="buzz" && buzzOpen && !buzzOrder.includes(m.name)){
+    buzzOrder.push(m.name);
+    if(buzzOrder.length===1){buzzAnswerIndex=0; startBuzzAnswerTimer();}
+    broadcastBuzzOrder(); renderHost();
+  }
   if(m.type==="answer"){
     if(modeName==="emoji" && (emojiPhase==="title"||emojiPhase==="artist")) handleEmojiAnswer(m.role,m.value);
     else {answers[m.role]=m.value; renderHost();}
@@ -167,8 +171,19 @@ function sendAll(msg){Object.values(conns).forEach(c=>{try{c.send(msg)}catch(e){
 function onClientMessage(m){
   if(m.type==="buzzState" && role && role.startsWith("player:")){$("buzzBtn").disabled=!m.open;$("buzzState").textContent=m.open?"🟢 BUZZER FREI!":"🔒 Buzzer gesperrt";}
   if(m.type==="buzzReset" && role && role.startsWith("player:")){$("buzzBtn").disabled=true;$("buzzState").textContent="Neue Runde – warte auf Jan …";}
-  if(m.type==="buzzPosition" && role && role.startsWith("player:")){const name=role.slice(7),p=m.order.indexOf(name);if(p>=0){$("buzzBtn").disabled=true;$("buzzState").innerHTML="<b>Du bist "+(p+1)+".</b>";}}
-  if(m.type==="buzzBoard" && role==="screen"){$("screenTitle").textContent=m.open?"🔴 BUZZER OFFEN":"🔒 BUZZER";$("screenTimer").textContent="";$("screenStatus").innerHTML=m.order.length?m.order.map((n,i)=>"<div class='status' style='font-size:"+(i===0?34:24)+"px'><b>"+(i+1)+". "+n+"</b></div>").join(""):"<div class='big' style='font-size:30px'>Noch niemand gebuzzert</div>";}
+  if(m.type==="buzzPosition" && role && role.startsWith("player:")){
+    const name=role.slice(7),p=m.order.indexOf(name);
+    if(p>=0){
+      $("buzzBtn").disabled=true;
+      $("buzzState").innerHTML="<b>Du bist "+(p+1)+".</b>"+(m.current===name?"<div style='font-size:28px;margin-top:8px'>DU BIST DRAN!</div>":"");
+      if(m.current===name && m.answerEnd)countdown(m.answerEnd,$("capTimer")||$("buzzState"));
+    }
+  }
+  if(m.type==="buzzBoard" && role==="screen"){
+    $("screenTitle").textContent=m.current?"Antwortet: "+m.current:(m.open?"🔴 BUZZER OFFEN":"🔒 BUZZER");
+    if(m.answerEnd){countdown(m.answerEnd,$("screenTimer"));}else{$("screenTimer").textContent="";}
+    $("screenStatus").innerHTML=m.order.length?m.order.map((n,i)=>"<div class='status' style='font-size:"+(n===m.current?34:22)+"px;"+(n===m.current?"background:#def4e7":"")+"'><b>"+(i+1)+". "+n+(n===m.current?" ← DRAN":"")+"</b></div>").join(""):"<div class='big' style='font-size:30px'>Noch niemand gebuzzert</div>";
+  }
   if(m.type==="start") startLocal(m);
   if(m.type==="feedback" && role!=="screen"){
     const old=$("capGame").querySelector(".emojiFeedback"); if(old)old.remove();
@@ -284,7 +299,9 @@ function renderHost(){
       answerStatus(true)+"<div>"+D.categories[catName].map(x=>"<span class='pill "+(used.has(norm(x))?"check":"")+"'>"+x+"</span>").join("")+"</div></div>";
   }
   if(modeName==="buzzer"){
-    h="<div class='card'><h2>🔴 Buzzer-Spiel</h2><p class='muted'>Alle 12 Spieler buzzern auf dem eigenen Handy. Die Reihenfolge bleibt erhalten, damit bei einer falschen Antwort der Nächste dran ist.</p><div class='grid'><button id='buzzOpenBtn' class='good'>BUZZER FREIGEBEN</button><button id='buzzCloseBtn' class='secondary'>SPERREN</button><button id='buzzResetBtn' class='danger'>NEUE RUNDE</button></div><h3>Reihenfolge</h3>"+(buzzOrder.length?buzzOrder.map((n,i)=>"<div class='status' style='font-size:"+(i===0?26:18)+"px'><b>"+(i+1)+". "+n+"</b></div>").join(""):"<div class='status'>Noch niemand gebuzzert.</div>")+"<p><b>Status:</b> "+(buzzOpen?"🟢 Buzzer offen":"🔒 Buzzer gesperrt")+"</p></div>";
+    h="<div class='card'><h2>🔴 Buzzer-Spiel</h2><p class='muted'>Alle 12 Spieler buzzern auf dem eigenen Handy. Die Reihenfolge bleibt erhalten, damit bei einer falschen Antwort der Nächste dran ist.</p><div class='grid'><button id='buzzOpenBtn' class='good'>BUZZER FREIGEBEN</button><button id='buzzCloseBtn' class='secondary'>SPERREN</button><button id='buzzResetBtn' class='danger'>NEUE RUNDE</button></div><h3>Reihenfolge</h3>"+(buzzOrder.length?buzzOrder.map((n,i)=>"<div class='status' style='font-size:"+(i===0?26:18)+"px'><b>"+(i+1)+". "+n+"</b></div>").join(""):"<div class='status'>Noch niemand gebuzzert.</div>")++"<div id='buzzTurnBox'>"+(buzzOrder.length?"<div class='status ok' style='font-size:24px'><b>Antwortet: "+buzzOrder[Math.min(buzzAnswerIndex,buzzOrder.length-1)]+"</b><div id='buzzAnswerCountdown' class='big' style='font-size:42px'>"+(buzzAnswerEnd?Math.max(0,Math.ceil((buzzAnswerEnd-Date.now())/1000)):"6")+"</div></div>":"")+"</div>"+
+      (buzzOrder.length?"<div class='grid'><button id='buzzWrongBtn' class='danger'>FALSCH → NÄCHSTER</button><button id='buzzRightBtn' class='good'>RICHTIG ✓</button></div>":"")+
+      "<p><b>Status:</b> "+(buzzOpen?"🟢 Buzzer offen":"🔒 Buzzer gesperrt")+"</p></div>";
   }
   if(modeName==="emoji"){
     const s=D.emoji[emojiIdx];
@@ -314,6 +331,8 @@ function bindHostControls(){
   const bo=$("buzzOpenBtn"); if(bo)bo.addEventListener("click",openBuzzers);
   const bc=$("buzzCloseBtn"); if(bc)bc.addEventListener("click",closeBuzzers);
   const br=$("buzzResetBtn"); if(br)br.addEventListener("click",resetBuzzers);
+  const bw=$("buzzWrongBtn"); if(bw)bw.addEventListener("click",nextBuzzAnswer);
+  const bry=$("buzzRightBtn"); if(bry)bry.addEventListener("click",finishBuzzAnswer);
   const es=$("emojiStart"); if(es)es.addEventListener("click",startEmojiTitle);
   const er=$("emojiRevealTitle"); if(er)er.addEventListener("click",()=>startEmojiArtist(null));
   const ep=$("emojiPrev"); if(ep)ep.addEventListener("click",()=>changeEmoji(-1));
@@ -355,10 +374,35 @@ function startCategory(){
 }
 
 function playerConnections(){return Object.entries(conns).filter(([k])=>k.startsWith("player:"));}
-function openBuzzers(){buzzOpen=true;playerConnections().forEach(([k,c])=>c.send({type:"buzzState",open:true}));if(conns.screen)conns.screen.send({type:"buzzBoard",order:buzzOrder,open:true});renderHost();}
-function closeBuzzers(){buzzOpen=false;playerConnections().forEach(([k,c])=>c.send({type:"buzzState",open:false}));if(conns.screen)conns.screen.send({type:"buzzBoard",order:buzzOrder,open:false});renderHost();}
-function resetBuzzers(){buzzOrder=[];buzzOpen=false;playerConnections().forEach(([k,c])=>c.send({type:"buzzReset"}));if(conns.screen)conns.screen.send({type:"buzzBoard",order:[],open:false});renderHost();}
-function broadcastBuzzOrder(){if(conns.screen)conns.screen.send({type:"buzzBoard",order:buzzOrder,open:buzzOpen});playerConnections().forEach(([k,c])=>c.send({type:"buzzPosition",order:buzzOrder}));}
+function buzzBoardMessage(){
+  return {type:"buzzBoard",order:buzzOrder,open:buzzOpen,current:buzzOrder[buzzAnswerIndex]||null,answerEnd:buzzAnswerEnd};
+}
+function openBuzzers(){buzzOpen=true;playerConnections().forEach(([k,c])=>c.send({type:"buzzState",open:true}));if(conns.screen)conns.screen.send(buzzBoardMessage());renderHost();}
+function closeBuzzers(){buzzOpen=false;playerConnections().forEach(([k,c])=>c.send({type:"buzzState",open:false}));if(conns.screen)conns.screen.send(buzzBoardMessage());renderHost();}
+function resetBuzzers(){clearInterval(buzzAnswerTimer);buzzOrder=[];buzzOpen=false;buzzAnswerIndex=0;buzzAnswerEnd=0;playerConnections().forEach(([k,c])=>c.send({type:"buzzReset"}));if(conns.screen)conns.screen.send(buzzBoardMessage());renderHost();}
+function broadcastBuzzOrder(){if(conns.screen)conns.screen.send(buzzBoardMessage());playerConnections().forEach(([k,c])=>c.send({type:"buzzPosition",order:buzzOrder,current:buzzOrder[buzzAnswerIndex]||null,answerEnd:buzzAnswerEnd}));}
+function startBuzzAnswerTimer(){
+  clearInterval(buzzAnswerTimer);
+  if(!buzzOrder[buzzAnswerIndex]){buzzAnswerEnd=0;broadcastBuzzOrder();renderHost();return;}
+  buzzAnswerEnd=Date.now()+6000;
+  broadcastBuzzOrder(); renderHost();
+  buzzAnswerTimer=setInterval(()=>{
+    const el=$("buzzAnswerCountdown");
+    const left=Math.max(0,Math.ceil((buzzAnswerEnd-Date.now())/1000));
+    if(el)el.textContent=left;
+    if(left<=0){clearInterval(buzzAnswerTimer);nextBuzzAnswer();}
+  },150);
+}
+function nextBuzzAnswer(){
+  clearInterval(buzzAnswerTimer);
+  if(buzzAnswerIndex < buzzOrder.length-1){buzzAnswerIndex++;startBuzzAnswerTimer();}
+  else {buzzAnswerEnd=0;broadcastBuzzOrder();renderHost();}
+}
+function finishBuzzAnswer(){
+  clearInterval(buzzAnswerTimer);buzzAnswerEnd=0;buzzOpen=false;
+  playerConnections().forEach(([k,c])=>c.send({type:"buzzState",open:false}));
+  broadcastBuzzOrder();renderHost();
+}
 function simpleNorm(s){
   return String(s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/&/g,"and").replace(/[^a-z0-9]/g,"");
 }
