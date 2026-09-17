@@ -18,18 +18,52 @@ button{background:var(--n);color:#fff;border:0;font-weight:800;cursor:pointer}.s
 .pill{display:inline-block;padding:5px 9px;background:#e8eef3;border-radius:99px;margin:3px;font-size:13px}.check{opacity:.42;text-decoration:line-through}
 .tabs{display:flex;gap:7px;overflow:auto;margin-bottom:12px}.tabs button{white-space:nowrap}
 .code{letter-spacing:5px}.teamBtn{min-height:56px}
+
+/* v13 mobile-first fixes */
+*{box-sizing:border-box}
+html,body{max-width:100%;overflow-x:hidden}
+body{min-width:0}
+header{width:100%;padding:14px 16px;font-size:18px;white-space:normal}
+main{width:min(1180px,100%);max-width:100%;padding:16px;margin:0 auto}
+.card{max-width:100%;overflow:hidden}
+.grid{min-width:0}
+button,select,input{max-width:100%;min-width:0}
+#setup .card{width:100%;max-width:980px;margin:0 auto}
+#setup .grid{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:10px}
+#setup button{white-space:normal;line-height:1.15;padding:15px 8px}
+#playerView .card{max-width:560px;margin:0 auto}
+#buzzBtn{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+@media(max-width:700px){
+  main{padding:10px}
+  header{font-size:17px;padding:12px}
+  .card{padding:16px;border-radius:16px}
+  #setup .grid{grid-template-columns:1fr 1fr!important;gap:8px}
+  #setup button{font-size:14px;padding:14px 6px}
+  #setup h2{font-size:22px}
+  #setup p{font-size:14px;line-height:1.4}
+  #roomIn,#teamSelect,#playerSelect{width:100%;font-size:16px;height:52px}
+  #teamJoinBtn,#screenJoinBtn,#playerJoinBtn{height:56px;font-size:16px}
+  #playerView .card{padding:14px}
+  #playerName{text-align:center;font-size:25px!important}
+  #buzzState{font-size:18px}
+  #buzzBtn{height:55vh!important;min-height:300px;font-size:44px!important;border-radius:24px!important}
+}
+@media(max-width:390px){
+  #setup .grid{grid-template-columns:1fr!important}
+}
+
 </style>
 </head>
 <body>
-<header>🇭🇷 Kroatien-Olympiade LIVE <span style="font-size:12px;opacity:.65">v12</span></header>
+<header>🇭🇷 Kroatien-Olympiade LIVE <span style="font-size:12px;opacity:.65">v13</span></header>
 <div class="wrap">
 <section id="setup" class="card">
 <h2>Verbinden</h2>
 <p class="muted">Alle Geräte öffnen dieselbe Seite. Jan erstellt den Raum, die Kapitäne treten mit dem Raumcode bei.</p>
-<div class="grid" style="grid-template-columns:repeat(4,minmax(170px,1fr))">
+<div class="grid">
 <button id="hostBtn">JAN – SPIELLEITER</button>
 <button id="captainBtn" class="secondary">KAPITÄN</button>
-<button id="screenBtn" class="secondary">TV / BEAMER</button><button id="playerBtn" class="secondary">SPIELER / BUZZER</button>
+<button id="screenBtn" class="secondary">TV / BEAMER</button><button id="playerBtn" type="button" class="secondary">SPIELER / BUZZER</button>
 </div>
 <div id="joinBox" class="hide" style="margin-top:16px">
 <input id="roomIn" placeholder="RAUMCODE" maxlength="6" style="width:100%;text-transform:uppercase">
@@ -41,7 +75,7 @@ button{background:var(--n);color:#fff;border:0;font-weight:800;cursor:pointer}.s
 <button id="screenJoinBtn" class="hide" style="width:100%;margin-top:10px">TV / BEAMER VERBINDEN</button>
 <div id="playerChoices" class="hide" style="margin-top:10px"><select id="playerSelect" style="width:100%">
 <option>Kevin</option><option>Markus</option><option>Stefan</option><option>Kay</option><option>Michel</option><option>Patrick</option><option>Mario</option><option>Fabian</option><option>Timo</option><option>Andre</option><option>Klemm</option><option>Swen</option>
-</select><button id="playerJoinBtn" style="width:100%;margin-top:10px">ALS SPIELER VERBINDEN</button></div>
+</select><button id="playerJoinBtn" type="button" style="width:100%;margin-top:10px">ALS SPIELER VERBINDEN</button></div>
 </div>
 </section>
 
@@ -146,10 +180,34 @@ function join(teamRole){
   });
 }
 function joinPlayer(){
-  if(!ensurePeer())return; room=$("roomIn").value.trim().toUpperCase();
+  room=$("roomIn").value.trim().toUpperCase();
   if(!room){alert("Bitte Raumcode eingeben.");return;}
-  const name=$("playerSelect").value; role="player:"+name; peer=new Peer();
-  peer.on("open",()=>{conn=peer.connect("kroatien-"+room,{reliable:true});conn.on("open",()=>{conn.send({type:"join",role,name});show("playerView");$("playerName").textContent=name;});conn.on("data",onClientMessage);});
+  const name=$("playerSelect").value;
+  if(!name){alert("Bitte Spieler auswählen.");return;}
+  role="player:"+name;
+
+  const connectPlayer=()=>{
+    conn=peer.connect("kroatien-"+room,{reliable:true});
+    conn.on("open",()=>{
+      conn.send({type:"join",role,name});
+      show("playerView");
+      $("playerName").textContent=name;
+      $("buzzState").textContent="Verbunden – warte auf Jan …";
+    });
+    conn.on("data",onClientMessage);
+    conn.on("error",()=>alert("Verbindung fehlgeschlagen. Bitte Raumcode prüfen."));
+  };
+
+  if(!peer){
+    if(!window.Peer){alert("PeerJS konnte nicht geladen werden. Internetverbindung prüfen.");return;}
+    peer=new Peer();
+    peer.on("open",connectPlayer);
+    peer.on("error",e=>alert("Verbindung fehlgeschlagen: "+e.type));
+  }else if(peer.open){
+    connectPlayer();
+  }else{
+    peer.once("open",connectPlayer);
+  }
 }
 function onHostMessage(m,c){
   if(m.type==="join"){conns[m.role]=c; refreshConnections();}
