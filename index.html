@@ -145,7 +145,7 @@ button,select,input{max-width:100%;min-width:0}
 </style>
 </head>
 <body>
-<header>🇭🇷 Kroatien-Olympiade LIVE <span style="font-size:12px;opacity:.65">v30 · Zimmergame Live + 3er-Finale</span></header>
+<header>🇭🇷 Kroatien-Olympiade LIVE <span style="font-size:12px;opacity:.65">v31 · Live-Fix + Finale bis Sieger</span></header>
 <div class="wrap">
 <section id="setup" class="card">
 <h2>Verbinden</h2>
@@ -252,13 +252,13 @@ const ZG_ROUNDS=[
   {title:"Runde 5 · Stein · Schere · Papier",question:"Best of Leben: Beide starten mit 3 Herzen."}
 ];
 let zgRound=0, zgPhase="idle", zgAnswers={}, zgDuos=[], zgOut=new Set(), zgWinner=null;
-let zgReactionStarts={}, zgRpsPlayers=[], zgRpsLives={}, zgRpsChoices={}, zgRpsToken=0, zgRpsEnd=0, zgRpsTimer=null;
+let zgReactionStarts={}, zgRpsPlayers=[], zgRpsLives={}, zgRpsChoices={}, zgRpsToken=0, zgRpsEnd=0, zgRpsTimer=null, zgRpsEliminated=[];
 let zgClientState={round:null,phase:"idle",submitted:false,localStart:0,reactionTimer:null,reactionGoAt:0,rpsChosen:false};
 let zgLive={};
 function zgLiveBroadcast(){
   if(modeName!=="zimmer")return;
-  const payload={type:"zgLive",round:zgRound,phase:zgPhase,live:zgLive,remaining:zgRemaining(),duos:zgDuos};
-  ZG_PLAYERS.forEach(n=>{ if(zgOut.has(n)) zgSend(n,payload); });
+  const payload={type:"zgLive",round:zgRound,phase:zgPhase,title:ZG_ROUNDS[zgRound]?.title||"",question:ZG_ROUNDS[zgRound]?.question||"",live:JSON.parse(JSON.stringify(zgLive||{})),remaining:zgRemaining(),duos:zgDuos};
+  ZG_PLAYERS.filter(n=>zgOut.has(n)).forEach(n=>zgSend(n,payload));
 }
 function zgLiveHostHtml(){
   const entries=Object.entries(zgLive||{});
@@ -276,7 +276,7 @@ function zgSpectatorRender(m){
   zgClientBase();
   $("buzzState").textContent="";
   $("playerAlert").className="status ok";
-  $("playerAlert").innerHTML="👀 <b>Du bist bereits im Zimmerteam.</b><br>Du siehst das aktuelle Spiel live.";
+  $("playerAlert").innerHTML="👀 <b>LIVE-ZUSCHAUER</b><br>Du bist bereits im Zimmerteam und siehst die aktuelle Runde live.";
   const live=m.live||{};
   $("playerRanking").innerHTML="<h3>Aktuelle Runde "+(m.round+1)+"</h3>"+
     (Object.entries(live).length?Object.entries(live).map(([n,v])=>{
@@ -416,7 +416,7 @@ function onHostMessage(m,c){
     zgRpsChoices[m.name]=m.choice;
     zgLive[m.name]={kind:"rps",chosen:true};
     zgLiveBroadcast(); renderHost();
-    if(zgRpsPlayers.every(n=>zgRpsChoices[n])) zgResolveRps();
+    if(zgRpsPlayers.filter(n=>zgRpsLives[n]>0).every(n=>zgRpsChoices[n])) zgResolveRps();
     return;
   }
   if(m.type==="answer"){
@@ -437,6 +437,12 @@ function onClientMessage(m){
   if(m.type==="zgState" && role && role.startsWith("player:")){ zgClientRender(m); return; }
   if(m.type==="zgLive" && role && role.startsWith("player:")){ zgSpectatorRender(m); return; }
   if(m.type==="zgRpsResult" && role && role.startsWith("player:")){ zgClientRpsResult(m); return; }
+  if(m.type==="zgFinalWinner" && role && role.startsWith("player:")){
+    zgClientBase();clearInterval(timerInt);const name=role.slice(7);
+    $("playerAlert").className=name===m.winner?"status ok":"status";
+    $("playerAlert").innerHTML=name===m.winner?"🏆 <b>DU HAST DAS FINALE GEWONNEN!</b><br>Wähle jetzt Platz 2 oder Platz 3 als Zimmerpartner.":"<b>Finale beendet.</b><br>Sieger: "+zgEsc(m.winner)+"<br>Platz 2: "+zgEsc(m.second||"—")+" · Platz 3: "+zgEsc(m.third||"—");
+    return;
+  }
 
   if(m.type==="buzzState" && role && role.startsWith("player:")){$("buzzBtn").disabled=!m.open;$("buzzState").textContent=m.open?"🟢 BUZZER FREI!":"🔒 Buzzer gesperrt";}
   if(m.type==="buzzReset" && role && role.startsWith("player:")){$("buzzBtn").classList.remove("hide");$("buzzBtn").disabled=true;$("playerBuzzBoard").classList.add("hide");$("playerRanking").innerHTML="";$("playerCountdown").textContent="";$("buzzState").textContent="Neue Runde – warte auf Jan …";}
@@ -1053,10 +1059,16 @@ function zgStartRound(){
   if(zgRound>=4)return;
   zgAnswers={}; zgWinner=null; zgLive={}; zgPhase="playing";
   const rem=zgRemaining();
+  rem.forEach(n=>{
+    if(zgRound===0||zgRound===2)zgLive[n]={kind:"input",value:"",sent:false};
+    else if(zgRound===1)zgLive[n]={kind:"timer",state:"ready"};
+    else if(zgRound===3)zgLive[n]={kind:"reaction",state:"waiting"};
+  });
   const end=(zgRound===0||zgRound===2)?Date.now()+60000:0;
   rem.forEach(n=>zgSend(n,{type:"zgState",round:zgRound,phase:"playing",title:ZG_ROUNDS[zgRound].title,question:ZG_ROUNDS[zgRound].question,end}));
   // Fabian may be connected, but is explicitly not part of Zimmergame.
   zgSend("Fabian",{type:"zgState",round:zgRound,phase:"excluded",title:"🏨 Zimmergame"});
+  zgLiveBroadcast();
   renderHost();
   if(end){
     setTimeout(()=>{if(modeName==="zimmer"&&zgRound<4&&zgPhase==="playing")zgRevealRound();},60500);
@@ -1074,13 +1086,14 @@ function zgRevealRound(){
 }
 
 function zgConfirmPair(){
-  if(zgPhase!=="revealed"||!zgWinner)return;
+  if(!["revealed","winnerChoose"].includes(zgPhase)||!zgWinner)return;
   const sel=$("zgPartner"); if(!sel||!sel.value)return;
   const partner=sel.value;
   if(partner===zgWinner||zgOut.has(partner)){alert("Ungültiger Partner.");return;}
   zgDuos.push([zgWinner,partner]); zgOut.add(zgWinner); zgOut.add(partner); zgPhase="paired";
   zgSend(zgWinner,{type:"zgState",round:zgRound,phase:"paired",partner});
   zgSend(partner,{type:"zgState",round:zgRound,phase:"paired",partner:zgWinner});
+  setTimeout(()=>zgLiveBroadcast(),150);
   renderHost();
 }
 
@@ -1094,95 +1107,86 @@ function zgNextRound(){
 function zgRpsHostHtml(){
   const rem=zgRemaining();
   if(zgPhase==="idle"||zgPhase==="ready"){
-    return "<div class='card'><h3>Finale mit 3 Spielern</h3><p>Alle drei spielen gleichzeitig mit 3 ❤️. Sobald der erste 0 ❤️ hat, ist er Couch-Kandidat; die beiden anderen bilden Zimmerteam 5.</p>"+
-      "<div class='grid'>"+rem.map(n=>"<div class='status' style='text-align:center'><b>"+zgEsc(n)+"</b><div class='zg-hearts'>❤️❤️❤️</div></div>").join("")+"</div>"+
-      "<button id='zgRpsStart' class='good' style='width:100%;margin-top:10px'>3ER-DUELL STARTEN</button></div>";
+    return "<div class='card'><h3>🏆 Finale: 3 → 2 → 1</h3><p>Alle drei starten mit 3 ❤️. Wer 0 ❤️ hat, scheidet aus. Danach spielen die letzten beiden weiter, bis <b>ein Sieger</b> feststeht.</p><p>Der Sieger darf anschließend <b>Platz 2 oder Platz 3</b> als Zimmerpartner wählen.</p><div class='grid'>"+rem.map(n=>"<div class='status' style='text-align:center'><b>"+zgEsc(n)+"</b><div class='zg-hearts'>❤️❤️❤️</div></div>").join("")+"</div><button id='zgRpsStart' class='good' style='width:100%;margin-top:10px'>FINALE STARTEN</button></div>";
   }
   if(zgPhase==="rps"){
-    return "<div class='card'><div class='grid'>"+zgRpsPlayers.map(n=>"<div class='status' style='text-align:center'><b>"+zgEsc(n)+"</b><div class='zg-hearts'>"+("❤️".repeat(zgRpsLives[n])||"💀")+"</div>"+(zgRpsChoices[n]?"✅ gewählt":"⏳ wählt")+"</div>").join("")+"</div>"+
-      "<div class='status'><b>10 Sekunden.</b> Sobald alle drei gewählt haben, wird sofort aufgelöst.</div>"+zgLiveHostHtml()+"</div>";
+    const active=zgRpsPlayers.filter(n=>zgRpsLives[n]>0);
+    return "<div class='card'><h3>"+(active.length===3?"3ER-RUNDE":"⚔️ 1 GEGEN 1 – BIS ZUM SIEGER")+"</h3><div class='grid'>"+zgRpsPlayers.map(n=>"<div class='status "+(zgRpsLives[n]<=0?"bad":"")+"' style='text-align:center'><b>"+zgEsc(n)+"</b><div class='zg-hearts'>"+("❤️".repeat(zgRpsLives[n])||"💀")+"</div>"+(zgRpsLives[n]<=0?"Platz 3 · Zuschauer":(zgRpsChoices[n]?"✅ gewählt":"⏳ wählt"))+"</div>").join("")+"</div><div class='status'><b>10 Sekunden.</b> Sobald alle aktiven Spieler gewählt haben, wird sofort aufgelöst.</div>"+zgLiveHostHtml()+"</div>";
   }
   if(zgPhase==="rpsBetween"){
-    return "<div class='card'><div class='grid'>"+zgRpsPlayers.map(n=>"<div class='status' style='text-align:center'><b>"+zgEsc(n)+"</b><div class='zg-hearts'>"+("❤️".repeat(zgRpsLives[n])||"💀")+"</div></div>").join("")+"</div>"+
-      "<button id='zgRpsNext' class='good' style='width:100%'>NÄCHSTE 10 SEKUNDEN STARTEN</button></div>";
+    const active=zgRpsPlayers.filter(n=>zgRpsLives[n]>0);
+    return "<div class='card'><h3>"+(active.length===2?"⚔️ Noch 2 Spieler – weiter bis zum Sieger":"Nächste Runde")+"</h3><div class='grid'>"+zgRpsPlayers.map(n=>"<div class='status' style='text-align:center'><b>"+zgEsc(n)+"</b><div class='zg-hearts'>"+("❤️".repeat(zgRpsLives[n])||"💀")+"</div></div>").join("")+"</div><button id='zgRpsNext' class='good' style='width:100%'>NÄCHSTE RUNDE STARTEN</button></div>";
+  }
+  if(zgPhase==="winnerChoose"){
+    const third=zgRpsEliminated[0]||null, second=zgRpsEliminated[1]||null;
+    return "<div class='card'><div class='status ok' style='font-size:26px;text-align:center'>🏆 <b>SIEGER: "+zgEsc(zgWinner)+"</b></div><div class='status'><b>Platz 2:</b> "+zgEsc(second||"—")+"<br><b>Platz 3:</b> "+zgEsc(third||"—")+"</div><h3>Mit wem will "+zgEsc(zgWinner)+" aufs Zimmer?</h3><select id='zgPartner' style='width:100%;font-size:20px'>"+[second,third].filter(Boolean).map((n,i)=>"<option value='"+zgEsc(n)+"'>"+(i===0?"Platz 2 · ":"Platz 3 · ")+zgEsc(n)+"</option>").join("")+"</select><button id='zgPair' class='good' style='width:100%;margin-top:10px'>ZIMMERPARTNER FESTLEGEN</button></div>";
   }
   if(zgPhase==="paired"){
     const couch=zgRemaining()[0]||"—";
-    return "<div class='card'><div class='status ok' style='font-size:24px;text-align:center'><b>ALLE ZIMMERTEAMS STEHEN</b></div>"+zgDuoHtml()+
-      "<div class='status bad' style='font-size:28px;text-align:center'>🛋️ <b>Couch-Kandidat: "+zgEsc(couch)+"</b></div></div>";
+    return "<div class='card'><div class='status ok' style='font-size:24px;text-align:center'><b>ALLE ZIMMERTEAMS STEHEN</b></div>"+zgDuoHtml()+"<div class='status bad' style='font-size:28px;text-align:center'>🛋️ <b>Couch-Kandidat: "+zgEsc(couch)+"</b></div></div>";
   }
   return "";
 }
-
 function zgStartRpsMatch(){
-  const rem=zgRemaining();
-  if(rem.length!==3){alert("Für das Finale müssen genau 3 Spieler übrig sein.");return;}
-  zgRpsPlayers=[...rem]; zgRpsLives={}; rem.forEach(n=>zgRpsLives[n]=3);
-  zgStartRpsTurn();
+  const rem=zgRemaining(); if(rem.length!==3){alert("Für das Finale müssen genau 3 Spieler übrig sein.");return;}
+  zgRpsPlayers=[...rem];zgRpsLives={};zgRpsEliminated=[];rem.forEach(n=>zgRpsLives[n]=3);zgStartRpsTurn();
 }
 function zgStartRpsTurn(){
-  clearTimeout(zgRpsTimer); zgPhase="rps"; zgRpsChoices={}; zgLive={}; zgRpsToken++; zgRpsEnd=Date.now()+10000;
-  zgRpsPlayers.forEach(n=>{
-    zgLive[n]={kind:"rps",chosen:false};
-    zgSend(n,{type:"zgState",round:4,phase:"rps",players:zgRpsPlayers,lives:zgRpsLives,token:zgRpsToken,end:zgRpsEnd});
-  });
-  zgLiveBroadcast(); renderHost();
-  const token=zgRpsToken;
-  zgRpsTimer=setTimeout(()=>{if(zgPhase==="rps"&&zgRpsToken===token)zgResolveRps();},10100);
+  clearTimeout(zgRpsTimer);
+  const active=zgRpsPlayers.filter(n=>zgRpsLives[n]>0);
+  if(active.length<=1){zgFinishRps();return;}
+  zgPhase="rps";zgRpsChoices={};zgLive={};zgRpsToken++;zgRpsEnd=Date.now()+10000;
+  active.forEach(n=>{zgLive[n]={kind:"rps",chosen:false};zgSend(n,{type:"zgState",round:4,phase:"rps",players:active,lives:zgRpsLives,token:zgRpsToken,end:zgRpsEnd});});
+  zgLiveBroadcast();renderHost();
+  const token=zgRpsToken;zgRpsTimer=setTimeout(()=>{if(zgPhase==="rps"&&zgRpsToken===token)zgResolveRps();},10100);
 }
 function zgResolveRps(){
-  if(zgPhase!=="rps")return;
-  clearTimeout(zgRpsTimer);
-  const p=zgRpsPlayers, c=p.map(n=>zgRpsChoices[n]||null);
-  let loser=null, text="";
-  const missing=p.filter(n=>!zgRpsChoices[n]);
-  if(missing.length===1){loser=missing[0];text=loser+" hat nicht gewählt und verliert ❤️.";}
-  else if(missing.length>1){text="Mehrere ohne Auswahl – niemand verliert ein Leben.";}
-  else{
-    const uniq=[...new Set(c)];
-    if(uniq.length===1){text="Alle drei gleich – niemand verliert ❤️.";}
-    else if(uniq.length===3){text="Stein, Schere und Papier – niemand verliert ❤️.";}
+  if(zgPhase!=="rps")return;clearTimeout(zgRpsTimer);
+  const active=zgRpsPlayers.filter(n=>zgRpsLives[n]>0), choices={};active.forEach(n=>choices[n]=zgRpsChoices[n]||null);
+  let losers=[],text="";
+  if(active.length===2){
+    const [a,b]=active,ca=choices[a],cb=choices[b];
+    if(!ca&&!cb)text="Beide ohne Auswahl – niemand verliert ❤️.";
+    else if(!ca){losers=[a];text=a+" verliert ❤️.";}
+    else if(!cb){losers=[b];text=b+" verliert ❤️.";}
+    else if(ca===cb)text="Unentschieden – niemand verliert ❤️.";
+    else{const beats={Stein:"Schere",Schere:"Papier",Papier:"Stein"};const l=beats[ca]===cb?b:a;losers=[l];text=(l===b?a:b)+" gewinnt – "+l+" verliert ❤️.";}
+  }else{
+    const miss=active.filter(n=>!choices[n]);
+    if(miss.length===1){losers=[miss[0]];text=miss[0]+" hat nicht gewählt und verliert ❤️.";}
+    else if(miss.length>1)text="Mehrere ohne Auswahl – niemand verliert ❤️.";
     else{
-      const counts={}; c.forEach(x=>counts[x]=(counts[x]||0)+1);
-      const single=Object.keys(counts).find(x=>counts[x]===1);
-      const pair=Object.keys(counts).find(x=>counts[x]===2);
-      const beats={Stein:"Schere",Schere:"Papier",Papier:"Stein"};
-      if(beats[pair]===single){
-        loser=p[c.indexOf(single)];
-        text=pair+" schlägt "+single+" – "+loser+" verliert ❤️.";
-      }else{
-        const pairPlayers=p.filter((n,i)=>c[i]===pair);
-        pairPlayers.forEach(n=>zgRpsLives[n]=Math.max(0,zgRpsLives[n]-1));
-        text=single+" schlägt "+pair+" – "+pairPlayers.join(" & ")+" verlieren je ❤️.";
+      const vals=active.map(n=>choices[n]),u=[...new Set(vals)];
+      if(u.length===1)text="Alle drei gleich – niemand verliert ❤️.";
+      else if(u.length===3)text="Stein, Schere und Papier – niemand verliert ❤️.";
+      else{
+        const cnt={};vals.forEach(x=>cnt[x]=(cnt[x]||0)+1);const single=Object.keys(cnt).find(x=>cnt[x]===1),pair=Object.keys(cnt).find(x=>cnt[x]===2);
+        const beats={Stein:"Schere",Schere:"Papier",Papier:"Stein"};
+        if(beats[pair]===single){losers=[active.find(n=>choices[n]===single)];text=pair+" schlägt "+single+" – "+losers[0]+" verliert ❤️.";}
+        else{losers=active.filter(n=>choices[n]===pair);text=single+" schlägt "+pair+" – "+losers.join(" & ")+" verlieren je ❤️.";}
       }
     }
   }
-  if(loser)zgRpsLives[loser]=Math.max(0,zgRpsLives[loser]-1);
-  const eliminated=p.filter(n=>zgRpsLives[n]===0);
-  const choices={};p.forEach((n,i)=>choices[n]=c[i]);
-  if(eliminated.length){
-    // If two hit zero simultaneously, the one with fewer lives before this edge case is not distinguishable;
-    // use a sudden-death-safe fallback by restoring both to 1 and continuing.
-    if(eliminated.length>1){
-      eliminated.forEach(n=>zgRpsLives[n]=1);
-      text+=" Gleichzeitiges Ausscheiden – beide bekommen 1 ❤️ zurück, weiter geht's.";
-      zgRpsPlayers.forEach(n=>zgSend(n,{type:"zgRpsResult",text,choices,lives:zgRpsLives,winner:null}));
-      zgPhase="rpsBetween"; renderHost(); return;
-    }
-    const couch=eliminated[0], duo=p.filter(n=>n!==couch);
-    zgDuos.push(duo); duo.forEach(n=>zgOut.add(n));
-    zgWinner=duo.join(" + "); zgPhase="paired";
-    zgRpsPlayers.forEach(n=>zgSend(n,{type:"zgRpsResult",text,choices,lives:zgRpsLives,winner:zgWinner,couch,duo}));
-    renderHost(); return;
-  }
+  losers.forEach(n=>zgRpsLives[n]=Math.max(0,zgRpsLives[n]-1));
+  let newly=active.filter(n=>zgRpsLives[n]===0&&!zgRpsEliminated.includes(n));
+  if(newly.length>1){newly.forEach(n=>zgRpsLives[n]=1);text+=" Gleichzeitiges Ausscheiden – beide bekommen 1 ❤️ zurück.";newly=[];}
+  newly.forEach(n=>{zgRpsEliminated.push(n);if(zgRpsEliminated.length===1)zgOut.add(n);});
   zgRpsPlayers.forEach(n=>zgSend(n,{type:"zgRpsResult",text,choices,lives:zgRpsLives,winner:null}));
-  zgPhase="rpsBetween"; renderHost();
+  const still=zgRpsPlayers.filter(n=>zgRpsLives[n]>0);
+  if(still.length===1){zgWinner=still[0];zgFinishRps();}
+  else{zgPhase="rpsBetween";zgLiveBroadcast();renderHost();}
 }
-
+function zgFinishRps(){
+  const still=zgRpsPlayers.filter(n=>zgRpsLives[n]>0);if(still.length===1)zgWinner=still[0];
+  zgRpsPlayers.forEach(n=>zgOut.delete(n));zgPhase="winnerChoose";
+  const third=zgRpsEliminated[0]||null,second=zgRpsEliminated[1]||null;
+  zgRpsPlayers.forEach(n=>zgSend(n,{type:"zgFinalWinner",winner:zgWinner,second,third}));
+  renderHost();
+}
 function zgResetGame(){
   if(!confirm("Zimmergame wirklich komplett zurücksetzen?"))return;
   clearTimeout(zgRpsTimer);
-  zgRound=0;zgPhase="idle";zgAnswers={};zgDuos=[];zgOut=new Set();zgWinner=null;zgRpsPlayers=[];zgRpsLives={};zgRpsChoices={};
+  zgRound=0;zgPhase="idle";zgAnswers={};zgDuos=[];zgOut=new Set();zgWinner=null;zgRpsPlayers=[];zgRpsLives={};zgRpsChoices={};zgRpsEliminated=[];zgLive={};
   ZG_PLAYERS.forEach(n=>zgSend(n,{type:"zgState",round:0,phase:"ready",title:ZG_ROUNDS[0].title,question:ZG_ROUNDS[0].question}));
   renderHost();
 }
@@ -1297,7 +1301,7 @@ function zgClientRpsResult(m){
   const name=role.slice(7);
   $("playerAlert").className=m.winner===name?"status ok":"status";
   $("playerAlert").innerHTML="<b>"+zgEsc(m.text)+"</b><br><div class='zg-hearts'>"+("❤️".repeat(m.lives[name]||0)||"💀")+"</div>"+
-    (m.couch?(name===m.couch?"🛋️ <b>Du bist der Couch-Kandidat.</b>":"🛏️ <b>Zimmerteam 5: "+m.duo.map(zgEsc).join(" + ")+"</b>"):"Warte auf den nächsten Zug …");
+    "Warte auf den nächsten Zug …";
   $("playerRanking").innerHTML=Object.entries(m.choices||{}).map(([n,c])=>"<div class='status'><b>"+zgEsc(n)+":</b> "+(c||"keine Auswahl")+"</div>").join("");
 }
 
