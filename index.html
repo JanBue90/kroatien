@@ -16,7 +16,7 @@ button{background:var(--n);color:#fff;border:0;font-weight:800;cursor:pointer}.s
 .muted{color:#667684}.answer{display:block;width:100%;margin:8px 0;text-align:left}.answer.sel{outline:4px solid #9bbbd6}
 .status{padding:10px;border-radius:9px;background:#edf2f6;margin:6px 0}.ok{background:#def4e7}.bad{background:#fae1e1}
 .pill{display:inline-block;padding:5px 9px;background:#e8eef3;border-radius:99px;margin:3px;font-size:13px}.check{opacity:1;text-decoration:line-through;background:#dff5e7!important;border:2px solid #22a35a;color:#116534;font-weight:900}
-.tabs{display:flex;gap:7px;flex-wrap:wrap;overflow:visible;margin-bottom:12px}.tabs button{white-space:normal;flex:1 1 150px}
+.tabs{display:flex;gap:7px;overflow:auto;margin-bottom:12px}.tabs button{white-space:nowrap}
 .code{letter-spacing:5px}.teamBtn{min-height:56px}
 
 /* v13 mobile-first fixes */
@@ -120,32 +120,10 @@ button,select,input{max-width:100%;min-width:0}
 
 /* v22 standings */
 .tour-tv-score{display:grid;grid-template-columns:repeat(6,minmax(90px,1fr));gap:7px;margin:12px auto 18px;max-width:1100px}.tour-tv-score .status{text-align:center;margin:0;padding:8px}.tour-standings{max-width:900px;margin:20px auto}.tour-standings-row{display:grid;grid-template-columns:70px 1fr 100px;gap:12px;align-items:center;font-size:26px;padding:14px 18px}.tour-standings-row:nth-child(1){font-size:34px;background:#fff0b8}.tour-standings-row:nth-child(2){font-size:31px}.tour-standings-row:nth-child(3){font-size:29px}@media(max-width:700px){.tour-tv-score{grid-template-columns:repeat(3,1fr)}.tour-standings-row{grid-template-columns:45px 1fr 60px;font-size:20px;padding:10px}}
-
-/* v28 Zimmergame */
-.zg-rounds{display:grid;grid-template-columns:repeat(5,minmax(100px,1fr));gap:8px;margin:12px 0}
-.zg-round{padding:10px;border-radius:12px;background:#edf2f6;text-align:center;font-weight:900}
-.zg-round.active{background:#dff5e7;border:3px solid #22a35a}
-.zg-round.done{background:#17324d;color:white}
-.zg-rank{display:grid;grid-template-columns:52px 1fr auto;gap:10px;align-items:center;padding:12px 14px}
-.zg-rank:first-child{background:#fff0b8;font-size:20px}
-.zg-duos{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px}
-.zg-choice{width:100%;min-height:70px;font-size:20px;margin:6px 0}
-.zg-rps{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.zg-rps button{min-height:90px;font-size:20px}
-.zg-hearts{font-size:32px;letter-spacing:3px}
-.zg-phone-title{text-align:center;font-size:25px;font-weight:900;margin:8px 0 16px}
-.zg-phone-big{text-align:center;font-size:54px;font-weight:950;margin:18px 0}
-.zg-go{background:#dff5e7!important;border:4px solid #22a35a!important}
-@media(max-width:700px){
-  .zg-rounds{grid-template-columns:1fr}
-  .zg-rank{grid-template-columns:40px 1fr auto;padding:9px}
-  .zg-rps button{font-size:17px;min-height:82px;padding:8px}
-}
-
 </style>
 </head>
 <body>
-<header>🇭🇷 Kroatien-Olympiade LIVE <span style="font-size:12px;opacity:.65">v31 · Live-Fix + Finale bis Sieger</span></header>
+<header>🇭🇷 Kroatien-Olympiade LIVE <span style="font-size:12px;opacity:.65">v22</span></header>
 <div class="wrap">
 <section id="setup" class="card">
 <h2>Verbinden</h2>
@@ -174,7 +152,7 @@ button,select,input{max-width:100%;min-width:0}
 <div class="tabs">
 <button data-mode="quiz">Kroatien-Quiz</button>
 <button data-mode="estimate">Schätzmeister</button>
-<button data-mode="category">Kategorien</button><button data-mode="emoji">Emoji-Songs</button><button data-mode="buzzer">Buzzer-Spiel</button><button data-mode="tourpics">Kegeltour-Fotos</button><button data-mode="zimmer" class="good" style="font-size:17px;border:3px solid #0d6639">🏨 ZIMMERGAME – ZIMMER AUSLOSEN</button>
+<button data-mode="category">Kategorien</button><button data-mode="higherlower">Higher or Lower</button><button data-mode="emoji">Emoji-Songs</button><button data-mode="buzzer">Buzzer-Spiel</button><button data-mode="tourpics">Kegeltour-Fotos</button>
 </div>
 <div id="hostGame"></div>
 </section>
@@ -228,6 +206,41 @@ if(!Array.isArray(D.emoji)){
 }
 const $=id=>document.getElementById(id);
 let peer=null, conns={}, conn=null, role=null, room=null, modeName="quiz";
+// v29 Higher or Lower – eigenständiges Einzelspiel innerhalb der Haupt-App
+const HL_NAMES=["Kevin","Markus","Stefan","Kay","Michel","Patrick","Mario","Fabian","Timo","Andre","Klemm","Swen","Jan"];
+const HL_BASE=[
+["Kroatien","Wie viele Nationalparks hat Kroatien?",10,8,"","8 Nationalparks."],["Kroatien","Seit welchem Jahr ist Kroatien EU-Mitglied?",2010,2013,"","Seit 2013."],["Kroatien","Seit welchem Jahr nutzt Kroatien den Euro?",2022,2023,"","Seit 2023."],["Kroatien","Einwohner Kroatien ungefähr?",4.5,3.9,"Mio.","Rund 3,9 Mio."],["Kroatien","Einwohner Zadar ungefähr?",100000,75000,"","Rund 75.000."],["Kroatien","Einwohner Zagreb ungefähr?",900000,770000,"","Rund 770.000."],["Kroatien","Höhe der Dinara?",1800,1831,"m","1.831 m."],["Kroatien","Fläche Kroatiens ungefähr?",50000,56594,"km²","Rund 56.594 km²."],["Kroatien","Inseln, Inselchen und Felsen Kroatiens ungefähr?",1000,1244,"","Über 1.200."],
+["Bier & Party","Alkoholgehalt eines typischen Pils ungefähr?",4,5,"%","Etwa 5 Vol.-%."],["Bier & Party","Liter in einer Maß?",0.8,1,"l","1 Liter."],["Bier & Party","Liter in 20 Bierflaschen à 0,5 l?",8,10,"l","10 Liter."],["Bier & Party","2-cl-Shots aus 0,7 l theoretisch?",30,35,"","35."],["Bier & Party","Halbe Liter aus einem 30-l-Fass theoretisch?",50,60,"","60."],["Bier & Party","Halbe Liter aus einem 50-l-Fass theoretisch?",80,100,"","100."],["Bier & Party","Alkoholgehalt Jägermeister?",40,35,"%","35 Vol.-%."],["Bier & Party","Alkoholgehalt Jack Daniel's Old No. 7 typischerweise?",45,40,"%","40 Vol.-%."],["Bier & Party","Liter in einer Magnum-Weinflasche?",1,1.5,"l","1,5 Liter."],
+["Fußball","Breite eines Fußballtores?",8,7.32,"m","7,32 m."],["Fußball","Höhe eines Fußballtores?",2,2.44,"m","2,44 m."],["Fußball","Entfernung Elfmeterpunkt zur Torlinie?",10,11,"m","11 m."],["Fußball","Spieler pro Team gleichzeitig auf dem Feld?",10,11,"","11."],["Fußball","WM-Titel Deutschland Männer?",5,4,"","4."],["Fußball","WM-Titel Brasilien Männer?",4,5,"","5."],["Fußball","Bundesliga-Spieltage je Verein?",30,34,"","34."],["Fußball","Teams in der Bundesliga?",20,18,"","18."],["Fußball","Punkte für einen Sieg?",2,3,"","3."],
+["Sport","Länge eines Marathons?",40,42.195,"km","42,195 km."],["Sport","Olympische Ringe?",6,5,"","5."],["Sport","Löcher einer Standard-Golfrunde?",20,18,"","18."],["Sport","Maximale Punktzahl mit drei Darts?",160,180,"","180."],["Sport","Punkte für einen F1-Sieg ohne Bonus?",20,25,"","25."],
+["Allgemeinwissen","Bundesländer Deutschlands?",15,16,"","16."],["Allgemeinwissen","Nachbarstaaten Deutschlands?",8,9,"","9."],["Allgemeinwissen","Sterne auf der EU-Flagge?",15,12,"","12."],["Allgemeinwissen","Planeten im Sonnensystem?",9,8,"","8."],["Allgemeinwissen","Knochen eines Erwachsenen typischerweise?",200,206,"","206."],["Allgemeinwissen","Zähne eines Erwachsenen mit Weisheitszähnen?",30,32,"","32."],["Allgemeinwissen","Herzen eines Oktopus?",2,3,"","3."],["Allgemeinwissen","Arme eines Oktopus?",10,8,"","8."],["Allgemeinwissen","Beine einer Spinne?",6,8,"","8."],["Allgemeinwissen","Elemente im Periodensystem?",120,118,"","118."],["Allgemeinwissen","Tasten eines Standardklaviers?",80,88,"","88."],["Allgemeinwissen","Karten in einem Skatblatt?",36,32,"","32."],["Allgemeinwissen","Felder eines Schachbretts?",60,64,"","64."],["Allgemeinwissen","Bits in einem Byte?",10,8,"","8."],["Allgemeinwissen","Zeichen einer deutschen IBAN?",20,22,"","22."],
+["Geografie","Höhe der Zugspitze?",3000,2962,"m","2.962 m."],["Geografie","Höhe Mount Everest ungefähr?",8500,8849,"m","Rund 8.849 m."],["Geografie","Länge des Rheins ungefähr?",1000,1233,"km","Rund 1.233 km."],["Geografie","Länge der Donau ungefähr?",3000,2850,"km","Rund 2.850 km."],["Geografie","Fläche Deutschlands ungefähr?",400000,357588,"km²","Rund 357.588 km²."],["Geografie","Mittlere Entfernung Erde–Mond?",400000,384400,"km","Rund 384.400 km."],
+["Geschichte","Jahr des Mauerfalls?",1990,1989,"","1989."],["Geschichte","Jahr der deutschen Wiedervereinigung?",1989,1990,"","1990."],["Geschichte","Erster Mensch auf dem Mond – Jahr?",1970,1969,"","1969."],["Geschichte","Untergang der Titanic – Jahr?",1910,1912,"","1912."],["Geschichte","Ende Zweiter Weltkrieg in Europa – Jahr?",1944,1945,"","1945."],
+["Popkultur","Erstes iPhone vorgestellt – Jahr?",2005,2007,"","2007."],["Popkultur","YouTube gegründet – Jahr?",2006,2005,"","2005."],["Popkultur","Google gegründet – Jahr?",2000,1998,"","1998."],["Popkultur","Wikipedia gestartet – Jahr?",2000,2001,"","2001."],["Popkultur","Erster EON-Bond 'Dr. No' – Jahr?",1960,1962,"","1962."],["Popkultur","EON-James-Bond-Filme bis einschließlich 'Keine Zeit zu sterben'?",24,25,"","25."],
+["Natur & Technik","Siedepunkt Wasser auf Meereshöhe?",90,100,"°C","100 °C."],["Natur & Technik","Schallgeschwindigkeit in Luft bei 20 °C ungefähr?",300,343,"m/s","Rund 343 m/s."],["Natur & Technik","Sekunden in einer Stunde?",3000,3600,"","3.600."],["Natur & Technik","Minuten in einem Tag?",1500,1440,"","1.440."],["Natur & Technik","Tage in einem Schaltjahr?",365,366,"","366."],["Reisen","Reisegeschwindigkeit Verkehrsflugzeug ungefähr?",1000,900,"km/h","Grob 900 km/h."],["Reisen","Meter in einer Seemeile?",2000,1852,"m","1.852 m."]
+];
+function hlBuildBank(){let a=HL_BASE.map(x=>({cat:x[0],q:x[1],t:x[2],a:x[3],u:x[4],n:x[5]}));
+for(let n=6;n<=40;n+=2){let v=n*.5;a.push({cat:"Party-Mathe",q:`Liter in ${n} Bierflaschen à 0,5 l?`,t:v+(n%4?2:-2),a:v,u:"l",n:`${n} × 0,5 = ${v} l.`})}
+for(let n=6;n<=45;n+=3){let v=+(n*.33).toFixed(2);a.push({cat:"Party-Mathe",q:`Liter in ${n} Dosen à 0,33 l?`,t:+(v+(n%2?1:-1)).toFixed(2),a:v,u:"l",n:`${n} × 0,33 = ${v} l.`})}
+for(let l=1;l<=15;l++){let v=l*50;a.push({cat:"Party-Mathe",q:`2-cl-Shots aus ${l} Liter theoretisch?`,t:v+(l%2?20:-20),a:v,u:"",n:`${l*100} cl ÷ 2 = ${v}.`})}
+for(let n=7;n<=35;n++){let v=n*n;a.push({cat:"Schnellrechnen",q:`Wie viel ist ${n} × ${n}?`,t:v+(n%2?10:-10),a:v,u:"",n:`${n} × ${n} = ${v}.`})}
+for(let h=2;h<=30;h++){let v=h*60;a.push({cat:"Zeit",q:`Wie viele Minuten sind ${h} Stunden?`,t:v+(h%2?30:-30),a:v,u:"Min.",n:`${h} × 60 = ${v} Minuten.`})}
+for(let d=2;d<=20;d++){let v=d*24;a.push({cat:"Zeit",q:`Wie viele Stunden sind ${d} Tage?`,t:v+(d%2?12:-12),a:v,u:"Std.",n:`${d} × 24 = ${v} Stunden.`})}
+for(let km=2;km<=30;km+=2){let v=km*1000;a.push({cat:"Einheiten",q:`Wie viele Meter sind ${km} Kilometer?`,t:v+(km%4?500:-500),a:v,u:"m",n:`${km} km = ${v} m.`})}
+for(let e=5;e<=100;e+=5){let v=e*100;a.push({cat:"Geld",q:`Wie viele Cent sind ${e} Euro?`,t:v+(e%10?100:-100),a:v,u:"Cent",n:`${e} € = ${v} Cent.`})}
+for(let w=2;w<=20;w++){let v=w*6;a.push({cat:"Spiel & Würfel",q:`Maximale Augensumme mit ${w} normalen Würfeln?`,t:v+(w%2?3:-3),a:v,u:"",n:`${w} × 6 = ${v}.`})}
+let seen=new Set(),out=[];for(const x of a){if(!seen.has(x.q)){seen.add(x.q);out.push(x)}}return out.slice(0,250)}
+const HL_BANK=hlBuildBank(); let hl=null;
+function hlShuffle(a){a=[...a];for(let i=a.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function hlFmt(v,u){return Number(v).toLocaleString("de-DE",{maximumFractionDigits:3})+(u?" "+u:"")}
+function hlAlive(){return hl?hl.players.filter(p=>p.life>0):[]}
+function hlActive(){return hl&&hl.players[hl.turn]}
+function hlScoreHtml(){if(!hl)return "";return "<div class='tour-score'>"+hl.players.map((p,i)=>"<div class='status' style='"+(i===hl.turn&&!hl.resolved?"outline:3px solid #f6b73c;":"")+(p.life<=0?"opacity:.45;":"")+"'><b>"+p.name+"</b><br><span style='font-size:22px'>"+"❤️".repeat(p.life)+"🖤".repeat(Math.max(0,p.max-p.life))+"</span>"+(p.life<=0?"<br><b>RAUS</b>":"")+"</div>").join("")+"</div>"}
+function hlBroadcast(extra={}){if(!hl)return;const q=hl.deck[hl.idx],p=hlActive();const msg={type:"hlState",phase:hl.phase,active:p?p.name:null,question:q?q.q:"",threshold:q?hlFmt(q.t,q.u):"",category:q?q.cat:"",players:hl.players.map(x=>({name:x.name,life:x.life,max:x.max})),picked:hl.picked||null,result:hl.result||null,actual:hl.actual||null,note:hl.note||null,winner:hl.winner||null,...extra};sendAll(msg)}
+function hlStart(){const chosen=[...document.querySelectorAll('.hlPick:checked')].map(x=>x.value);if(chosen.length<2)return alert('Bitte mindestens 2 Spieler auswählen.');const players=chosen.map(n=>{const el=document.querySelector('.hlLife[data-name="'+n+'"]');const life=el?+el.value:3;return {name:n,life,max:life}});hl={players,deck:hlShuffle(HL_BANK),idx:0,turn:0,resolved:false,phase:'question',picked:null,result:null,actual:null,note:null,winner:null};renderHost();hlBroadcast()}
+function hlChoose(choice,by){if(!hl||hl.resolved)return;const p=hlActive();if(by&&by!==p.name)return;const q=hl.deck[hl.idx];hl.resolved=true;hl.picked=choice;const right=q.a>q.t?'higher':'lower',ok=choice===right;if(!ok)p.life=Math.max(0,p.life-1);hl.result=ok?'Richtig':'Falsch – 1 Leben weg';hl.actual=hlFmt(q.a,q.u);hl.note=q.n;hl.phase='result';const alive=hlAlive();if(alive.length===1){hl.winner=alive[0].name;hl.phase='winner'}renderHost();hlBroadcast()}
+function hlNext(){if(!hl||hl.phase==='winner')return;let n=hl.turn;do{n=(n+1)%hl.players.length}while(hl.players[n].life<=0);hl.turn=n;hl.idx++;if(hl.idx>=hl.deck.length){hl.deck=hlShuffle(HL_BANK);hl.idx=0}hl.resolved=false;hl.phase='question';hl.picked=hl.result=hl.actual=hl.note=null;renderHost();hlBroadcast()}
+
 let timerInt=null, answers={}, used=new Set(), qidx=0, eidx=0, currentClientKind=null;
 let quizScores={team1:0,team2:0,team3:0}, quizAwarded=new Set(), clientQuizScores={team1:0,team2:0,team3:0};
 let estimateScores={team1:0,team2:0,team3:0}, estimateAwarded=new Set(), clientEstimateScores={team1:0,team2:0,team3:0};
@@ -238,66 +251,7 @@ let clientTourRound=null, clientTourPhase=null;
 let promiIdx=0, promiReveal=0, promiSolved=false, promiTimer=null;
 let promiRounds=JSON.parse(localStorage.getItem("promiRounds")||"null")||Array.from({length:12},(_,i)=>({brother:"",celebrity:"",mix:"",brotherImg:"",celebrityImg:""}));
 const TOUR_ROUNDS=[{"place":"Stuttgart","year":2023,"img":"tour_12.jpg"},{"place":"München","year":2012,"img":"tour_07.jpg"},{"place":"Amsterdam","year":2015,"img":"tour_13.jpg"},{"place":"Breslau","year":2017,"img":"tour_18.jpg"},{"place":"Münster","year":2014,"img":"tour_08.jpg"},{"place":"Frankfurt","year":2022,"img":"tour_02.jpg"},{"place":"Breslau","year":2017,"img":"tour_17.jpg"},{"place":"Berlin","year":2016,"img":"tour_14.jpg"},{"place":"Stuttgart","year":2023,"img":"tour_11.jpg"},{"place":"Bremen","year":2023,"img":"tour_15.jpg"},{"place":"München","year":2012,"img":"tour_06.jpg"},{"place":"Frankfurt","year":2022,"img":"tour_03.jpg"},{"place":"Brügge","year":2025,"img":"tour_01.jpg"},{"place":"Hamburg","year":2020,"img":"tour_04.jpg"},{"place":"Bremen","year":2023,"img":"tour_16.jpg"},{"place":"Sophia","year":2019,"img":"tour_09.jpg"},{"place":"Sophia","year":2019,"img":"tour_10.jpg"},{"place":"Krakau","year":2018,"img":"tour_05.jpg"}];
-
 let tourIdx=0,tourPhase="idle",tourScores={},tourLocationWinner=null,tourStandingsShown=false;
-
-// Zimmergame: Fabian und Jan sind NUR hier ausgeschlossen.
-// In allen anderen Spielen bleibt die bestehende Spielerliste unverändert.
-const ZG_PLAYERS=["Kevin","Markus","Stefan","Kay","Michel","Patrick","Mario","Timo","Andre","Klemm","Swen"];
-const ZG_ROUNDS=[
-  {title:"Runde 1 · Schätzmeister",question:"Wie weit ist es ungefähr Luftlinie von Zadar bis zum Nordpol?",unit:"km",solution:5101},
-  {title:"Runde 2 · Zeitgefühl",question:"Stoppe die unsichtbare Uhr möglichst genau bei 10,00 Sekunden.",target:10000},
-  {title:"Runde 3 · Dinara",question:"Wie hoch ist der höchste Berg Kroatiens, der Berg Dinara?",unit:"m",solution:1831},
-  {title:"Runde 4 · Reaktionsblitz",question:"Warte auf JETZT! und drücke dann so schnell wie möglich."},
-  {title:"Runde 5 · Stein · Schere · Papier",question:"Best of Leben: Beide starten mit 3 Herzen."}
-];
-let zgRound=0, zgPhase="idle", zgAnswers={}, zgDuos=[], zgOut=new Set(), zgWinner=null;
-let zgReactionStarts={}, zgRpsPlayers=[], zgRpsLives={}, zgRpsChoices={}, zgRpsToken=0, zgRpsEnd=0, zgRpsTimer=null, zgRpsEliminated=[];
-let zgClientState={round:null,phase:"idle",submitted:false,localStart:0,reactionTimer:null,reactionGoAt:0,rpsChosen:false};
-let zgLive={};
-function zgLiveBroadcast(){
-  if(modeName!=="zimmer")return;
-  const payload={type:"zgLive",round:zgRound,phase:zgPhase,title:ZG_ROUNDS[zgRound]?.title||"",question:ZG_ROUNDS[zgRound]?.question||"",live:JSON.parse(JSON.stringify(zgLive||{})),remaining:zgRemaining(),duos:zgDuos};
-  ZG_PLAYERS.filter(n=>zgOut.has(n)).forEach(n=>zgSend(n,payload));
-}
-function zgLiveHostHtml(){
-  const entries=Object.entries(zgLive||{});
-  if(!entries.length)return "<div class='status'><b>Live:</b> Noch keine Aktion.</div>";
-  return "<div class='card'><h3>👀 LIVE-GESCHEHEN</h3>"+entries.map(([n,v])=>{
-    let t="";
-    if(v.kind==="timer") t=v.state==="running"?"⏱️ Uhr läuft …":v.state==="stopped"?"⏱️ gestoppt bei <b>"+(v.ms/1000).toFixed(2).replace(".",",")+" s</b>":"Bereit";
-    else if(v.kind==="input") t="⌨️ Eingabe: <b>"+zgEsc(v.value||"—")+"</b>"+(v.sent?" ✅":"");
-    else if(v.kind==="reaction") t=v.state==="waiting"?"⚡ wartet auf JETZT …":v.state==="go"?"🟢 JETZT!":v.early?"❌ Frühstart":"⚡ Reaktion: <b>"+(v.ms/1000).toFixed(3).replace(".",",")+" s</b>";
-    else if(v.kind==="rps") t=v.chosen?"✋ Auswahl abgegeben":"⏳ wählt …";
-    return "<div class='status'><b>"+zgEsc(n)+":</b> "+t+"</div>";
-  }).join("")+"</div>";
-}
-function zgSpectatorRender(m){
-  zgClientBase();
-  $("buzzState").textContent="";
-  $("playerAlert").className="status ok";
-  $("playerAlert").innerHTML="👀 <b>LIVE-ZUSCHAUER</b><br>Du bist bereits im Zimmerteam und siehst die aktuelle Runde live.";
-  const live=m.live||{};
-  $("playerRanking").innerHTML="<h3>Aktuelle Runde "+(m.round+1)+"</h3>"+
-    (Object.entries(live).length?Object.entries(live).map(([n,v])=>{
-      let t="";
-      if(v.kind==="timer")t=v.state==="running"?"⏱️ Uhr läuft …":v.state==="stopped"?"⏱️ "+(v.ms/1000).toFixed(2).replace(".",",")+" s":"Bereit";
-      else if(v.kind==="input")t="⌨️ "+zgEsc(v.value||"—")+(v.sent?" ✅":"");
-      else if(v.kind==="reaction")t=v.state==="waiting"?"⚡ wartet …":v.state==="go"?"🟢 JETZT!":v.early?"❌ Frühstart":"⚡ "+(v.ms/1000).toFixed(3).replace(".",",")+" s";
-      else if(v.kind==="rps")t=v.chosen?"✋ gewählt":"⏳ wählt …";
-      return "<div class='status'><b>"+zgEsc(n)+":</b> "+t+"</div>";
-    }).join(""):"<div class='status'>Warte auf Aktionen …</div>");
-}
-
-
-function zgRemaining(){return ZG_PLAYERS.filter(n=>!zgOut.has(n));}
-function zgConnectedRemaining(){return zgRemaining().filter(n=>!!conns["player:"+n]);}
-function zgSend(name,msg){const c=conns["player:"+name];if(c)try{c.send(msg)}catch(e){}}
-function zgEsc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));}
-function zgDuoHtml(){
-  return "<div class='zg-duos'>"+zgDuos.map((d,i)=>"<div class='status ok'><b>Zimmerteam "+(i+1)+"</b><br>"+zgEsc(d[0])+" + "+zgEsc(d[1])+"</div>").join("")+"</div>";
-}
-
 
 let emojiIdx=0, emojiPhase="idle", emojiWinner=null, emojiAttempts={team1:0,team2:0,team3:0}, emojiPoints={team1:0,team2:0,team3:0};
 
@@ -381,43 +335,12 @@ function joinPlayer(){
   }
 }
 function onHostMessage(m,c){
+  if(m.type==="hlChoice" && modeName==="higherlower") { hlChoose(m.choice,m.name); return; }
   if(m.type==="join"){conns[m.role]=c; refreshConnections();}
   if(m.type==="buzz" && buzzOpen && !buzzOrder.includes(m.name)){
     buzzOrder.push(m.name);
     if(buzzOrder.length===1){buzzAnswerIndex=0; startBuzzAnswerTimer();}
     broadcastBuzzOrder(); renderHost();
-  }
-
-  if(m.type==="zgLive" && modeName==="zimmer"){
-    if(!ZG_PLAYERS.includes(m.name) || zgOut.has(m.name))return;
-    zgLive[m.name]=m.data||{};
-    zgLiveBroadcast();
-    renderHost();
-    return;
-  }
-  if(m.type==="zgAnswer" && modeName==="zimmer"){
-    const name=m.name;
-    if(!ZG_PLAYERS.includes(name) || zgOut.has(name) || zgAnswers[name]!==undefined)return;
-    zgAnswers[name]=Number(m.value);
-    renderHost();
-    if(zgRound<4 && zgRemaining().every(n=>zgAnswers[n]!==undefined)) zgRevealRound();
-    return;
-  }
-  if(m.type==="zgReaction" && modeName==="zimmer" && zgRound===3 && zgPhase==="playing"){
-    const name=m.name;
-    if(!ZG_PLAYERS.includes(name) || zgOut.has(name) || zgAnswers[name]!==undefined)return;
-    zgAnswers[name]={ms:Number(m.ms),early:!!m.early};
-    renderHost();
-    if(zgRemaining().every(n=>zgAnswers[n]!==undefined)) zgRevealRound();
-    return;
-  }
-  if(m.type==="zgRpsChoice" && modeName==="zimmer" && zgRound===4 && zgPhase==="rps" && zgRpsPlayers.includes(m.name)){
-    if(Number(m.token)!==zgRpsToken || zgRpsChoices[m.name])return;
-    zgRpsChoices[m.name]=m.choice;
-    zgLive[m.name]={kind:"rps",chosen:true};
-    zgLiveBroadcast(); renderHost();
-    if(zgRpsPlayers.filter(n=>zgRpsLives[n]>0).every(n=>zgRpsChoices[n])) zgResolveRps();
-    return;
   }
   if(m.type==="answer"){
     if(modeName==="emoji" && (emojiPhase==="title"||emojiPhase==="artist")) handleEmojiAnswer(m.role,m.value);
@@ -434,16 +357,15 @@ function refreshConnections(){
 }
 function sendAll(msg){Object.values(conns).forEach(c=>{try{c.send(msg)}catch(e){}});}
 function onClientMessage(m){
-  if(m.type==="zgState" && role && role.startsWith("player:")){ zgClientRender(m); return; }
-  if(m.type==="zgLive" && role && role.startsWith("player:")){ zgSpectatorRender(m); return; }
-  if(m.type==="zgRpsResult" && role && role.startsWith("player:")){ zgClientRpsResult(m); return; }
-  if(m.type==="zgFinalWinner" && role && role.startsWith("player:")){
-    zgClientBase();clearInterval(timerInt);const name=role.slice(7);
-    $("playerAlert").className=name===m.winner?"status ok":"status";
-    $("playerAlert").innerHTML=name===m.winner?"🏆 <b>DU HAST DAS FINALE GEWONNEN!</b><br>Wähle jetzt Platz 2 oder Platz 3 als Zimmerpartner.":"<b>Finale beendet.</b><br>Sieger: "+zgEsc(m.winner)+"<br>Platz 2: "+zgEsc(m.second||"—")+" · Platz 3: "+zgEsc(m.third||"—");
+  if(m.type==="hlState"){
+    clearInterval(timerInt); const score=(m.players||[]).map(p=>"<div class='status'><b>"+p.name+"</b> · "+"❤️".repeat(p.life)+"🖤".repeat(Math.max(0,p.max-p.life))+(p.life<=0?" · RAUS":"")+"</div>").join("");
+    const choice=m.picked?(m.picked==="higher"?"⬆ HÖHER":"⬇ NIEDRIGER"):"";
+    let body=m.phase==="winner" ? "<div class=\'big\' style=\'font-size:60px;text-align:center\'>🏆 "+m.winner+" GEWINNT!</div>" : "<div class=\'status\'><b>Am Zug: "+m.active+"</b></div><div class=\'big\' style=\'font-size:32px\'>"+m.question+"</div><div class=\'muted\'>Höher oder niedriger als</div><div class=\'big\' style=\'font-size:48px\'>"+m.threshold+"</div>"+(choice?"<div class=\'status ok\' style=\'font-size:26px\'><b>"+m.active+" drückt: "+choice+"</b></div>":"")+(m.result?"<div class=\'status "+(m.result.startsWith("Richtig")?"ok":"bad")+"\'><b>"+m.result+"</b><br>Antwort: <b>"+m.actual+"</b><br>"+(m.note||"")+"</div>":"")+"<h3>Leben</h3>"+score;
+    if(role==="screen"){$("screenTitle").textContent="⬆️⬇️ HIGHER OR LOWER";$("screenTimer").textContent="";$("screenStatus").innerHTML=body;}
+    else if(role&&role.startsWith("team")){$("capTimer").textContent="";$("capGame").innerHTML=body;}
+    else if(role&&role.startsWith("player:")){const me=role.slice(7);$("buzzBtn").classList.add("hide");$("playerTourBox").classList.add("hide");$("playerBuzzBoard").classList.remove("hide");$("playerAlert").className="status";$("playerAlert").innerHTML=body;$("playerCountdown").textContent="";$("playerRanking").innerHTML=(m.phase==="question"&&m.active===me)?"<div class='grid'><button id='hlPhoneHi' class='good' style='font-size:25px'>⬆ HÖHER</button><button id='hlPhoneLo' class='danger' style='font-size:25px'>⬇ NIEDRIGER</button></div>":"<div class='muted' style='text-align:center'>"+(m.phase==="question"?"Warte auf "+m.active+" …":"Warte auf die nächste Runde …")+"</div>";const hi=$("hlPhoneHi"),lo=$("hlPhoneLo");if(hi)hi.onclick=()=>conn.send({type:"hlChoice",choice:"higher",name:me});if(lo)lo.onclick=()=>conn.send({type:"hlChoice",choice:"lower",name:me});}
     return;
   }
-
   if(m.type==="buzzState" && role && role.startsWith("player:")){$("buzzBtn").disabled=!m.open;$("buzzState").textContent=m.open?"🟢 BUZZER FREI!":"🔒 Buzzer gesperrt";}
   if(m.type==="buzzReset" && role && role.startsWith("player:")){$("buzzBtn").classList.remove("hide");$("buzzBtn").disabled=true;$("playerBuzzBoard").classList.add("hide");$("playerRanking").innerHTML="";$("playerCountdown").textContent="";$("buzzState").textContent="Neue Runde – warte auf Jan …";}
   if(m.type==="buzzPosition" && role && role.startsWith("player:")){
@@ -654,12 +576,9 @@ function lockCaptain(msg){
 }
 function setMode(m){
   modeName=m; answers={};
-  if(m==="zimmer"){
-    ZG_PLAYERS.forEach(n=>zgSend(n,{type:"zgState",round:zgRound,phase:(zgOut.has(n)?"paired":"ready"),title:ZG_ROUNDS[zgRound].title,question:ZG_ROUNDS[zgRound].question}));
-    zgSend("Fabian",{type:"zgState",round:zgRound,phase:"excluded",title:"🏨 Zimmergame"});
-  }
   if(m==="emoji" && !["idle","title","artist","done"].includes(emojiPhase)) resetEmojiRound();
   renderHost();
+  if(m==="higherlower" && hl) hlBroadcast();
 }
 function answerStatus(category=false){
   return "<div class='card'>"+["team1","team2","team3"].map(t=>{
@@ -688,9 +607,10 @@ function renderHost(){
       "</select><p><select id='turnTeam'>"+["team1","team2","team3"].map(t=>"<option value='"+t+"' "+(catOut.has(t)?"disabled":"")+">"+D.teams[t].name+(catOut.has(t)?" — RAUS":"")+"</option>").join("")+"</select> <button id='catStart'>35 SEK. START</button></p>"+
       answerStatus(true)+"<div>"+D.categories[catName].map(x=>"<span class='pill "+(used.has(norm(x))?"check":"")+"'>"+x+"</span>").join("")+"</div>"+categoryProgressHtml(used.size,D.categories[catName].length)+"</div>";
   }
-
-  if(modeName==="zimmer"){
-    h=zgHostHtml();
+  if(modeName==="higherlower"){
+    if(!hl){h="<div class='card'><h2>⬆️⬇️ Higher or Lower</h2><p class='muted'>Einzelspiel · unabhängig von der Olympiade/Zimmerverteilung · 250 Fragen · bei jedem Start zufällig gemischt.</p><h3>Spieler & Leben auswählen</h3><div class='tour-score'>"+HL_NAMES.map(n=>"<label class='status' style='display:block'><input class='hlPick' type='checkbox' value='"+n+"'> <b>"+n+"</b><br>Leben: <select class='hlLife' data-name='"+n+"'>"+[1,2,3,4,5].map(x=>"<option "+(x===3?"selected":"")+">"+x+"</option>").join("")+"</select></label>").join("")+"</div><button id='hlStart' class='good' style='width:100%;margin-top:14px'>SPIEL STARTEN</button></div>";}
+    else if(hl.phase==='winner'){h="<div class='card' style='text-align:center'><div style='font-size:70px'>🏆</div><h2 class='big'>"+hl.winner+" GEWINNT!</h2>"+hlScoreHtml()+"<button id='hlRestart' style='width:100%;margin-top:14px'>NEUES SPIEL</button></div>";}
+    else {const q=hl.deck[hl.idx],p=hlActive();h="<div class='card'><h2>⬆️⬇️ Higher or Lower</h2><div class='pill'>Frage "+(hl.idx+1)+"/250 · "+q.cat+"</div>"+hlScoreHtml()+"<div class='status' style='font-size:24px'><b>AM ZUG: "+p.name+"</b></div><div class='big' style='font-size:34px;margin:20px 0'>"+q.q+"</div><div class='muted'>Ist die richtige Antwort höher oder niedriger als:</div><div class='big' style='font-size:55px'>"+hlFmt(q.t,q.u)+"</div>"+(hl.phase==='question'?"<div class='grid'><button id='hlHi' class='good' style='font-size:28px'>⬆ HÖHER</button><button id='hlLo' class='danger' style='font-size:28px'>⬇ NIEDRIGER</button></div><p class='muted'>Ist "+p.name+" als Spieler verbunden, kann er auch auf seinem eigenen Handy drücken. Alle anderen sehen live mit.</p>":"<div class='status "+(hl.result.startsWith('Richtig')?'ok':'bad')+"' style='font-size:24px'><b>"+p.name+" drückt: "+(hl.picked==='higher'?'⬆ HÖHER':'⬇ NIEDRIGER')+"</b><br>"+hl.result+"<br>Antwort: <b>"+hl.actual+"</b><br><span class='muted'>"+hl.note+"</span></div><button id='hlNext' style='width:100%'>NÄCHSTER SPIELER →</button>")+"</div>";}
   }
   if(modeName==="tourpics"){
     const r=TOUR_ROUNDS[tourIdx], cur=buzzOrder[buzzAnswerIndex]||null;
@@ -748,6 +668,11 @@ function bindHostControls(){
   const catStart=$("catStart"); if(catStart)catStart.addEventListener("click",startCategory);
   document.querySelectorAll(".acceptCat").forEach(b=>b.addEventListener("click",()=>acceptCategory(b.dataset.team)));
   document.querySelectorAll(".rejectCat").forEach(b=>b.addEventListener("click",()=>rejectCategory(b.dataset.team)));
+  const hls=$("hlStart");if(hls)hls.addEventListener("click",hlStart);
+  const hlh=$("hlHi");if(hlh)hlh.addEventListener("click",()=>hlChoose("higher",hlActive().name));
+  const hll=$("hlLo");if(hll)hll.addEventListener("click",()=>hlChoose("lower",hlActive().name));
+  const hln=$("hlNext");if(hln)hln.addEventListener("click",hlNext);
+  const hlr=$("hlRestart");if(hlr)hlr.addEventListener("click",()=>{hl=null;renderHost();sendAll({type:"reset"});});
   const ts=$("tourStart");if(ts)ts.addEventListener("click",tourStartRound);
   const tlw=$("tourLocWrong");if(tlw)tlw.addEventListener("click",tourLocationWrong);
   const tlr=$("tourLocRight");if(tlr)tlr.addEventListener("click",tourLocationRight);
@@ -771,13 +696,6 @@ function bindHostControls(){
   const er=$("emojiRevealTitle"); if(er)er.addEventListener("click",()=>startEmojiArtist(null));
   const ep=$("emojiPrev"); if(ep)ep.addEventListener("click",()=>changeEmoji(-1));
   const en=$("emojiNext"); if(en)en.addEventListener("click",()=>changeEmoji(1));
-  const zstart=$("zgStart"); if(zstart)zstart.addEventListener("click",zgStartRound);
-  const zreveal=$("zgReveal"); if(zreveal)zreveal.addEventListener("click",zgRevealRound);
-  const zpair=$("zgPair"); if(zpair)zpair.addEventListener("click",zgConfirmPair);
-  const znext=$("zgNext"); if(znext)znext.addEventListener("click",zgNextRound);
-  const zrps=$("zgRpsStart"); if(zrps)zrps.addEventListener("click",zgStartRpsMatch);
-  const zrpsnext=$("zgRpsNext"); if(zrpsnext)zrpsnext.addEventListener("click",zgStartRpsTurn);
-  const zreset=$("zgReset"); if(zreset)zreset.addEventListener("click",zgResetGame);
 }
 function startRound(sec){
   answers={}; const end=Date.now()+sec*1000;
@@ -973,336 +891,6 @@ function startEmojiArtist(titleWinner){
       renderHost();
     }
   },30200);
-}
-
-
-function zgHostHtml(){
-  const rem=zgRemaining();
-  const round=ZG_ROUNDS[zgRound];
-  let body="<div class='card'><h2>🏨 ZIMMERGAME</h2>"+
-    "<p class='muted'>Nur für die Zimmerauslosung: <b>Fabian und Jan spielen nicht mit.</b> Alle anderen Spiele bleiben unverändert.</p>"+
-    "<div class='zg-rounds'>"+ZG_ROUNDS.map((r,i)=>"<div class='zg-round "+(i===zgRound?"active":i<zgRound?"done":"")+"'>"+(i+1)+". "+r.title.split("·").pop().trim()+"</div>").join("")+"</div>"+
-    zgDuoHtml()+
-    "<div class='status'><b>Noch im Spiel ("+rem.length+"):</b> "+rem.map(zgEsc).join(", ")+"</div>"+
-    "<h2>"+round.title+"</h2><div class='status' style='font-size:20px'><b>"+round.question+"</b></div>";
-
-  if(zgRound===0){
-    body+="<div class='status'><b>Lösung:</b> ca. 5.101 km</div>";
-  }else if(zgRound===1){
-    body+="<div class='status'><b>Ziel:</b> exakt 10,00 Sekunden · Zeit ist während des Laufs unsichtbar.</div>";
-  }else if(zgRound===2){
-    body+="<div class='status'><b>Lösung:</b> 1.831 m<br><span class='muted'>Überboten = immer hinter jeder gültigen Schätzung ≤ 1.831 m.</span></div>";
-  }else if(zgRound===3){
-    body+="<div class='status'><b>Regel:</b> Auf jedem Handy erscheint JETZT! nach zufälliger Wartezeit. Frühstart = +1.000 ms Strafzeit.</div>";
-  }else{
-    body+="<div class='status'><b>Finale:</b> 3 Spieler übrig. Du wählst 2 für das Duell. Sieger darf anschließend aus den beiden anderen seinen Zimmerpartner wählen.</div>";
-  }
-
-  if(zgRound<4){
-    if(zgPhase==="idle" || zgPhase==="ready"){
-      body+="<button id='zgStart' class='good' style='width:100%;font-size:20px'>RUNDE STARTEN</button>";
-    }else if(zgPhase==="playing"){
-      body+="<div class='status ok'><b>RUNDE LÄUFT</b><br>"+rem.map(n=>(zgAnswers[n]!==undefined?"✅ ":"⏳ ")+zgEsc(n)).join(" · ")+"</div>"+
-        "<button id='zgReveal' class='secondary' style='width:100%'>JETZT AUSWERTEN</button>"+zgLiveHostHtml();
-    }else if(zgPhase==="revealed"){
-      body+=zgRankingHtml()+"<div class='card'><h3>🏆 "+zgEsc(zgWinner)+" darf den Zimmerpartner wählen</h3>"+
-        "<select id='zgPartner' style='width:100%'>"+rem.filter(n=>n!==zgWinner).map(n=>"<option>"+zgEsc(n)+"</option>").join("")+"</select>"+
-        "<button id='zgPair' class='good' style='width:100%;margin-top:10px'>ZIMMERTEAM FESTLEGEN</button></div>";
-    }else if(zgPhase==="paired"){
-      body+="<div class='status ok' style='font-size:22px;text-align:center'><b>Zimmerteam "+zgDuos.length+" steht:</b><br>"+zgEsc(zgDuos.at(-1)[0])+" + "+zgEsc(zgDuos.at(-1)[1])+"</div>"+
-        "<button id='zgNext' style='width:100%'>NÄCHSTE RUNDE →</button>";
-    }
-  }else{
-    body+=zgRpsHostHtml();
-  }
-
-  body+="<details style='margin-top:18px'><summary><b>Zimmergame zurücksetzen</b></summary><button id='zgReset' class='danger' style='width:100%;margin-top:10px'>KOMPLETT ZURÜCKSETZEN</button></details></div>";
-  return body;
-}
-
-function zgRanking(){
-  const rem=zgRemaining();
-  if(zgRound===0){
-    return rem.map(n=>({name:n,value:zgAnswers[n],valid:true,score:Math.abs(Number(zgAnswers[n])-5101)}))
-      .filter(x=>Number.isFinite(x.value)).sort((a,b)=>a.score-b.score);
-  }
-  if(zgRound===1){
-    return rem.map(n=>({name:n,value:zgAnswers[n],valid:true,score:Math.abs(Number(zgAnswers[n])-10000)}))
-      .filter(x=>Number.isFinite(x.value)).sort((a,b)=>a.score-b.score);
-  }
-  if(zgRound===2){
-    return rem.map(n=>({name:n,value:zgAnswers[n],valid:Number(zgAnswers[n])<=1831,score:Math.abs(Number(zgAnswers[n])-1831)}))
-      .filter(x=>Number.isFinite(x.value)).sort((a,b)=>(b.valid-a.valid)||a.score-b.score);
-  }
-  if(zgRound===3){
-    return rem.map(n=>{
-      const a=zgAnswers[n]; if(!a)return null;
-      return {name:n,value:a.ms,early:a.early,valid:true,score:Number(a.ms)+(a.early?1000:0)};
-    }).filter(Boolean).sort((a,b)=>a.score-b.score);
-  }
-  return [];
-}
-
-function zgRankingHtml(){
-  const rank=zgRanking();
-  return "<div class='card'><h3>Rangliste</h3>"+rank.map((x,i)=>{
-    let val="";
-    if(zgRound===0) val=Number(x.value).toLocaleString("de-DE")+" km · Δ "+Math.round(x.score).toLocaleString("de-DE")+" km";
-    if(zgRound===1) val=(Number(x.value)/1000).toFixed(2).replace(".",",")+" s · Δ "+(x.score/1000).toFixed(2).replace(".",",")+" s";
-    if(zgRound===2) val=Number(x.value).toLocaleString("de-DE")+" m"+(!x.valid?" · ❌ ÜBERBOTEN":" · Δ "+Math.round(x.score)+" m");
-    if(zgRound===3) val=(Number(x.value)/1000).toFixed(3).replace(".",",")+" s"+(x.early?" + 1,000 s Strafe":"");
-    return "<div class='status zg-rank'><b>"+(i+1)+".</b><b>"+zgEsc(x.name)+"</b><span>"+val+"</span></div>";
-  }).join("")+"</div>";
-}
-
-function zgStartRound(){
-  if(zgRound>=4)return;
-  zgAnswers={}; zgWinner=null; zgLive={}; zgPhase="playing";
-  const rem=zgRemaining();
-  rem.forEach(n=>{
-    if(zgRound===0||zgRound===2)zgLive[n]={kind:"input",value:"",sent:false};
-    else if(zgRound===1)zgLive[n]={kind:"timer",state:"ready"};
-    else if(zgRound===3)zgLive[n]={kind:"reaction",state:"waiting"};
-  });
-  const end=(zgRound===0||zgRound===2)?Date.now()+60000:0;
-  rem.forEach(n=>zgSend(n,{type:"zgState",round:zgRound,phase:"playing",title:ZG_ROUNDS[zgRound].title,question:ZG_ROUNDS[zgRound].question,end}));
-  // Fabian may be connected, but is explicitly not part of Zimmergame.
-  zgSend("Fabian",{type:"zgState",round:zgRound,phase:"excluded",title:"🏨 Zimmergame"});
-  zgLiveBroadcast();
-  renderHost();
-  if(end){
-    setTimeout(()=>{if(modeName==="zimmer"&&zgRound<4&&zgPhase==="playing")zgRevealRound();},60500);
-  }
-}
-
-function zgRevealRound(){
-  if(zgRound>=4 || zgPhase!=="playing")return;
-  const rank=zgRanking();
-  if(!rank.length){alert("Noch keine Ergebnisse vorhanden.");return;}
-  zgPhase="revealed"; zgWinner=rank[0].name;
-  const html=zgRankingHtml();
-  zgRemaining().forEach(n=>zgSend(n,{type:"zgState",round:zgRound,phase:"revealed",winner:zgWinner,ranking:rank}));
-  renderHost();
-}
-
-function zgConfirmPair(){
-  if(!["revealed","winnerChoose"].includes(zgPhase)||!zgWinner)return;
-  const sel=$("zgPartner"); if(!sel||!sel.value)return;
-  const partner=sel.value;
-  if(partner===zgWinner||zgOut.has(partner)){alert("Ungültiger Partner.");return;}
-  zgDuos.push([zgWinner,partner]); zgOut.add(zgWinner); zgOut.add(partner); zgPhase="paired";
-  zgSend(zgWinner,{type:"zgState",round:zgRound,phase:"paired",partner});
-  zgSend(partner,{type:"zgState",round:zgRound,phase:"paired",partner:zgWinner});
-  setTimeout(()=>zgLiveBroadcast(),150);
-  renderHost();
-}
-
-function zgNextRound(){
-  if(zgPhase!=="paired")return;
-  zgRound=Math.min(4,zgRound+1); zgPhase="idle"; zgAnswers={}; zgLive={}; zgWinner=null;
-  zgRemaining().forEach(n=>zgSend(n,{type:"zgState",round:zgRound,phase:"ready",title:ZG_ROUNDS[zgRound].title,question:ZG_ROUNDS[zgRound].question}));
-  renderHost();
-}
-
-function zgRpsHostHtml(){
-  const rem=zgRemaining();
-  if(zgPhase==="idle"||zgPhase==="ready"){
-    return "<div class='card'><h3>🏆 Finale: 3 → 2 → 1</h3><p>Alle drei starten mit 3 ❤️. Wer 0 ❤️ hat, scheidet aus. Danach spielen die letzten beiden weiter, bis <b>ein Sieger</b> feststeht.</p><p>Der Sieger darf anschließend <b>Platz 2 oder Platz 3</b> als Zimmerpartner wählen.</p><div class='grid'>"+rem.map(n=>"<div class='status' style='text-align:center'><b>"+zgEsc(n)+"</b><div class='zg-hearts'>❤️❤️❤️</div></div>").join("")+"</div><button id='zgRpsStart' class='good' style='width:100%;margin-top:10px'>FINALE STARTEN</button></div>";
-  }
-  if(zgPhase==="rps"){
-    const active=zgRpsPlayers.filter(n=>zgRpsLives[n]>0);
-    return "<div class='card'><h3>"+(active.length===3?"3ER-RUNDE":"⚔️ 1 GEGEN 1 – BIS ZUM SIEGER")+"</h3><div class='grid'>"+zgRpsPlayers.map(n=>"<div class='status "+(zgRpsLives[n]<=0?"bad":"")+"' style='text-align:center'><b>"+zgEsc(n)+"</b><div class='zg-hearts'>"+("❤️".repeat(zgRpsLives[n])||"💀")+"</div>"+(zgRpsLives[n]<=0?"Platz 3 · Zuschauer":(zgRpsChoices[n]?"✅ gewählt":"⏳ wählt"))+"</div>").join("")+"</div><div class='status'><b>10 Sekunden.</b> Sobald alle aktiven Spieler gewählt haben, wird sofort aufgelöst.</div>"+zgLiveHostHtml()+"</div>";
-  }
-  if(zgPhase==="rpsBetween"){
-    const active=zgRpsPlayers.filter(n=>zgRpsLives[n]>0);
-    return "<div class='card'><h3>"+(active.length===2?"⚔️ Noch 2 Spieler – weiter bis zum Sieger":"Nächste Runde")+"</h3><div class='grid'>"+zgRpsPlayers.map(n=>"<div class='status' style='text-align:center'><b>"+zgEsc(n)+"</b><div class='zg-hearts'>"+("❤️".repeat(zgRpsLives[n])||"💀")+"</div></div>").join("")+"</div><button id='zgRpsNext' class='good' style='width:100%'>NÄCHSTE RUNDE STARTEN</button></div>";
-  }
-  if(zgPhase==="winnerChoose"){
-    const third=zgRpsEliminated[0]||null, second=zgRpsEliminated[1]||null;
-    return "<div class='card'><div class='status ok' style='font-size:26px;text-align:center'>🏆 <b>SIEGER: "+zgEsc(zgWinner)+"</b></div><div class='status'><b>Platz 2:</b> "+zgEsc(second||"—")+"<br><b>Platz 3:</b> "+zgEsc(third||"—")+"</div><h3>Mit wem will "+zgEsc(zgWinner)+" aufs Zimmer?</h3><select id='zgPartner' style='width:100%;font-size:20px'>"+[second,third].filter(Boolean).map((n,i)=>"<option value='"+zgEsc(n)+"'>"+(i===0?"Platz 2 · ":"Platz 3 · ")+zgEsc(n)+"</option>").join("")+"</select><button id='zgPair' class='good' style='width:100%;margin-top:10px'>ZIMMERPARTNER FESTLEGEN</button></div>";
-  }
-  if(zgPhase==="paired"){
-    const couch=zgRemaining()[0]||"—";
-    return "<div class='card'><div class='status ok' style='font-size:24px;text-align:center'><b>ALLE ZIMMERTEAMS STEHEN</b></div>"+zgDuoHtml()+"<div class='status bad' style='font-size:28px;text-align:center'>🛋️ <b>Couch-Kandidat: "+zgEsc(couch)+"</b></div></div>";
-  }
-  return "";
-}
-function zgStartRpsMatch(){
-  const rem=zgRemaining(); if(rem.length!==3){alert("Für das Finale müssen genau 3 Spieler übrig sein.");return;}
-  zgRpsPlayers=[...rem];zgRpsLives={};zgRpsEliminated=[];rem.forEach(n=>zgRpsLives[n]=3);zgStartRpsTurn();
-}
-function zgStartRpsTurn(){
-  clearTimeout(zgRpsTimer);
-  const active=zgRpsPlayers.filter(n=>zgRpsLives[n]>0);
-  if(active.length<=1){zgFinishRps();return;}
-  zgPhase="rps";zgRpsChoices={};zgLive={};zgRpsToken++;zgRpsEnd=Date.now()+10000;
-  active.forEach(n=>{zgLive[n]={kind:"rps",chosen:false};zgSend(n,{type:"zgState",round:4,phase:"rps",players:active,lives:zgRpsLives,token:zgRpsToken,end:zgRpsEnd});});
-  zgLiveBroadcast();renderHost();
-  const token=zgRpsToken;zgRpsTimer=setTimeout(()=>{if(zgPhase==="rps"&&zgRpsToken===token)zgResolveRps();},10100);
-}
-function zgResolveRps(){
-  if(zgPhase!=="rps")return;clearTimeout(zgRpsTimer);
-  const active=zgRpsPlayers.filter(n=>zgRpsLives[n]>0), choices={};active.forEach(n=>choices[n]=zgRpsChoices[n]||null);
-  let losers=[],text="";
-  if(active.length===2){
-    const [a,b]=active,ca=choices[a],cb=choices[b];
-    if(!ca&&!cb)text="Beide ohne Auswahl – niemand verliert ❤️.";
-    else if(!ca){losers=[a];text=a+" verliert ❤️.";}
-    else if(!cb){losers=[b];text=b+" verliert ❤️.";}
-    else if(ca===cb)text="Unentschieden – niemand verliert ❤️.";
-    else{const beats={Stein:"Schere",Schere:"Papier",Papier:"Stein"};const l=beats[ca]===cb?b:a;losers=[l];text=(l===b?a:b)+" gewinnt – "+l+" verliert ❤️.";}
-  }else{
-    const miss=active.filter(n=>!choices[n]);
-    if(miss.length===1){losers=[miss[0]];text=miss[0]+" hat nicht gewählt und verliert ❤️.";}
-    else if(miss.length>1)text="Mehrere ohne Auswahl – niemand verliert ❤️.";
-    else{
-      const vals=active.map(n=>choices[n]),u=[...new Set(vals)];
-      if(u.length===1)text="Alle drei gleich – niemand verliert ❤️.";
-      else if(u.length===3)text="Stein, Schere und Papier – niemand verliert ❤️.";
-      else{
-        const cnt={};vals.forEach(x=>cnt[x]=(cnt[x]||0)+1);const single=Object.keys(cnt).find(x=>cnt[x]===1),pair=Object.keys(cnt).find(x=>cnt[x]===2);
-        const beats={Stein:"Schere",Schere:"Papier",Papier:"Stein"};
-        if(beats[pair]===single){losers=[active.find(n=>choices[n]===single)];text=pair+" schlägt "+single+" – "+losers[0]+" verliert ❤️.";}
-        else{losers=active.filter(n=>choices[n]===pair);text=single+" schlägt "+pair+" – "+losers.join(" & ")+" verlieren je ❤️.";}
-      }
-    }
-  }
-  losers.forEach(n=>zgRpsLives[n]=Math.max(0,zgRpsLives[n]-1));
-  let newly=active.filter(n=>zgRpsLives[n]===0&&!zgRpsEliminated.includes(n));
-  if(newly.length>1){newly.forEach(n=>zgRpsLives[n]=1);text+=" Gleichzeitiges Ausscheiden – beide bekommen 1 ❤️ zurück.";newly=[];}
-  newly.forEach(n=>{zgRpsEliminated.push(n);if(zgRpsEliminated.length===1)zgOut.add(n);});
-  zgRpsPlayers.forEach(n=>zgSend(n,{type:"zgRpsResult",text,choices,lives:zgRpsLives,winner:null}));
-  const still=zgRpsPlayers.filter(n=>zgRpsLives[n]>0);
-  if(still.length===1){zgWinner=still[0];zgFinishRps();}
-  else{zgPhase="rpsBetween";zgLiveBroadcast();renderHost();}
-}
-function zgFinishRps(){
-  const still=zgRpsPlayers.filter(n=>zgRpsLives[n]>0);if(still.length===1)zgWinner=still[0];
-  zgRpsPlayers.forEach(n=>zgOut.delete(n));zgPhase="winnerChoose";
-  const third=zgRpsEliminated[0]||null,second=zgRpsEliminated[1]||null;
-  zgRpsPlayers.forEach(n=>zgSend(n,{type:"zgFinalWinner",winner:zgWinner,second,third}));
-  renderHost();
-}
-function zgResetGame(){
-  if(!confirm("Zimmergame wirklich komplett zurücksetzen?"))return;
-  clearTimeout(zgRpsTimer);
-  zgRound=0;zgPhase="idle";zgAnswers={};zgDuos=[];zgOut=new Set();zgWinner=null;zgRpsPlayers=[];zgRpsLives={};zgRpsChoices={};zgRpsEliminated=[];zgLive={};
-  ZG_PLAYERS.forEach(n=>zgSend(n,{type:"zgState",round:0,phase:"ready",title:ZG_ROUNDS[0].title,question:ZG_ROUNDS[0].question}));
-  renderHost();
-}
-
-function zgClientBase(){
-  $("playerView").classList.remove("tour-active");
-  $("playerTourBox").classList.add("hide");
-  $("buzzBtn").classList.add("hide");
-  $("playerBuzzBoard").classList.remove("hide");
-  $("playerRanking").innerHTML="";
-  $("playerCountdown").textContent="";
-}
-function zgClientRender(m){
-  zgClientBase(); clearInterval(timerInt);
-  const name=role.slice(7);
-  $("buzzState").textContent="";
-  if(m.phase==="excluded"){
-    $("playerAlert").className="status";
-    $("playerAlert").innerHTML="<b>Du spielst beim Zimmergame nicht mit.</b><br>Bei allen anderen Spielen bleibst du ganz normal dabei.";
-    return;
-  }
-  if(m.phase==="ready"){
-    $("playerAlert").className="status";
-    $("playerAlert").innerHTML="<b>"+zgEsc(m.title)+"</b><br>Warte auf den Spielleiter …";
-    return;
-  }
-  if(m.phase==="paired"){
-    $("playerAlert").className="status ok";
-    $("playerAlert").innerHTML="🛏️ <b>Zimmerteam steht!</b><br>Du + <b>"+zgEsc(m.partner)+"</b>";
-    return;
-  }
-  if(m.phase==="spectator"){
-    $("playerAlert").className="status";
-    $("playerAlert").innerHTML="<b>Finalduell:</b><br>"+m.players.map(zgEsc).join(" vs. ")+"<br><span class='muted'>Du wartest auf das Ergebnis.</span>";
-    return;
-  }
-  if(m.phase==="revealed"){
-    const rank=m.ranking||[], pos=rank.findIndex(x=>x.name===name);
-    $("playerAlert").className=name===m.winner?"status ok":"status";
-    $("playerAlert").innerHTML=(name===m.winner?"🏆 <b>DU HAST GEWONNEN!</b><br>Du darfst deinen Zimmerpartner wählen.":"<b>Runde beendet.</b><br>Platz "+(pos+1));
-    $("playerRanking").innerHTML=rank.map((x,i)=>"<div class='status'><b>"+(i+1)+". "+zgEsc(x.name)+"</b></div>").join("");
-    return;
-  }
-  if(m.phase!=="playing" && m.phase!=="rps")return;
-
-  if(m.round===0 || m.round===2){
-    $("playerAlert").className="status";
-    $("playerAlert").innerHTML="<div class='zg-phone-title'>"+zgEsc(m.title)+"</div>"+zgEsc(m.question);
-    $("playerRanking").innerHTML="<input id='zgPhoneInput' type='number' inputmode='numeric' placeholder='"+(m.round===0?"Kilometer":"Meter")+"' style='width:100%;font-size:24px'><button id='zgPhoneSend' class='good' style='width:100%;margin-top:10px;font-size:20px'>ABSCHICKEN</button>";
-    if(m.end)countdown(m.end,$("playerCountdown"),()=>{const b=$("zgPhoneSend");if(b)b.disabled=true;});
-    const ze=$("zgPhoneInput");
-    ze.addEventListener("input",()=>conn.send({type:"zgLive",name,data:{kind:"input",value:ze.value,sent:false}}));
-    $("zgPhoneSend").onclick=()=>{
-      const e=$("zgPhoneInput");if(!e.value)return;
-      conn.send({type:"zgLive",name,data:{kind:"input",value:e.value,sent:true}});
-      conn.send({type:"zgAnswer",name,value:Number(e.value)});
-      e.disabled=true;$("zgPhoneSend").disabled=true;clearInterval(timerInt);$("playerCountdown").textContent="";
-      $("playerAlert").innerHTML="✅ <b>Gesendet!</b><br>Deine Schätzung: "+Number(e.value).toLocaleString("de-DE")+" "+(m.round===0?"km":"m")+"<br><span class='muted'>Warte auf die anderen …</span>";
-    };
-    return;
-  }
-  if(m.round===1){
-    $("playerAlert").className="status";
-    $("playerAlert").innerHTML="<div class='zg-phone-title'>⏱️ ZEITGEFÜHL</div>Ziel: möglichst genau <b>10,00 Sekunden</b>.";
-    $("playerRanking").innerHTML="<button id='zgTimeBtn' class='good zg-choice'>START</button><div id='zgTimeInfo' class='zg-phone-big'>Bereit</div>";
-    const b=$("zgTimeBtn"),info=$("zgTimeInfo");
-    b.onclick=()=>{
-      if(!zgClientState.localStart){
-        zgClientState.localStart=performance.now(); b.textContent="STOPP"; b.className="danger zg-choice"; info.textContent="???"; conn.send({type:"zgLive",name,data:{kind:"timer",state:"running"}});
-      }else{
-        const ms=Math.round(performance.now()-zgClientState.localStart); zgClientState.localStart=0;
-        b.disabled=true; info.textContent=(ms/1000).toFixed(2).replace(".",",")+" s"; conn.send({type:"zgLive",name,data:{kind:"timer",state:"stopped",ms}});
-        conn.send({type:"zgAnswer",name,value:ms});
-        $("playerAlert").innerHTML="✅ <b>Gestoppt!</b><br>Deine Zeit:";
-      }
-    };
-    return;
-  }
-  if(m.round===3){
-    $("playerAlert").className="status";
-    $("playerAlert").innerHTML="<div class='zg-phone-title'>⚡ REAKTIONSBLITZ</div>Drücke erst, wenn <b>JETZT!</b> erscheint.";
-    $("playerRanking").innerHTML="<button id='zgReactBtn' class='secondary zg-choice' style='min-height:180px;font-size:30px'>WARTEN …</button>";
-    const b=$("zgReactBtn");
-    const wait=2000+Math.floor(Math.random()*5001);
-    zgClientState.reactionGoAt=performance.now()+wait; conn.send({type:"zgLive",name,data:{kind:"reaction",state:"waiting"}});
-    zgClientState.reactionTimer=setTimeout(()=>{b.textContent="JETZT!";b.className="good zg-choice zg-go"; conn.send({type:"zgLive",name,data:{kind:"reaction",state:"go"}});},wait);
-    b.onclick=()=>{
-      clearTimeout(zgClientState.reactionTimer);
-      const now=performance.now(), early=now<zgClientState.reactionGoAt;
-      const ms=early?0:Math.round(now-zgClientState.reactionGoAt);
-      b.disabled=true;b.textContent=early?"FRÜHSTART!":"GESENDET!";
-      $("playerAlert").innerHTML=early?"❌ <b>Frühstart!</b><br>+1,000 Sekunden Strafzeit":"✅ <b>Reaktion gespeichert:</b><br>"+(ms/1000).toFixed(3).replace(".",",")+" s";
-      conn.send({type:"zgLive",name,data:{kind:"reaction",state:"done",ms,early}}); conn.send({type:"zgReaction",name,ms,early});
-    };
-    return;
-  }
-  if(m.round===4 && m.phase==="rps"){
-    $("playerAlert").className="status";
-    $("playerAlert").innerHTML="<div class='zg-phone-title'>3ER-FINALE</div><div>"+m.players.map(zgEsc).join(" · ")+"</div><div class='zg-hearts'>"+("❤️".repeat(m.lives[name])||"💀")+"</div>";
-    $("playerRanking").innerHTML="<div class='zg-rps'><button data-rps='Stein'>🪨<br>STEIN</button><button data-rps='Schere'>✂️<br>SCHERE</button><button data-rps='Papier'>📄<br>PAPIER</button></div>";
-    countdown(m.end,$("playerCountdown"),()=>document.querySelectorAll("[data-rps]").forEach(x=>x.disabled=true));
-    document.querySelectorAll("[data-rps]").forEach(b=>b.onclick=()=>{
-      document.querySelectorAll("[data-rps]").forEach(x=>x.disabled=true);
-      b.classList.add("good"); clearInterval(timerInt);$("playerCountdown").textContent="";
-      conn.send({type:"zgRpsChoice",name,choice:b.dataset.rps,token:m.token});
-      $("playerAlert").innerHTML="<b>Gewählt: "+b.dataset.rps+"</b><br>Warte auf die anderen …";
-    });
-  }
-}
-function zgClientRpsResult(m){
-  zgClientBase(); clearInterval(timerInt);
-  const name=role.slice(7);
-  $("playerAlert").className=m.winner===name?"status ok":"status";
-  $("playerAlert").innerHTML="<b>"+zgEsc(m.text)+"</b><br><div class='zg-hearts'>"+("❤️".repeat(m.lives[name]||0)||"💀")+"</div>"+
-    "Warte auf den nächsten Zug …";
-  $("playerRanking").innerHTML=Object.entries(m.choices||{}).map(([n,c])=>"<div class='status'><b>"+zgEsc(n)+":</b> "+(c||"keine Auswahl")+"</div>").join("");
 }
 
 function norm(s){return String(s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]/g,"");}
