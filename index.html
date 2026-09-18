@@ -208,6 +208,7 @@ const $=id=>document.getElementById(id);
 let peer=null, conns={}, conn=null, role=null, room=null, modeName="quiz";
 let timerInt=null, answers={}, used=new Set(), qidx=0, eidx=0, currentClientKind=null;
 let quizScores={team1:0,team2:0,team3:0}, quizAwarded=new Set(), clientQuizScores={team1:0,team2:0,team3:0};
+let estimateScores={team1:0,team2:0,team3:0}, estimateAwarded=new Set(), clientEstimateScores={team1:0,team2:0,team3:0};
 let catName=Object.keys(D.categories)[0];
 let catOut=new Set();
 let buzzOrder=[], buzzOpen=false, buzzAnswerIndex=0, buzzAnswerTimer=null, buzzAnswerEnd=0, buzzExpired=false;
@@ -310,6 +311,7 @@ function onHostMessage(m,c){
     else {
       answers[m.role]=m.value; renderHost();
       if(modeName==="quiz" && ["team1","team2","team3"].every(t=>answers[t]!==undefined)) revealQuiz(true);
+      if(modeName==="estimate" && ["team1","team2","team3"].every(t=>answers[t]!==undefined)) revealEstimate(true);
     }
   }
 }
@@ -431,7 +433,7 @@ function onClientMessage(m){
   }
   if(m.type==="reveal"){
     clearInterval(timerInt);
-    if(m.scores) clientQuizScores=m.scores;
+    if(m.scores){ if(m.kind==="estimate" || m.scoreKind==="estimate") clientEstimateScores=m.scores; else clientQuizScores=m.scores; }
     if(role==="screen"){ $("screenTimer").textContent="";
       $("screenStatus").innerHTML=m.html;
     }else{
@@ -454,12 +456,18 @@ function quizScoreHtml(scores){
   scores=scores||quizScores;
   return "<div class='status' style='margin-top:18px;text-align:center'><b>🏆 Punktestand</b><div class='grid' style='margin-top:8px'>"+["team1","team2","team3"].map(t=>"<div><b>"+D.teams[t].name+"</b><br><span style='font-size:26px;font-weight:900'>"+(scores[t]||0)+"</span></div>").join("")+"</div></div>";
 }
+function estimateScoreHtml(scores){
+  scores=scores||estimateScores;
+  const ranked=["team1","team2","team3"].map((t,i)=>({t,score:scores[t]||0,i})).sort((a,b)=>b.score-a.score||a.i-b.i);
+  return "<div class='status' style='margin-top:18px;text-align:center'><b>🏆 Schätzmeister – Punktestand</b><div class='grid' style='margin-top:8px'>"+ranked.map((x,i)=>"<div><b>"+(i+1)+". "+D.teams[x.t].name+"</b><br><span style='font-size:26px;font-weight:900'>"+x.score+"</span></div>").join("")+"</div></div>";
+}
 function categoryProgressHtml(count,total){
   return "<div class='status' style='margin-top:18px;text-align:center;font-size:22px'><b>"+count+"/"+total+" genannt</b></div>";
 }
 function startLocal(m){
   currentClientKind=m.kind;
   if(m.kind==="quiz" && m.scores) clientQuizScores=m.scores;
+  if(m.kind==="estimate" && m.scores) clientEstimateScores=m.scores;
   if(role==="screen"){
     $("screenTitle").textContent=m.title;
     if(m.kind==="emojiTitle"){
@@ -475,6 +483,8 @@ function startLocal(m){
           "</div>"
         ).join("")+
         "</div><div class='muted' style='margin-top:12px'>Team-Antworten und richtige Lösung bleiben bis zur Auflösung verborgen.</div>"+quizScoreHtml(clientQuizScores);
+    }else if(m.kind==="estimate"){
+      $("screenStatus").innerHTML="<div class='muted'>Schätzungen bleiben bis zur Auflösung verborgen.</div>"+estimateScoreHtml(clientEstimateScores);
     }else{
       $("screenStatus").innerHTML="<div class='muted'>Antworten noch verborgen</div>";
     }
@@ -486,7 +496,7 @@ function startLocal(m){
     m.options.forEach((x,i)=>h+="<button class='answer secondary qanswer' data-value='"+i+"'>"+String.fromCharCode(65+i)+" · "+x+"</button>");
     h+=quizScoreHtml(clientQuizScores);
   } else if(m.kind==="estimate"){
-    h+="<input id='txtAns' type='number' inputmode='numeric' placeholder='Kilometer' style='width:100%'><button id='sendText' class='answer'>ABSCHICKEN</button>";
+    h+="<input id='txtAns' type='number' inputmode='numeric' placeholder='Kilometer' style='width:100%'><button id='sendText' class='answer'>ABSCHICKEN</button>"+estimateScoreHtml(clientEstimateScores);
   } else if(m.kind==="category"){
     h+="<input id='txtAns' autocomplete='off' placeholder='Antwort' style='width:100%'><button id='sendText' class='answer'>ABSCHICKEN</button>"+categoryProgressHtml(m.usedCount||0,m.totalCount||0);
   } else if(m.kind==="emojiTitle"){
@@ -509,6 +519,9 @@ function submitText(){
   if(currentClientKind==="category"){
     clearInterval(timerInt); $("capTimer").textContent="";
     lockCaptain("Antwort gesendet ✓<br><b>Das nächste Team ist dran.</b>");
+  } else if(currentClientKind==="estimate"){
+    clearInterval(timerInt); $("capTimer").textContent="";
+    lockCaptain("Schätzung gesendet ✓<br><b>Warte auf die anderen Teams.</b>");
   } else if(!(currentClientKind==="emojiTitle"||currentClientKind==="emojiArtist")) lockCaptain("Antwort gesendet ✓");
   else { e.value=""; e.focus(); }
 }
@@ -540,8 +553,8 @@ function renderHost(){
   } else if(modeName==="estimate"){
     const e=D.estimate[eidx];
     h="<div class='card'><h2>Schätzmeister "+(eidx+1)+"/"+D.estimate.length+"</h2><p class='big'>"+e[0]+"</p><p class='muted'>Lösung: "+Number(e[1]).toLocaleString("de-DE")+" km</p>"+
-      "<p><button id='startBtn'>30 SEK. START</button> <button id='revealBtn' class='secondary'>AUSWERTEN</button></p>"+
-      answerStatus(false)+"<div id='hostReveal'></div><div class='grid'><button id='prevBtn' class='secondary'>←</button><button id='nextBtn'>NÄCHSTE →</button></div></div>";
+      "<p><button id='startBtn'>60 SEK. START</button> <button id='revealBtn' class='secondary'>AUSWERTEN</button></p>"+
+      answerStatus(false)+"<div id='hostReveal'></div>"+estimateScoreHtml(estimateScores)+"<div class='grid'><button id='prevBtn' class='secondary'>←</button><button id='nextBtn'>NÄCHSTE →</button></div></div>";
   } else if(modeName==="category"){
     h="<div class='card'><h2>Kategorien-Battle</h2><select id='catSelect' style='width:100%'>"+
       Object.keys(D.categories).map(x=>"<option "+(x===catName?"selected":"")+">"+x+"</option>").join("")+
@@ -596,7 +609,7 @@ function renderHost(){
 }
 function bindHostControls(){
   const start=$("startBtn"), reveal=$("revealBtn"), prev=$("prevBtn"), next=$("nextBtn");
-  if(start)start.addEventListener("click",()=>startRound(30));
+  if(start)start.addEventListener("click",()=>startRound(modeName==="estimate"?60:30));
   if(reveal)reveal.addEventListener("click",()=>modeName==="quiz"?revealQuiz():revealEstimate());
   if(prev)prev.addEventListener("click",()=>{answers={};if(modeName==="quiz")qidx=Math.max(0,qidx-1);else eidx=Math.max(0,eidx-1);renderHost();});
   if(next)next.addEventListener("click",()=>{answers={};if(modeName==="quiz")qidx=Math.min(D.quiz.length-1,qidx+1);else eidx=Math.min(D.estimate.length-1,eidx+1);renderHost();});
@@ -633,7 +646,7 @@ function startRound(sec){
   if(modeName==="quiz"){
     const q=D.quiz[qidx]; sendAll({type:"start",kind:"quiz",end,title:"Frage "+(qidx+1)+": "+q[0],options:q[1],scores:{...quizScores}});
   }else{
-    sendAll({type:"start",kind:"estimate",end,title:"Schätzmeister: "+D.estimate[eidx][0]});
+    sendAll({type:"start",kind:"estimate",end,title:"Schätzmeister: "+D.estimate[eidx][0],scores:{...estimateScores}});
   }
   renderHost();
 }
@@ -654,14 +667,21 @@ function revealQuiz(auto=false){
   renderHost();
   const hr2=$("hostReveal"); if(hr2)hr2.innerHTML="<div class='card'>"+html+"</div>";
 }
-function revealEstimate(){
-  const sol=Number(D.estimate[eidx][1]), pts=[3,2,1];
+function revealEstimate(auto=false){
+  const sol=Number(D.estimate[eidx][1]), pts=[2,1,0];
   const arr=["team1","team2","team3"].filter(t=>answers[t]!==undefined)
     .map(t=>[t,Number(answers[t]),Math.abs(Number(answers[t])-sol)]).sort((a,b)=>a[2]-b[2]);
+  if(!estimateAwarded.has(eidx)){
+    arr.forEach((x,i)=>estimateScores[x[0]]=(estimateScores[x[0]]||0)+(pts[i]||0));
+    estimateAwarded.add(eidx);
+  }
   let html="<p><b>Lösung: "+sol.toLocaleString("de-DE")+" km</b></p>";
-  arr.forEach((x,i)=>html+="<div class='status'>"+pts[i]+" Punkte: "+D.teams[x[0]].name+" – "+x[1].toLocaleString("de-DE")+" km</div>");
+  arr.forEach((x,i)=>html+="<div class='status "+(i===0?"ok":"")+"'><b>"+(i+1)+". Platz · "+(pts[i]||0)+" Punkt"+((pts[i]||0)===1?"":"e")+":</b> "+D.teams[x[0]].name+" – "+x[1].toLocaleString("de-DE")+" km</div>");
+  html+=estimateScoreHtml(estimateScores);
   const hr=$("hostReveal"); if(hr)hr.innerHTML="<div class='card'>"+html+"</div>";
-  sendAll({type:"reveal",html});
+  sendAll({type:"reveal",html,scores:{...estimateScores},scoreKind:"estimate",kind:"estimate"});
+  renderHost();
+  const hr2=$("hostReveal"); if(hr2)hr2.innerHTML="<div class='card'>"+html+"</div>";
 }
 function startCategory(){
   answers={}; const t=$("turnTeam").value;
