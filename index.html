@@ -145,7 +145,7 @@ button,select,input{max-width:100%;min-width:0}
 </style>
 </head>
 <body>
-<header>🇭🇷 Kroatien-Olympiade LIVE <span style="font-size:12px;opacity:.65">v31 · Zimmergame + Higher or Lower</span></header>
+<header>🇭🇷 Kroatien-Olympiade LIVE <span style="font-size:12px;opacity:.65">Saufy-Nauten Kegeltour 2026</span></header>
 <div class="wrap">
 <section id="setup" class="card">
 <h2>Verbinden</h2>
@@ -887,6 +887,7 @@ function categoryProgressHtml(count,total){
 }
 function startLocal(m){
   currentClientKind=m.kind;
+  if(m.noTimer){clearInterval(timerInt);}
   if(m.kind==="quiz" && m.scores) clientQuizScores=m.scores;
   if(m.kind==="estimate" && m.scores) clientEstimateScores=m.scores;
   if(role==="screen"){
@@ -894,7 +895,7 @@ function startLocal(m){
     if(m.kind==="emojiTitle"){
       $("screenStatus").innerHTML="<div class='big' style='font-size:80px;margin:25px 0'>"+m.emojis+"</div><div class='muted'>Songtitel gesucht</div>";
     }else if(m.kind==="emojiArtist"){
-      $("screenStatus").innerHTML="<div class='big' style='font-size:70px;margin:18px 0'>"+m.emojis+"</div><div class='status ok' style='font-size:30px'><b>Titel: "+m.songTitle+"</b></div><div class='muted'>Jetzt Interpret – 30 Sekunden</div>";
+      $("screenStatus").innerHTML="<div class='big' style='font-size:70px;margin:18px 0'>"+m.emojis+"</div><div class='status ok' style='font-size:30px'><b>Titel: "+m.songTitle+"</b></div><div class='muted'>Jetzt Interpret gesucht</div>";
     }else if(m.kind==="quiz" && Array.isArray(m.options)){
       $("screenStatus").innerHTML=
         "<div class='grid' style='margin-top:18px'>"+
@@ -923,7 +924,7 @@ function startLocal(m){
   } else if(m.kind==="emojiTitle"){
     h+="<div class='big' style='font-size:54px;margin:15px 0'>"+m.emojis+"</div><p><b>Songtitel gesucht</b> · maximal 3 Versuche</p><input id='txtAns' autocomplete='off' placeholder='Songtitel' style='width:100%'><button id='sendText' class='answer'>VERSUCH ABSCHICKEN</button>";
   } else if(m.kind==="emojiArtist"){
-    h+="<div class='big' style='font-size:42px;margin:12px 0'>"+m.emojis+"</div><div class='status ok'><b>Titel: "+m.songTitle+"</b></div><p><b>Interpret gesucht</b> · 30 Sekunden · maximal 3 Versuche</p><input id='txtAns' autocomplete='off' placeholder='Interpret' style='width:100%'><button id='sendText' class='answer'>VERSUCH ABSCHICKEN</button>";
+    h+="<div class='big' style='font-size:42px;margin:12px 0'>"+m.emojis+"</div><div class='status ok'><b>Titel: "+m.songTitle+"</b></div><p><b>Interpret gesucht</b> · maximal 3 Versuche</p><input id='txtAns' autocomplete='off' placeholder='Interpret' style='width:100%'><button id='sendText' class='answer'>VERSUCH ABSCHICKEN</button>";
   }
   $("capGame").innerHTML=h;
   document.querySelectorAll(".qanswer").forEach(b=>b.addEventListener("click",()=>submitChoice(Number(b.dataset.value),b)));
@@ -1028,13 +1029,13 @@ function renderHost(){
   }
   if(modeName==="emoji"){
     const s=D.emoji[emojiIdx];
-    const phaseText=emojiPhase==="title"?"Titel läuft – bis ein Team richtig antwortet":emojiPhase==="artist"?"Interpret läuft – 30 Sekunden":emojiPhase==="done"?"Runde beendet":"Bereit";
+    const phaseText=emojiPhase==="title"?"Titel läuft – bis ein Team richtig antwortet":emojiPhase==="artist"?"Interpret läuft – bis ein Team richtig antwortet":emojiPhase==="done"?"Runde beendet":"Bereit";
     h="<div class='card'><h2>Emoji-Songs "+(emojiIdx+1)+"/"+D.emoji.length+"</h2>"+
       "<div class='big' style='font-size:58px;margin:20px 0'>"+s[0]+"</div>"+
       "<div class='status'><b>Status:</b> "+phaseText+"</div>"+
       (emojiPhase==="idle"?"<button id='emojiStart'>TITEL-RATEN STARTEN</button>":"")+
       (emojiPhase==="title"?"<button id='emojiRevealTitle' class='secondary'>TITEL MANUELL AUFLÖSEN</button>":"")+
-      (emojiPhase==="artist"?"<div class='status ok'><b>Titel: "+s[1]+"</b></div>":"")+
+      (emojiPhase==="artist"?"<div class='status ok'><b>Titel: "+s[1]+"</b></div><button id='emojiRevealArtist' class='secondary'>INTERPRET MANUELL AUFLÖSEN / WEITER</button>":"")+
       (emojiPhase==="done"?"<div class='status ok'><b>"+s[1]+"</b> · "+s[2]+"</div>":"")+
       "<div class='card'>"+["team1","team2","team3"].map(t=>"<div class='status'><b>"+D.teams[t].name+"</b> · Punkte: <b style='font-size:22px'>"+("I".repeat(emojiPoints[t])||"–")+"</b> <span class='muted'>("+emojiPoints[t]+")</span> · Versuche: "+emojiAttempts[t]+"/3</div>").join("")+"</div>"+
       "<div class='grid'><button id='emojiPrev' class='secondary'>←</button><button id='emojiNext'>NÄCHSTER SONG →</button></div></div>";
@@ -1217,9 +1218,7 @@ function changeEmoji(d){
 function startEmojiTitle(){
   resetEmojiRound(); emojiPhase="title";
   const s=D.emoji[emojiIdx];
-  // Effectively no countdown: 24h; ends immediately when first correct title arrives.
-  const end=Date.now()+86400000;
-  sendAll({type:"start",kind:"emojiTitle",end,title:"Emoji-Song: Titel gesucht",emojis:s[0]});
+  sendAll({type:"start",kind:"emojiTitle",noTimer:true,title:"Emoji-Song: Titel gesucht",emojis:s[0]});
   renderHost();
 }
 function sendEmojiFeedback(team,msg,good=false){
@@ -1252,21 +1251,18 @@ function handleEmojiAnswer(team,value){
 function startEmojiArtist(titleWinner){
   const s=D.emoji[emojiIdx];
   emojiPhase="artist"; emojiWinner=titleWinner;
-  // New 3 attempts for artist for every team.
   emojiAttempts={team1:0,team2:0,team3:0};
-  const end=Date.now()+30000;
-  sendAll({type:"start",kind:"emojiArtist",end,title:"Interpret gesucht",emojis:s[0],songTitle:s[1]});
+  sendAll({type:"start",kind:"emojiArtist",noTimer:true,title:"Interpret gesucht",emojis:s[0],songTitle:s[1]});
   renderHost();
-  setTimeout(()=>{
-    if(modeName==="emoji" && emojiPhase==="artist"){
-      emojiPhase="done";
-      sendAll({type:"reveal",html:"<div class='status'><b>Zeit abgelaufen.</b></div><div class='status ok'>Interpret: "+s[2]+"</div>"+teamScoreHtml(emojiPoints,"EMOJI SONG · PUNKTE")}); sendShortStandings(emojiPoints,"EMOJI SONG · NACH SONG "+(emojiIdx+1));
-      renderHost();
-    }
-  },30200);
 }
-
-
+function emojiManualArtistReveal(){
+  if(emojiPhase!=="artist")return;
+  const s=D.emoji[emojiIdx];
+  emojiPhase="done";
+  sendAll({type:"reveal",html:"<div class='status'><b>Spielleiter löst auf.</b></div><div class='status ok'>Interpret: "+s[2]+"</div>"+teamScoreHtml(emojiPoints,"EMOJI SONG · PUNKTE")});
+  sendShortStandings(emojiPoints,"EMOJI SONG · NACH SONG "+(emojiIdx+1));
+  renderHost();
+}
 function zgHostHtml(){
   const rem=zgRemaining();
   const round=ZG_ROUNDS[zgRound];
