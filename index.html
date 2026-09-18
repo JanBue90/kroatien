@@ -16,7 +16,7 @@ button{background:var(--n);color:#fff;border:0;font-weight:800;cursor:pointer}.s
 .muted{color:#667684}.answer{display:block;width:100%;margin:8px 0;text-align:left}.answer.sel{outline:4px solid #9bbbd6}
 .status{padding:10px;border-radius:9px;background:#edf2f6;margin:6px 0}.ok{background:#def4e7}.bad{background:#fae1e1}
 .pill{display:inline-block;padding:5px 9px;background:#e8eef3;border-radius:99px;margin:3px;font-size:13px}.check{opacity:1;text-decoration:line-through;background:#dff5e7!important;border:2px solid #22a35a;color:#116534;font-weight:900}
-.tabs{display:flex;gap:7px;overflow:auto;margin-bottom:12px}.tabs button{white-space:nowrap}
+.tabs{display:flex;gap:7px;flex-wrap:wrap;overflow:visible;margin-bottom:12px}.tabs button{white-space:normal;flex:1 1 150px}
 .code{letter-spacing:5px}.teamBtn{min-height:56px}
 
 /* v13 mobile-first fixes */
@@ -120,10 +120,32 @@ button,select,input{max-width:100%;min-width:0}
 
 /* v22 standings */
 .tour-tv-score{display:grid;grid-template-columns:repeat(6,minmax(90px,1fr));gap:7px;margin:12px auto 18px;max-width:1100px}.tour-tv-score .status{text-align:center;margin:0;padding:8px}.tour-standings{max-width:900px;margin:20px auto}.tour-standings-row{display:grid;grid-template-columns:70px 1fr 100px;gap:12px;align-items:center;font-size:26px;padding:14px 18px}.tour-standings-row:nth-child(1){font-size:34px;background:#fff0b8}.tour-standings-row:nth-child(2){font-size:31px}.tour-standings-row:nth-child(3){font-size:29px}@media(max-width:700px){.tour-tv-score{grid-template-columns:repeat(3,1fr)}.tour-standings-row{grid-template-columns:45px 1fr 60px;font-size:20px;padding:10px}}
+
+/* v28 Zimmergame */
+.zg-rounds{display:grid;grid-template-columns:repeat(5,minmax(100px,1fr));gap:8px;margin:12px 0}
+.zg-round{padding:10px;border-radius:12px;background:#edf2f6;text-align:center;font-weight:900}
+.zg-round.active{background:#dff5e7;border:3px solid #22a35a}
+.zg-round.done{background:#17324d;color:white}
+.zg-rank{display:grid;grid-template-columns:52px 1fr auto;gap:10px;align-items:center;padding:12px 14px}
+.zg-rank:first-child{background:#fff0b8;font-size:20px}
+.zg-duos{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px}
+.zg-choice{width:100%;min-height:70px;font-size:20px;margin:6px 0}
+.zg-rps{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.zg-rps button{min-height:90px;font-size:20px}
+.zg-hearts{font-size:32px;letter-spacing:3px}
+.zg-phone-title{text-align:center;font-size:25px;font-weight:900;margin:8px 0 16px}
+.zg-phone-big{text-align:center;font-size:54px;font-weight:950;margin:18px 0}
+.zg-go{background:#dff5e7!important;border:4px solid #22a35a!important}
+@media(max-width:700px){
+  .zg-rounds{grid-template-columns:1fr}
+  .zg-rank{grid-template-columns:40px 1fr auto;padding:9px}
+  .zg-rps button{font-size:17px;min-height:82px;padding:8px}
+}
+
 </style>
 </head>
 <body>
-<header>🇭🇷 Kroatien-Olympiade LIVE <span style="font-size:12px;opacity:.65">v22</span></header>
+<header>🇭🇷 Kroatien-Olympiade LIVE <span style="font-size:12px;opacity:.65">v31 · Zimmergame + Higher or Lower</span></header>
 <div class="wrap">
 <section id="setup" class="card">
 <h2>Verbinden</h2>
@@ -152,7 +174,7 @@ button,select,input{max-width:100%;min-width:0}
 <div class="tabs">
 <button data-mode="quiz">Kroatien-Quiz</button>
 <button data-mode="estimate">Schätzmeister</button>
-<button data-mode="category">Kategorien</button><button data-mode="higherlower">Higher or Lower</button><button data-mode="emoji">Emoji-Songs</button><button data-mode="buzzer">Buzzer-Spiel</button><button data-mode="tourpics">Kegeltour-Fotos</button>
+<button data-mode="category">Kategorien</button><button data-mode="higherlower">Higher or Lower</button><button data-mode="emoji">Emoji-Songs</button><button data-mode="buzzer">Buzzer-Spiel</button><button data-mode="tourpics">Kegeltour-Fotos</button><button data-mode="zimmer" class="good" style="font-size:17px;border:3px solid #0d6639">🏨 ZIMMERGAME – ZIMMER AUSLOSEN</button>
 </div>
 <div id="hostGame"></div>
 </section>
@@ -251,7 +273,66 @@ let clientTourRound=null, clientTourPhase=null;
 let promiIdx=0, promiReveal=0, promiSolved=false, promiTimer=null;
 let promiRounds=JSON.parse(localStorage.getItem("promiRounds")||"null")||Array.from({length:12},(_,i)=>({brother:"",celebrity:"",mix:"",brotherImg:"",celebrityImg:""}));
 const TOUR_ROUNDS=[{"place":"Stuttgart","year":2023,"img":"tour_12.jpg"},{"place":"München","year":2012,"img":"tour_07.jpg"},{"place":"Amsterdam","year":2015,"img":"tour_13.jpg"},{"place":"Breslau","year":2017,"img":"tour_18.jpg"},{"place":"Münster","year":2014,"img":"tour_08.jpg"},{"place":"Frankfurt","year":2022,"img":"tour_02.jpg"},{"place":"Breslau","year":2017,"img":"tour_17.jpg"},{"place":"Berlin","year":2016,"img":"tour_14.jpg"},{"place":"Stuttgart","year":2023,"img":"tour_11.jpg"},{"place":"Bremen","year":2023,"img":"tour_15.jpg"},{"place":"München","year":2012,"img":"tour_06.jpg"},{"place":"Frankfurt","year":2022,"img":"tour_03.jpg"},{"place":"Brügge","year":2025,"img":"tour_01.jpg"},{"place":"Hamburg","year":2020,"img":"tour_04.jpg"},{"place":"Bremen","year":2023,"img":"tour_16.jpg"},{"place":"Sophia","year":2019,"img":"tour_09.jpg"},{"place":"Sophia","year":2019,"img":"tour_10.jpg"},{"place":"Krakau","year":2018,"img":"tour_05.jpg"}];
+
 let tourIdx=0,tourPhase="idle",tourScores={},tourLocationWinner=null,tourStandingsShown=false;
+
+// Zimmergame: Fabian und Jan sind NUR hier ausgeschlossen.
+// In allen anderen Spielen bleibt die bestehende Spielerliste unverändert.
+const ZG_PLAYERS=["Kevin","Markus","Stefan","Kay","Michel","Patrick","Mario","Timo","Andre","Klemm","Swen"];
+const ZG_ROUNDS=[
+  {title:"Runde 1 · Schätzmeister",question:"Wie weit ist es ungefähr Luftlinie von Zadar bis zum Nordpol?",unit:"km",solution:5101},
+  {title:"Runde 2 · Zeitgefühl",question:"Stoppe die unsichtbare Uhr möglichst genau bei 10,00 Sekunden.",target:10000},
+  {title:"Runde 3 · Dinara",question:"Wie hoch ist der höchste Berg Kroatiens, der Berg Dinara?",unit:"m",solution:1831},
+  {title:"Runde 4 · Reaktionsblitz",question:"Warte auf JETZT! und drücke dann so schnell wie möglich."},
+  {title:"Runde 5 · Stein · Schere · Papier",question:"Best of Leben: Beide starten mit 3 Herzen."}
+];
+let zgRound=0, zgPhase="idle", zgAnswers={}, zgDuos=[], zgOut=new Set(), zgWinner=null;
+let zgReactionStarts={}, zgRpsPlayers=[], zgRpsLives={}, zgRpsChoices={}, zgRpsToken=0, zgRpsEnd=0, zgRpsTimer=null;
+let zgClientState={round:null,phase:"idle",submitted:false,localStart:0,reactionTimer:null,reactionGoAt:0,rpsChosen:false};
+let zgLive={};
+function zgLiveBroadcast(){
+  if(modeName!=="zimmer")return;
+  const payload={type:"zgLive",round:zgRound,phase:zgPhase,live:zgLive,remaining:zgRemaining(),duos:zgDuos};
+  ZG_PLAYERS.forEach(n=>{ if(zgOut.has(n)) zgSend(n,payload); });
+}
+function zgLiveHostHtml(){
+  const entries=Object.entries(zgLive||{});
+  if(!entries.length)return "<div class='status'><b>Live:</b> Noch keine Aktion.</div>";
+  return "<div class='card'><h3>👀 LIVE-GESCHEHEN</h3>"+entries.map(([n,v])=>{
+    let t="";
+    if(v.kind==="timer") t=v.state==="running"?"⏱️ Uhr läuft …":v.state==="stopped"?"⏱️ gestoppt bei <b>"+(v.ms/1000).toFixed(2).replace(".",",")+" s</b>":"Bereit";
+    else if(v.kind==="input") t="⌨️ Eingabe: <b>"+zgEsc(v.value||"—")+"</b>"+(v.sent?" ✅":"");
+    else if(v.kind==="reaction") t=v.state==="waiting"?"⚡ wartet auf JETZT …":v.state==="go"?"🟢 JETZT!":v.early?"❌ Frühstart":"⚡ Reaktion: <b>"+(v.ms/1000).toFixed(3).replace(".",",")+" s</b>";
+    else if(v.kind==="rps") t=v.chosen?"✋ Auswahl abgegeben":"⏳ wählt …";
+    return "<div class='status'><b>"+zgEsc(n)+":</b> "+t+"</div>";
+  }).join("")+"</div>";
+}
+function zgSpectatorRender(m){
+  zgClientBase();
+  $("buzzState").textContent="";
+  $("playerAlert").className="status ok";
+  $("playerAlert").innerHTML="👀 <b>Du bist bereits im Zimmerteam.</b><br>Du siehst das aktuelle Spiel live.";
+  const live=m.live||{};
+  $("playerRanking").innerHTML="<h3>Aktuelle Runde "+(m.round+1)+"</h3>"+
+    (Object.entries(live).length?Object.entries(live).map(([n,v])=>{
+      let t="";
+      if(v.kind==="timer")t=v.state==="running"?"⏱️ Uhr läuft …":v.state==="stopped"?"⏱️ "+(v.ms/1000).toFixed(2).replace(".",",")+" s":"Bereit";
+      else if(v.kind==="input")t="⌨️ "+zgEsc(v.value||"—")+(v.sent?" ✅":"");
+      else if(v.kind==="reaction")t=v.state==="waiting"?"⚡ wartet …":v.state==="go"?"🟢 JETZT!":v.early?"❌ Frühstart":"⚡ "+(v.ms/1000).toFixed(3).replace(".",",")+" s";
+      else if(v.kind==="rps")t=v.chosen?"✋ gewählt":"⏳ wählt …";
+      return "<div class='status'><b>"+zgEsc(n)+":</b> "+t+"</div>";
+    }).join(""):"<div class='status'>Warte auf Aktionen …</div>");
+}
+
+
+function zgRemaining(){return ZG_PLAYERS.filter(n=>!zgOut.has(n));}
+function zgConnectedRemaining(){return zgRemaining().filter(n=>!!conns["player:"+n]);}
+function zgSend(name,msg){const c=conns["player:"+name];if(c)try{c.send(msg)}catch(e){}}
+function zgEsc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));}
+function zgDuoHtml(){
+  return "<div class='zg-duos'>"+zgDuos.map((d,i)=>"<div class='status ok'><b>Zimmerteam "+(i+1)+"</b><br>"+zgEsc(d[0])+" + "+zgEsc(d[1])+"</div>").join("")+"</div>";
+}
+
 
 let emojiIdx=0, emojiPhase="idle", emojiWinner=null, emojiAttempts={team1:0,team2:0,team3:0}, emojiPoints={team1:0,team2:0,team3:0};
 
@@ -342,6 +423,38 @@ function onHostMessage(m,c){
     if(buzzOrder.length===1){buzzAnswerIndex=0; startBuzzAnswerTimer();}
     broadcastBuzzOrder(); renderHost();
   }
+
+  if(m.type==="zgLive" && modeName==="zimmer"){
+    if(!ZG_PLAYERS.includes(m.name) || zgOut.has(m.name))return;
+    zgLive[m.name]=m.data||{};
+    zgLiveBroadcast();
+    renderHost();
+    return;
+  }
+  if(m.type==="zgAnswer" && modeName==="zimmer"){
+    const name=m.name;
+    if(!ZG_PLAYERS.includes(name) || zgOut.has(name) || zgAnswers[name]!==undefined)return;
+    zgAnswers[name]=Number(m.value);
+    renderHost();
+    if(zgRound<4 && zgRemaining().every(n=>zgAnswers[n]!==undefined)) zgRevealRound();
+    return;
+  }
+  if(m.type==="zgReaction" && modeName==="zimmer" && zgRound===3 && zgPhase==="playing"){
+    const name=m.name;
+    if(!ZG_PLAYERS.includes(name) || zgOut.has(name) || zgAnswers[name]!==undefined)return;
+    zgAnswers[name]={ms:Number(m.ms),early:!!m.early};
+    renderHost();
+    if(zgRemaining().every(n=>zgAnswers[n]!==undefined)) zgRevealRound();
+    return;
+  }
+  if(m.type==="zgRpsChoice" && modeName==="zimmer" && zgRound===4 && zgPhase==="rps" && zgRpsPlayers.includes(m.name)){
+    if(Number(m.token)!==zgRpsToken || zgRpsChoices[m.name])return;
+    zgRpsChoices[m.name]=m.choice;
+    zgLive[m.name]={kind:"rps",chosen:true};
+    zgLiveBroadcast(); renderHost();
+    if(zgRpsPlayers.every(n=>zgRpsChoices[n])) zgResolveRps();
+    return;
+  }
   if(m.type==="answer"){
     if(modeName==="emoji" && (emojiPhase==="title"||emojiPhase==="artist")) handleEmojiAnswer(m.role,m.value);
     else {
@@ -366,6 +479,11 @@ function onClientMessage(m){
     else if(role&&role.startsWith("player:")){const me=role.slice(7);$("buzzBtn").classList.add("hide");$("playerTourBox").classList.add("hide");$("playerBuzzBoard").classList.remove("hide");$("playerAlert").className="status";$("playerAlert").innerHTML=body;$("playerCountdown").textContent="";$("playerRanking").innerHTML=(m.phase==="question"&&m.active===me)?"<div class='grid'><button id='hlPhoneHi' class='good' style='font-size:25px'>⬆ HÖHER</button><button id='hlPhoneLo' class='danger' style='font-size:25px'>⬇ NIEDRIGER</button></div>":"<div class='muted' style='text-align:center'>"+(m.phase==="question"?"Warte auf "+m.active+" …":"Warte auf die nächste Runde …")+"</div>";const hi=$("hlPhoneHi"),lo=$("hlPhoneLo");if(hi)hi.onclick=()=>conn.send({type:"hlChoice",choice:"higher",name:me});if(lo)lo.onclick=()=>conn.send({type:"hlChoice",choice:"lower",name:me});}
     return;
   }
+
+  if(m.type==="zgState" && role && role.startsWith("player:")){ zgClientRender(m); return; }
+  if(m.type==="zgLive" && role && role.startsWith("player:")){ zgSpectatorRender(m); return; }
+  if(m.type==="zgRpsResult" && role && role.startsWith("player:")){ zgClientRpsResult(m); return; }
+
   if(m.type==="buzzState" && role && role.startsWith("player:")){$("buzzBtn").disabled=!m.open;$("buzzState").textContent=m.open?"🟢 BUZZER FREI!":"🔒 Buzzer gesperrt";}
   if(m.type==="buzzReset" && role && role.startsWith("player:")){$("buzzBtn").classList.remove("hide");$("buzzBtn").disabled=true;$("playerBuzzBoard").classList.add("hide");$("playerRanking").innerHTML="";$("playerCountdown").textContent="";$("buzzState").textContent="Neue Runde – warte auf Jan …";}
   if(m.type==="buzzPosition" && role && role.startsWith("player:")){
@@ -576,6 +694,10 @@ function lockCaptain(msg){
 }
 function setMode(m){
   modeName=m; answers={};
+  if(m==="zimmer"){
+    ZG_PLAYERS.forEach(n=>zgSend(n,{type:"zgState",round:zgRound,phase:(zgOut.has(n)?"paired":"ready"),title:ZG_ROUNDS[zgRound].title,question:ZG_ROUNDS[zgRound].question}));
+    zgSend("Fabian",{type:"zgState",round:zgRound,phase:"excluded",title:"🏨 Zimmergame"});
+  }
   if(m==="emoji" && !["idle","title","artist","done"].includes(emojiPhase)) resetEmojiRound();
   renderHost();
   if(m==="higherlower" && hl) hlBroadcast();
@@ -606,6 +728,10 @@ function renderHost(){
       Object.keys(D.categories).map(x=>"<option "+(x===catName?"selected":"")+">"+x+"</option>").join("")+
       "</select><p><select id='turnTeam'>"+["team1","team2","team3"].map(t=>"<option value='"+t+"' "+(catOut.has(t)?"disabled":"")+">"+D.teams[t].name+(catOut.has(t)?" — RAUS":"")+"</option>").join("")+"</select> <button id='catStart'>35 SEK. START</button></p>"+
       answerStatus(true)+"<div>"+D.categories[catName].map(x=>"<span class='pill "+(used.has(norm(x))?"check":"")+"'>"+x+"</span>").join("")+"</div>"+categoryProgressHtml(used.size,D.categories[catName].length)+"</div>";
+  }
+
+  if(modeName==="zimmer"){
+    h=zgHostHtml();
   }
   if(modeName==="higherlower"){
     if(!hl){h="<div class='card'><h2>⬆️⬇️ Higher or Lower</h2><p class='muted'>Einzelspiel · unabhängig von der Olympiade/Zimmerverteilung · 250 Fragen · bei jedem Start zufällig gemischt.</p><h3>Spieler & Leben auswählen</h3><div class='tour-score'>"+HL_NAMES.map(n=>"<label class='status' style='display:block'><input class='hlPick' type='checkbox' value='"+n+"'> <b>"+n+"</b><br>Leben: <select class='hlLife' data-name='"+n+"'>"+[1,2,3,4,5].map(x=>"<option "+(x===3?"selected":"")+">"+x+"</option>").join("")+"</select></label>").join("")+"</div><button id='hlStart' class='good' style='width:100%;margin-top:14px'>SPIEL STARTEN</button></div>";}
@@ -696,6 +822,13 @@ function bindHostControls(){
   const er=$("emojiRevealTitle"); if(er)er.addEventListener("click",()=>startEmojiArtist(null));
   const ep=$("emojiPrev"); if(ep)ep.addEventListener("click",()=>changeEmoji(-1));
   const en=$("emojiNext"); if(en)en.addEventListener("click",()=>changeEmoji(1));
+  const zstart=$("zgStart"); if(zstart)zstart.addEventListener("click",zgStartRound);
+  const zreveal=$("zgReveal"); if(zreveal)zreveal.addEventListener("click",zgRevealRound);
+  const zpair=$("zgPair"); if(zpair)zpair.addEventListener("click",zgConfirmPair);
+  const znext=$("zgNext"); if(znext)znext.addEventListener("click",zgNextRound);
+  const zrps=$("zgRpsStart"); if(zrps)zrps.addEventListener("click",zgStartRpsMatch);
+  const zrpsnext=$("zgRpsNext"); if(zrpsnext)zrpsnext.addEventListener("click",zgStartRpsTurn);
+  const zreset=$("zgReset"); if(zreset)zreset.addEventListener("click",zgResetGame);
 }
 function startRound(sec){
   answers={}; const end=Date.now()+sec*1000;
@@ -891,6 +1024,338 @@ function startEmojiArtist(titleWinner){
       renderHost();
     }
   },30200);
+}
+
+
+function zgHostHtml(){
+  const rem=zgRemaining();
+  const round=ZG_ROUNDS[zgRound];
+  let body="<div class='card'><h2>🏨 ZIMMERGAME</h2>"+
+    "<p class='muted'>Nur für die Zimmerauslosung: <b>Fabian und Jan spielen nicht mit.</b> Alle anderen Spiele bleiben unverändert.</p>"+
+    "<div class='zg-rounds'>"+ZG_ROUNDS.map((r,i)=>"<div class='zg-round "+(i===zgRound?"active":i<zgRound?"done":"")+"'>"+(i+1)+". "+r.title.split("·").pop().trim()+"</div>").join("")+"</div>"+
+    zgDuoHtml()+
+    "<div class='status'><b>Noch im Spiel ("+rem.length+"):</b> "+rem.map(zgEsc).join(", ")+"</div>"+
+    "<h2>"+round.title+"</h2><div class='status' style='font-size:20px'><b>"+round.question+"</b></div>";
+
+  if(zgRound===0){
+    body+="<div class='status'><b>Lösung:</b> ca. 5.101 km</div>";
+  }else if(zgRound===1){
+    body+="<div class='status'><b>Ziel:</b> exakt 10,00 Sekunden · Zeit ist während des Laufs unsichtbar.</div>";
+  }else if(zgRound===2){
+    body+="<div class='status'><b>Lösung:</b> 1.831 m<br><span class='muted'>Überboten = immer hinter jeder gültigen Schätzung ≤ 1.831 m.</span></div>";
+  }else if(zgRound===3){
+    body+="<div class='status'><b>Regel:</b> Auf jedem Handy erscheint JETZT! nach zufälliger Wartezeit. Frühstart = +1.000 ms Strafzeit.</div>";
+  }else{
+    body+="<div class='status'><b>Finale:</b> 3 Spieler übrig. Du wählst 2 für das Duell. Sieger darf anschließend aus den beiden anderen seinen Zimmerpartner wählen.</div>";
+  }
+
+  if(zgRound<4){
+    if(zgPhase==="idle" || zgPhase==="ready"){
+      body+="<button id='zgStart' class='good' style='width:100%;font-size:20px'>RUNDE STARTEN</button>";
+    }else if(zgPhase==="playing"){
+      body+="<div class='status ok'><b>RUNDE LÄUFT</b><br>"+rem.map(n=>(zgAnswers[n]!==undefined?"✅ ":"⏳ ")+zgEsc(n)).join(" · ")+"</div>"+
+        "<button id='zgReveal' class='secondary' style='width:100%'>JETZT AUSWERTEN</button>"+zgLiveHostHtml();
+    }else if(zgPhase==="revealed"){
+      body+=zgRankingHtml()+"<div class='card'><h3>🏆 "+zgEsc(zgWinner)+" darf den Zimmerpartner wählen</h3>"+
+        "<select id='zgPartner' style='width:100%'>"+rem.filter(n=>n!==zgWinner).map(n=>"<option>"+zgEsc(n)+"</option>").join("")+"</select>"+
+        "<button id='zgPair' class='good' style='width:100%;margin-top:10px'>ZIMMERTEAM FESTLEGEN</button></div>";
+    }else if(zgPhase==="paired"){
+      body+="<div class='status ok' style='font-size:22px;text-align:center'><b>Zimmerteam "+zgDuos.length+" steht:</b><br>"+zgEsc(zgDuos.at(-1)[0])+" + "+zgEsc(zgDuos.at(-1)[1])+"</div>"+
+        "<button id='zgNext' style='width:100%'>NÄCHSTE RUNDE →</button>";
+    }
+  }else{
+    body+=zgRpsHostHtml();
+  }
+
+  body+="<details style='margin-top:18px'><summary><b>Zimmergame zurücksetzen</b></summary><button id='zgReset' class='danger' style='width:100%;margin-top:10px'>KOMPLETT ZURÜCKSETZEN</button></details></div>";
+  return body;
+}
+
+function zgRanking(){
+  const rem=zgRemaining();
+  if(zgRound===0){
+    return rem.map(n=>({name:n,value:zgAnswers[n],valid:true,score:Math.abs(Number(zgAnswers[n])-5101)}))
+      .filter(x=>Number.isFinite(x.value)).sort((a,b)=>a.score-b.score);
+  }
+  if(zgRound===1){
+    return rem.map(n=>({name:n,value:zgAnswers[n],valid:true,score:Math.abs(Number(zgAnswers[n])-10000)}))
+      .filter(x=>Number.isFinite(x.value)).sort((a,b)=>a.score-b.score);
+  }
+  if(zgRound===2){
+    return rem.map(n=>({name:n,value:zgAnswers[n],valid:Number(zgAnswers[n])<=1831,score:Math.abs(Number(zgAnswers[n])-1831)}))
+      .filter(x=>Number.isFinite(x.value)).sort((a,b)=>(b.valid-a.valid)||a.score-b.score);
+  }
+  if(zgRound===3){
+    return rem.map(n=>{
+      const a=zgAnswers[n]; if(!a)return null;
+      return {name:n,value:a.ms,early:a.early,valid:true,score:Number(a.ms)+(a.early?1000:0)};
+    }).filter(Boolean).sort((a,b)=>a.score-b.score);
+  }
+  return [];
+}
+
+function zgRankingHtml(){
+  const rank=zgRanking();
+  return "<div class='card'><h3>Rangliste</h3>"+rank.map((x,i)=>{
+    let val="";
+    if(zgRound===0) val=Number(x.value).toLocaleString("de-DE")+" km · Δ "+Math.round(x.score).toLocaleString("de-DE")+" km";
+    if(zgRound===1) val=(Number(x.value)/1000).toFixed(2).replace(".",",")+" s · Δ "+(x.score/1000).toFixed(2).replace(".",",")+" s";
+    if(zgRound===2) val=Number(x.value).toLocaleString("de-DE")+" m"+(!x.valid?" · ❌ ÜBERBOTEN":" · Δ "+Math.round(x.score)+" m");
+    if(zgRound===3) val=(Number(x.value)/1000).toFixed(3).replace(".",",")+" s"+(x.early?" + 1,000 s Strafe":"");
+    return "<div class='status zg-rank'><b>"+(i+1)+".</b><b>"+zgEsc(x.name)+"</b><span>"+val+"</span></div>";
+  }).join("")+"</div>";
+}
+
+function zgStartRound(){
+  if(zgRound>=4)return;
+  zgAnswers={}; zgWinner=null; zgLive={}; zgPhase="playing";
+  const rem=zgRemaining();
+  const end=(zgRound===0||zgRound===2)?Date.now()+60000:0;
+  rem.forEach(n=>zgSend(n,{type:"zgState",round:zgRound,phase:"playing",title:ZG_ROUNDS[zgRound].title,question:ZG_ROUNDS[zgRound].question,end}));
+  // Fabian may be connected, but is explicitly not part of Zimmergame.
+  zgSend("Fabian",{type:"zgState",round:zgRound,phase:"excluded",title:"🏨 Zimmergame"});
+  renderHost();
+  if(end){
+    setTimeout(()=>{if(modeName==="zimmer"&&zgRound<4&&zgPhase==="playing")zgRevealRound();},60500);
+  }
+}
+
+function zgRevealRound(){
+  if(zgRound>=4 || zgPhase!=="playing")return;
+  const rank=zgRanking();
+  if(!rank.length){alert("Noch keine Ergebnisse vorhanden.");return;}
+  zgPhase="revealed"; zgWinner=rank[0].name;
+  const html=zgRankingHtml();
+  zgRemaining().forEach(n=>zgSend(n,{type:"zgState",round:zgRound,phase:"revealed",winner:zgWinner,ranking:rank}));
+  renderHost();
+}
+
+function zgConfirmPair(){
+  if(zgPhase!=="revealed"||!zgWinner)return;
+  const sel=$("zgPartner"); if(!sel||!sel.value)return;
+  const partner=sel.value;
+  if(partner===zgWinner||zgOut.has(partner)){alert("Ungültiger Partner.");return;}
+  zgDuos.push([zgWinner,partner]); zgOut.add(zgWinner); zgOut.add(partner); zgPhase="paired";
+  zgSend(zgWinner,{type:"zgState",round:zgRound,phase:"paired",partner});
+  zgSend(partner,{type:"zgState",round:zgRound,phase:"paired",partner:zgWinner});
+  renderHost();
+}
+
+function zgNextRound(){
+  if(zgPhase!=="paired")return;
+  zgRound=Math.min(4,zgRound+1); zgPhase="idle"; zgAnswers={}; zgLive={}; zgWinner=null;
+  zgRemaining().forEach(n=>zgSend(n,{type:"zgState",round:zgRound,phase:"ready",title:ZG_ROUNDS[zgRound].title,question:ZG_ROUNDS[zgRound].question}));
+  renderHost();
+}
+
+function zgRpsHostHtml(){
+  const rem=zgRemaining();
+  if(zgPhase==="idle"||zgPhase==="ready"){
+    return "<div class='card'><h3>Finale mit 3 Spielern</h3><p>Alle drei spielen gleichzeitig mit 3 ❤️. Sobald der erste 0 ❤️ hat, ist er Couch-Kandidat; die beiden anderen bilden Zimmerteam 5.</p>"+
+      "<div class='grid'>"+rem.map(n=>"<div class='status' style='text-align:center'><b>"+zgEsc(n)+"</b><div class='zg-hearts'>❤️❤️❤️</div></div>").join("")+"</div>"+
+      "<button id='zgRpsStart' class='good' style='width:100%;margin-top:10px'>3ER-DUELL STARTEN</button></div>";
+  }
+  if(zgPhase==="rps"){
+    return "<div class='card'><div class='grid'>"+zgRpsPlayers.map(n=>"<div class='status' style='text-align:center'><b>"+zgEsc(n)+"</b><div class='zg-hearts'>"+("❤️".repeat(zgRpsLives[n])||"💀")+"</div>"+(zgRpsChoices[n]?"✅ gewählt":"⏳ wählt")+"</div>").join("")+"</div>"+
+      "<div class='status'><b>10 Sekunden.</b> Sobald alle drei gewählt haben, wird sofort aufgelöst.</div>"+zgLiveHostHtml()+"</div>";
+  }
+  if(zgPhase==="rpsBetween"){
+    return "<div class='card'><div class='grid'>"+zgRpsPlayers.map(n=>"<div class='status' style='text-align:center'><b>"+zgEsc(n)+"</b><div class='zg-hearts'>"+("❤️".repeat(zgRpsLives[n])||"💀")+"</div></div>").join("")+"</div>"+
+      "<button id='zgRpsNext' class='good' style='width:100%'>NÄCHSTE 10 SEKUNDEN STARTEN</button></div>";
+  }
+  if(zgPhase==="paired"){
+    const couch=zgRemaining()[0]||"—";
+    return "<div class='card'><div class='status ok' style='font-size:24px;text-align:center'><b>ALLE ZIMMERTEAMS STEHEN</b></div>"+zgDuoHtml()+
+      "<div class='status bad' style='font-size:28px;text-align:center'>🛋️ <b>Couch-Kandidat: "+zgEsc(couch)+"</b></div></div>";
+  }
+  return "";
+}
+
+function zgStartRpsMatch(){
+  const rem=zgRemaining();
+  if(rem.length!==3){alert("Für das Finale müssen genau 3 Spieler übrig sein.");return;}
+  zgRpsPlayers=[...rem]; zgRpsLives={}; rem.forEach(n=>zgRpsLives[n]=3);
+  zgStartRpsTurn();
+}
+function zgStartRpsTurn(){
+  clearTimeout(zgRpsTimer); zgPhase="rps"; zgRpsChoices={}; zgLive={}; zgRpsToken++; zgRpsEnd=Date.now()+10000;
+  zgRpsPlayers.forEach(n=>{
+    zgLive[n]={kind:"rps",chosen:false};
+    zgSend(n,{type:"zgState",round:4,phase:"rps",players:zgRpsPlayers,lives:zgRpsLives,token:zgRpsToken,end:zgRpsEnd});
+  });
+  zgLiveBroadcast(); renderHost();
+  const token=zgRpsToken;
+  zgRpsTimer=setTimeout(()=>{if(zgPhase==="rps"&&zgRpsToken===token)zgResolveRps();},10100);
+}
+function zgResolveRps(){
+  if(zgPhase!=="rps")return;
+  clearTimeout(zgRpsTimer);
+  const p=zgRpsPlayers, c=p.map(n=>zgRpsChoices[n]||null);
+  let loser=null, text="";
+  const missing=p.filter(n=>!zgRpsChoices[n]);
+  if(missing.length===1){loser=missing[0];text=loser+" hat nicht gewählt und verliert ❤️.";}
+  else if(missing.length>1){text="Mehrere ohne Auswahl – niemand verliert ein Leben.";}
+  else{
+    const uniq=[...new Set(c)];
+    if(uniq.length===1){text="Alle drei gleich – niemand verliert ❤️.";}
+    else if(uniq.length===3){text="Stein, Schere und Papier – niemand verliert ❤️.";}
+    else{
+      const counts={}; c.forEach(x=>counts[x]=(counts[x]||0)+1);
+      const single=Object.keys(counts).find(x=>counts[x]===1);
+      const pair=Object.keys(counts).find(x=>counts[x]===2);
+      const beats={Stein:"Schere",Schere:"Papier",Papier:"Stein"};
+      if(beats[pair]===single){
+        loser=p[c.indexOf(single)];
+        text=pair+" schlägt "+single+" – "+loser+" verliert ❤️.";
+      }else{
+        const pairPlayers=p.filter((n,i)=>c[i]===pair);
+        pairPlayers.forEach(n=>zgRpsLives[n]=Math.max(0,zgRpsLives[n]-1));
+        text=single+" schlägt "+pair+" – "+pairPlayers.join(" & ")+" verlieren je ❤️.";
+      }
+    }
+  }
+  if(loser)zgRpsLives[loser]=Math.max(0,zgRpsLives[loser]-1);
+  const eliminated=p.filter(n=>zgRpsLives[n]===0);
+  const choices={};p.forEach((n,i)=>choices[n]=c[i]);
+  if(eliminated.length){
+    // If two hit zero simultaneously, the one with fewer lives before this edge case is not distinguishable;
+    // use a sudden-death-safe fallback by restoring both to 1 and continuing.
+    if(eliminated.length>1){
+      eliminated.forEach(n=>zgRpsLives[n]=1);
+      text+=" Gleichzeitiges Ausscheiden – beide bekommen 1 ❤️ zurück, weiter geht's.";
+      zgRpsPlayers.forEach(n=>zgSend(n,{type:"zgRpsResult",text,choices,lives:zgRpsLives,winner:null}));
+      zgPhase="rpsBetween"; renderHost(); return;
+    }
+    const couch=eliminated[0], duo=p.filter(n=>n!==couch);
+    zgDuos.push(duo); duo.forEach(n=>zgOut.add(n));
+    zgWinner=duo.join(" + "); zgPhase="paired";
+    zgRpsPlayers.forEach(n=>zgSend(n,{type:"zgRpsResult",text,choices,lives:zgRpsLives,winner:zgWinner,couch,duo}));
+    renderHost(); return;
+  }
+  zgRpsPlayers.forEach(n=>zgSend(n,{type:"zgRpsResult",text,choices,lives:zgRpsLives,winner:null}));
+  zgPhase="rpsBetween"; renderHost();
+}
+
+function zgResetGame(){
+  if(!confirm("Zimmergame wirklich komplett zurücksetzen?"))return;
+  clearTimeout(zgRpsTimer);
+  zgRound=0;zgPhase="idle";zgAnswers={};zgDuos=[];zgOut=new Set();zgWinner=null;zgRpsPlayers=[];zgRpsLives={};zgRpsChoices={};
+  ZG_PLAYERS.forEach(n=>zgSend(n,{type:"zgState",round:0,phase:"ready",title:ZG_ROUNDS[0].title,question:ZG_ROUNDS[0].question}));
+  renderHost();
+}
+
+function zgClientBase(){
+  $("playerView").classList.remove("tour-active");
+  $("playerTourBox").classList.add("hide");
+  $("buzzBtn").classList.add("hide");
+  $("playerBuzzBoard").classList.remove("hide");
+  $("playerRanking").innerHTML="";
+  $("playerCountdown").textContent="";
+}
+function zgClientRender(m){
+  zgClientBase(); clearInterval(timerInt);
+  const name=role.slice(7);
+  $("buzzState").textContent="";
+  if(m.phase==="excluded"){
+    $("playerAlert").className="status";
+    $("playerAlert").innerHTML="<b>Du spielst beim Zimmergame nicht mit.</b><br>Bei allen anderen Spielen bleibst du ganz normal dabei.";
+    return;
+  }
+  if(m.phase==="ready"){
+    $("playerAlert").className="status";
+    $("playerAlert").innerHTML="<b>"+zgEsc(m.title)+"</b><br>Warte auf den Spielleiter …";
+    return;
+  }
+  if(m.phase==="paired"){
+    $("playerAlert").className="status ok";
+    $("playerAlert").innerHTML="🛏️ <b>Zimmerteam steht!</b><br>Du + <b>"+zgEsc(m.partner)+"</b>";
+    return;
+  }
+  if(m.phase==="spectator"){
+    $("playerAlert").className="status";
+    $("playerAlert").innerHTML="<b>Finalduell:</b><br>"+m.players.map(zgEsc).join(" vs. ")+"<br><span class='muted'>Du wartest auf das Ergebnis.</span>";
+    return;
+  }
+  if(m.phase==="revealed"){
+    const rank=m.ranking||[], pos=rank.findIndex(x=>x.name===name);
+    $("playerAlert").className=name===m.winner?"status ok":"status";
+    $("playerAlert").innerHTML=(name===m.winner?"🏆 <b>DU HAST GEWONNEN!</b><br>Du darfst deinen Zimmerpartner wählen.":"<b>Runde beendet.</b><br>Platz "+(pos+1));
+    $("playerRanking").innerHTML=rank.map((x,i)=>"<div class='status'><b>"+(i+1)+". "+zgEsc(x.name)+"</b></div>").join("");
+    return;
+  }
+  if(m.phase!=="playing" && m.phase!=="rps")return;
+
+  if(m.round===0 || m.round===2){
+    $("playerAlert").className="status";
+    $("playerAlert").innerHTML="<div class='zg-phone-title'>"+zgEsc(m.title)+"</div>"+zgEsc(m.question);
+    $("playerRanking").innerHTML="<input id='zgPhoneInput' type='number' inputmode='numeric' placeholder='"+(m.round===0?"Kilometer":"Meter")+"' style='width:100%;font-size:24px'><button id='zgPhoneSend' class='good' style='width:100%;margin-top:10px;font-size:20px'>ABSCHICKEN</button>";
+    if(m.end)countdown(m.end,$("playerCountdown"),()=>{const b=$("zgPhoneSend");if(b)b.disabled=true;});
+    const ze=$("zgPhoneInput");
+    ze.addEventListener("input",()=>conn.send({type:"zgLive",name,data:{kind:"input",value:ze.value,sent:false}}));
+    $("zgPhoneSend").onclick=()=>{
+      const e=$("zgPhoneInput");if(!e.value)return;
+      conn.send({type:"zgLive",name,data:{kind:"input",value:e.value,sent:true}});
+      conn.send({type:"zgAnswer",name,value:Number(e.value)});
+      e.disabled=true;$("zgPhoneSend").disabled=true;clearInterval(timerInt);$("playerCountdown").textContent="";
+      $("playerAlert").innerHTML="✅ <b>Gesendet!</b><br>Deine Schätzung: "+Number(e.value).toLocaleString("de-DE")+" "+(m.round===0?"km":"m")+"<br><span class='muted'>Warte auf die anderen …</span>";
+    };
+    return;
+  }
+  if(m.round===1){
+    $("playerAlert").className="status";
+    $("playerAlert").innerHTML="<div class='zg-phone-title'>⏱️ ZEITGEFÜHL</div>Ziel: möglichst genau <b>10,00 Sekunden</b>.";
+    $("playerRanking").innerHTML="<button id='zgTimeBtn' class='good zg-choice'>START</button><div id='zgTimeInfo' class='zg-phone-big'>Bereit</div>";
+    const b=$("zgTimeBtn"),info=$("zgTimeInfo");
+    b.onclick=()=>{
+      if(!zgClientState.localStart){
+        zgClientState.localStart=performance.now(); b.textContent="STOPP"; b.className="danger zg-choice"; info.textContent="???"; conn.send({type:"zgLive",name,data:{kind:"timer",state:"running"}});
+      }else{
+        const ms=Math.round(performance.now()-zgClientState.localStart); zgClientState.localStart=0;
+        b.disabled=true; info.textContent=(ms/1000).toFixed(2).replace(".",",")+" s"; conn.send({type:"zgLive",name,data:{kind:"timer",state:"stopped",ms}});
+        conn.send({type:"zgAnswer",name,value:ms});
+        $("playerAlert").innerHTML="✅ <b>Gestoppt!</b><br>Deine Zeit:";
+      }
+    };
+    return;
+  }
+  if(m.round===3){
+    $("playerAlert").className="status";
+    $("playerAlert").innerHTML="<div class='zg-phone-title'>⚡ REAKTIONSBLITZ</div>Drücke erst, wenn <b>JETZT!</b> erscheint.";
+    $("playerRanking").innerHTML="<button id='zgReactBtn' class='secondary zg-choice' style='min-height:180px;font-size:30px'>WARTEN …</button>";
+    const b=$("zgReactBtn");
+    const wait=2000+Math.floor(Math.random()*5001);
+    zgClientState.reactionGoAt=performance.now()+wait; conn.send({type:"zgLive",name,data:{kind:"reaction",state:"waiting"}});
+    zgClientState.reactionTimer=setTimeout(()=>{b.textContent="JETZT!";b.className="good zg-choice zg-go"; conn.send({type:"zgLive",name,data:{kind:"reaction",state:"go"}});},wait);
+    b.onclick=()=>{
+      clearTimeout(zgClientState.reactionTimer);
+      const now=performance.now(), early=now<zgClientState.reactionGoAt;
+      const ms=early?0:Math.round(now-zgClientState.reactionGoAt);
+      b.disabled=true;b.textContent=early?"FRÜHSTART!":"GESENDET!";
+      $("playerAlert").innerHTML=early?"❌ <b>Frühstart!</b><br>+1,000 Sekunden Strafzeit":"✅ <b>Reaktion gespeichert:</b><br>"+(ms/1000).toFixed(3).replace(".",",")+" s";
+      conn.send({type:"zgLive",name,data:{kind:"reaction",state:"done",ms,early}}); conn.send({type:"zgReaction",name,ms,early});
+    };
+    return;
+  }
+  if(m.round===4 && m.phase==="rps"){
+    $("playerAlert").className="status";
+    $("playerAlert").innerHTML="<div class='zg-phone-title'>3ER-FINALE</div><div>"+m.players.map(zgEsc).join(" · ")+"</div><div class='zg-hearts'>"+("❤️".repeat(m.lives[name])||"💀")+"</div>";
+    $("playerRanking").innerHTML="<div class='zg-rps'><button data-rps='Stein'>🪨<br>STEIN</button><button data-rps='Schere'>✂️<br>SCHERE</button><button data-rps='Papier'>📄<br>PAPIER</button></div>";
+    countdown(m.end,$("playerCountdown"),()=>document.querySelectorAll("[data-rps]").forEach(x=>x.disabled=true));
+    document.querySelectorAll("[data-rps]").forEach(b=>b.onclick=()=>{
+      document.querySelectorAll("[data-rps]").forEach(x=>x.disabled=true);
+      b.classList.add("good"); clearInterval(timerInt);$("playerCountdown").textContent="";
+      conn.send({type:"zgRpsChoice",name,choice:b.dataset.rps,token:m.token});
+      $("playerAlert").innerHTML="<b>Gewählt: "+b.dataset.rps+"</b><br>Warte auf die anderen …";
+    });
+  }
+}
+function zgClientRpsResult(m){
+  zgClientBase(); clearInterval(timerInt);
+  const name=role.slice(7);
+  $("playerAlert").className=m.winner===name?"status ok":"status";
+  $("playerAlert").innerHTML="<b>"+zgEsc(m.text)+"</b><br><div class='zg-hearts'>"+("❤️".repeat(m.lives[name]||0)||"💀")+"</div>"+
+    (m.couch?(name===m.couch?"🛋️ <b>Du bist der Couch-Kandidat.</b>":"🛏️ <b>Zimmerteam 5: "+m.duo.map(zgEsc).join(" + ")+"</b>"):"Warte auf den nächsten Zug …");
+  $("playerRanking").innerHTML=Object.entries(m.choices||{}).map(([n,c])=>"<div class='status'><b>"+zgEsc(n)+":</b> "+(c||"keine Auswahl")+"</div>").join("");
 }
 
 function norm(s){return String(s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]/g,"");}
