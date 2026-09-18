@@ -1033,6 +1033,7 @@ function renderHost(){
     h="<div class='card'><h2>Emoji-Songs "+(emojiIdx+1)+"/"+D.emoji.length+"</h2>"+
       "<div class='big' style='font-size:58px;margin:20px 0'>"+s[0]+"</div>"+
       "<div class='status'><b>Status:</b> "+phaseText+"</div>"+
+      "<div class='status' style='border:2px solid #16834b;background:#eefaf3'><b>🔐 Lösung nur für Spielleiter</b><br><b>Titel:</b> "+s[1]+"<br><b>Interpret:</b> "+s[2]+"</div>"+
       (emojiPhase==="idle"?"<button id='emojiStart'>TITEL-RATEN STARTEN</button>":"")+
       (emojiPhase==="title"?"<button id='emojiRevealTitle' class='secondary'>TITEL MANUELL AUFLÖSEN</button>":"")+
       (emojiPhase==="artist"?"<div class='status ok'><b>Titel: "+s[1]+"</b></div><button id='emojiRevealArtist' class='secondary'>INTERPRET MANUELL AUFLÖSEN / WEITER</button>":"")+
