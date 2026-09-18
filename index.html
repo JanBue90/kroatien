@@ -121,7 +121,7 @@ button,select,input{max-width:100%;min-width:0}
 /* v22 standings */
 .tour-tv-score{display:grid;grid-template-columns:repeat(6,minmax(90px,1fr));gap:7px;margin:12px auto 18px;max-width:1100px}.tour-tv-score .status{text-align:center;margin:0;padding:8px}.tour-standings{max-width:900px;margin:20px auto}.tour-standings-row{display:grid;grid-template-columns:70px 1fr 100px;gap:12px;align-items:center;font-size:26px;padding:14px 18px}.tour-standings-row:nth-child(1){font-size:34px;background:#fff0b8}.tour-standings-row:nth-child(2){font-size:31px}.tour-standings-row:nth-child(3){font-size:29px}@media(max-width:700px){.tour-tv-score{grid-template-columns:repeat(3,1fr)}.tour-standings-row{grid-template-columns:45px 1fr 60px;font-size:20px;padding:10px}}
 
-/* v28 Zimmergame */
+/* v28 Bettgeflüster */
 .zg-rounds{display:grid;grid-template-columns:repeat(5,minmax(100px,1fr));gap:8px;margin:12px 0}
 .zg-round{padding:10px;border-radius:12px;background:#edf2f6;text-align:center;font-weight:900}
 .zg-round.active{background:#dff5e7;border:3px solid #22a35a}
@@ -153,7 +153,7 @@ button,select,input{max-width:100%;min-width:0}
 <div class="grid">
 <button id="hostBtn">JAN – SPIELLEITER</button>
 <button id="captainBtn" class="secondary">KAPITÄN</button>
-<button id="screenBtn" class="secondary">TV / BEAMER</button><button id="playerBtn" type="button" class="secondary">SPIELER / BUZZER</button>
+<button id="screenBtn" class="secondary">TV / ZUSCHAUER</button><button id="playerBtn" type="button" class="secondary">SPIELER / BUZZER</button>
 </div>
 <div id="joinBox" class="hide" style="margin-top:16px">
 <input id="roomIn" placeholder="RAUMCODE" maxlength="6" style="width:100%;text-transform:uppercase">
@@ -162,7 +162,7 @@ button,select,input{max-width:100%;min-width:0}
 <button class="teamBtn" data-team="team2">Team 2</button>
 <button class="teamBtn" data-team="team3">Team 3</button>
 </div>
-<button id="screenJoinBtn" class="hide" style="width:100%;margin-top:10px">TV / BEAMER VERBINDEN</button>
+<button id="screenJoinBtn" class="hide" style="width:100%;margin-top:10px">TV / ZUSCHAUER VERBINDEN</button>
 <div id="playerChoices" class="hide" style="margin-top:10px"><select id="playerSelect" style="width:100%">
 <option>Kevin</option><option>Markus</option><option>Stefan</option><option>Kay</option><option>Michel</option><option>Patrick</option><option>Mario</option><option>Fabian</option><option>Timo</option><option>Andre</option><option>Klemm</option><option>Swen</option>
 </select><button id="playerJoinBtn" type="button" style="width:100%;margin-top:10px">ALS SPIELER VERBINDEN</button></div>
@@ -173,8 +173,8 @@ button,select,input{max-width:100%;min-width:0}
 <div class="card"><div class="muted">Raumcode</div><div id="roomCode" class="big code"></div><div id="connections"></div></div>
 <div class="tabs">
 <button data-mode="quiz">Kroatien-Quiz</button>
-<button data-mode="estimate">Schätzmeister</button>
-<button data-mode="category">Kategorien</button><button data-mode="higherlower">Higher or Lower</button><button data-mode="emoji">Emoji-Songs</button><button data-mode="buzzer">Buzzer-Spiel</button><button data-mode="tourpics">Kegeltour-Fotos</button><button data-mode="zimmer" class="good" style="font-size:17px;border:3px solid #0d6639">🏨 ZIMMERGAME – ZIMMER AUSLOSEN</button>
+<button data-mode="estimate">Dicht daneben</button>
+<button data-mode="category">Kategorien</button><button data-mode="higherlower">Higher or Lower</button><button data-mode="emoji">Emoji-Eskalation</button><button data-mode="buzzer">Buzzer-Spiel</button><button data-mode="tourpics">Kegeltour-Fotos</button><button data-mode="zimmer" class="good" style="font-size:17px;border:3px solid #0d6639">🏨 BETTGEFLÜSTER – ZIMMER AUSLOSEN</button>
 </div>
 <div id="hostGame"></div>
 </section>
@@ -354,7 +354,7 @@ button,select,input{max-width:100%;min-width:0}
 /* v22 standings */
 .tour-tv-score{display:grid;grid-template-columns:repeat(6,minmax(90px,1fr));gap:7px;margin:12px auto 18px;max-width:1100px}.tour-tv-score .status{text-align:center;margin:0;padding:8px}.tour-standings{max-width:900px;margin:20px auto}.tour-standings-row{display:grid;grid-template-columns:70px 1fr 100px;gap:12px;align-items:center;font-size:26px;padding:14px 18px}.tour-standings-row:nth-child(1){font-size:34px;background:#fff0b8}.tour-standings-row:nth-child(2){font-size:31px}.tour-standings-row:nth-child(3){font-size:29px}@media(max-width:700px){.tour-tv-score{grid-template-columns:repeat(3,1fr)}.tour-standings-row{grid-template-columns:45px 1fr 60px;font-size:20px;padding:10px}}
 
-/* v28 Zimmergame */
+/* v28 Bettgeflüster */
 .zg-rounds{display:grid;grid-template-columns:repeat(5,minmax(100px,1fr));gap:8px;margin:12px 0}
 .zg-round{padding:10px;border-radius:12px;background:#edf2f6;text-align:center;font-weight:900}
 .zg-round.active{background:#dff5e7;border:3px solid #22a35a}
@@ -378,7 +378,7 @@ button,select,input{max-width:100%;min-width:0}
 </style>
 </head>
 <body>
-<header>🇭🇷 Kroatien-Olympiade LIVE <span style="font-size:12px;opacity:.65">v31 · Zimmergame + Higher or Lower</span></header>
+<header>🇭🇷 Kroatien-Olympiade LIVE <span style="font-size:12px;opacity:.65">v31 · Bettgeflüster + Higher or Lower</span></header>
 <div class="wrap">
 <section id="setup" class="card">
 <h2>Verbinden</h2>
@@ -386,7 +386,7 @@ button,select,input{max-width:100%;min-width:0}
 <div class="grid">
 <button id="hostBtn">JAN – SPIELLEITER</button>
 <button id="captainBtn" class="secondary">KAPITÄN</button>
-<button id="screenBtn" class="secondary">TV / BEAMER</button><button id="playerBtn" type="button" class="secondary">SPIELER / BUZZER</button>
+<button id="screenBtn" class="secondary">TV / ZUSCHAUER</button><button id="playerBtn" type="button" class="secondary">SPIELER / BUZZER</button>
 </div>
 <div id="joinBox" class="hide" style="margin-top:16px">
 <input id="roomIn" placeholder="RAUMCODE" maxlength="6" style="width:100%;text-transform:uppercase">
@@ -395,7 +395,7 @@ button,select,input{max-width:100%;min-width:0}
 <button class="teamBtn" data-team="team2">Team 2</button>
 <button class="teamBtn" data-team="team3">Team 3</button>
 </div>
-<button id="screenJoinBtn" class="hide" style="width:100%;margin-top:10px">TV / BEAMER VERBINDEN</button>
+<button id="screenJoinBtn" class="hide" style="width:100%;margin-top:10px">TV / ZUSCHAUER VERBINDEN</button>
 <div id="playerChoices" class="hide" style="margin-top:10px"><select id="playerSelect" style="width:100%">
 <option>Kevin</option><option>Markus</option><option>Stefan</option><option>Kay</option><option>Michel</option><option>Patrick</option><option>Mario</option><option>Fabian</option><option>Timo</option><option>Andre</option><option>Klemm</option><option>Swen</option>
 </select><button id="playerJoinBtn" type="button" style="width:100%;margin-top:10px">ALS SPIELER VERBINDEN</button></div>
@@ -406,8 +406,8 @@ button,select,input{max-width:100%;min-width:0}
 <div class="card"><div class="muted">Raumcode</div><div id="roomCode" class="big code"></div><div id="connections"></div></div>
 <div class="tabs">
 <button data-mode="quiz">Kroatien-Quiz</button>
-<button data-mode="estimate">Schätzmeister</button>
-<button data-mode="category">Kategorien</button><button data-mode="higherlower">Higher or Lower</button><button data-mode="emoji">Emoji-Songs</button><button data-mode="buzzer">Buzzer-Spiel</button><button data-mode="tourpics">Kegeltour-Fotos</button><button data-mode="zimmer" class="good" style="font-size:17px;border:3px solid #0d6639">🏨 ZIMMERGAME – ZIMMER AUSLOSEN</button>
+<button data-mode="estimate">Dicht daneben</button>
+<button data-mode="category">Kategorien</button><button data-mode="higherlower">Higher or Lower</button><button data-mode="emoji">Emoji-Eskalation</button><button data-mode="buzzer">Buzzer-Spiel</button><button data-mode="tourpics">Kegeltour-Fotos</button><button data-mode="zimmer" class="good" style="font-size:17px;border:3px solid #0d6639">🏨 BETTGEFLÜSTER – ZIMMER AUSLOSEN</button>
 </div>
 <div id="hostGame"></div>
 </section>
@@ -513,11 +513,11 @@ const TOUR_ROUNDS=[{"place":"Stuttgart","year":2023,"img":"tour_12.jpg"},{"place
 
 let tourIdx=0,tourPhase="idle",tourScores={},tourLocationWinner=null,tourStandingsShown=false;
 
-// Zimmergame: Fabian und Jan sind NUR hier ausgeschlossen.
+// Bettgeflüster: Fabian und Jan sind NUR hier ausgeschlossen.
 // In allen anderen Spielen bleibt die bestehende Spielerliste unverändert.
 const ZG_PLAYERS=["Kevin","Markus","Stefan","Kay","Michel","Patrick","Mario","Timo","Andre","Klemm","Swen"];
 const ZG_ROUNDS=[
-  {title:"Runde 1 · Schätzmeister",question:"Wie weit ist es ungefähr Luftlinie von Zadar bis zum Nordpol?",unit:"km",solution:5101},
+  {title:"Runde 1 · Dicht daneben",question:"Wie weit ist es ungefähr Luftlinie von Zadar bis zum Nordpol?",unit:"km",solution:5101},
   {title:"Runde 2 · Zeitgefühl",question:"Stoppe die unsichtbare Uhr möglichst genau bei 10,00 Sekunden.",target:10000},
   {title:"Runde 3 · Dinara",question:"Wie hoch ist der höchste Berg Kroatiens, der Berg Dinara?",unit:"m",solution:1831},
   {title:"Runde 4 · Reaktionsblitz",question:"Warte auf JETZT! und drücke dann so schnell wie möglich."},
@@ -880,7 +880,7 @@ function quizScoreHtml(scores){
 function estimateScoreHtml(scores){
   scores=scores||estimateScores;
   const ranked=["team1","team2","team3"].map((t,i)=>({t,score:scores[t]||0,i})).sort((a,b)=>b.score-a.score||a.i-b.i);
-  return "<div class='status' style='margin-top:18px;text-align:center'><b>🏆 Schätzmeister – Punktestand</b><div class='grid' style='margin-top:8px'>"+ranked.map((x,i)=>"<div><b>"+(i+1)+". "+D.teams[x.t].name+"</b><br><span style='font-size:26px;font-weight:900'>"+x.score+"</span></div>").join("")+"</div></div>";
+  return "<div class='status' style='margin-top:18px;text-align:center'><b>🏆 Dicht daneben – Punktestand</b><div class='grid' style='margin-top:8px'>"+ranked.map((x,i)=>"<div><b>"+(i+1)+". "+D.teams[x.t].name+"</b><br><span style='font-size:26px;font-weight:900'>"+x.score+"</span></div>").join("")+"</div></div>";
 }
 function categoryProgressHtml(count,total){
   return "<div class='status' style='margin-top:18px;text-align:center;font-size:22px'><b>"+count+"/"+total+" genannt</b></div>";
@@ -955,7 +955,7 @@ function setMode(m){
   modeName=m; answers={};
   if(m==="zimmer"){
     ZG_PLAYERS.forEach(n=>zgSend(n,{type:"zgState",round:zgRound,phase:(zgOut.has(n)?"paired":"ready"),title:ZG_ROUNDS[zgRound].title,question:ZG_ROUNDS[zgRound].question}));
-    zgSend("Fabian",{type:"zgState",round:zgRound,phase:"excluded",title:"🏨 Zimmergame"});
+    zgSend("Fabian",{type:"zgState",round:zgRound,phase:"excluded",title:"🏨 Bettgeflüster"});
   }
   if(m==="emoji" && !["idle","title","artist","done"].includes(emojiPhase)) resetEmojiRound();
   renderHost();
@@ -979,7 +979,7 @@ function renderHost(){
       answerStatus(false)+"<div id='hostReveal'></div>"+quizScoreHtml(quizScores)+"<div class='grid'><button id='prevBtn' class='secondary'>←</button><button id='nextBtn'>NÄCHSTE →</button></div></div>";
   } else if(modeName==="estimate"){
     const e=D.estimate[eidx];
-    h="<div class='card'><h2>Schätzmeister "+(eidx+1)+"/"+D.estimate.length+"</h2><p class='big'>"+e[0]+"</p><p class='muted'>Lösung: "+Number(e[1]).toLocaleString("de-DE")+" km</p>"+
+    h="<div class='card'><h2>Dicht daneben "+(eidx+1)+"/"+D.estimate.length+"</h2><p class='big'>"+e[0]+"</p><p class='muted'>Lösung: "+Number(e[1]).toLocaleString("de-DE")+" km</p>"+
       "<p><button id='startBtn'>60 SEK. START</button> <button id='revealBtn' class='secondary'>AUSWERTEN</button></p>"+
       answerStatus(false)+"<div id='hostReveal'></div>"+estimateScoreHtml(estimateScores)+"<div class='grid'><button id='prevBtn' class='secondary'>←</button><button id='nextBtn'>NÄCHSTE →</button></div></div>";
   } else if(modeName==="category"){
@@ -1030,7 +1030,7 @@ function renderHost(){
   if(modeName==="emoji"){
     const s=D.emoji[emojiIdx];
     const phaseText=emojiPhase==="title"?"Titel läuft – bis ein Team richtig antwortet":emojiPhase==="artist"?"Interpret läuft – bis ein Team richtig antwortet":emojiPhase==="done"?"Runde beendet":"Bereit";
-    h="<div class='card'><h2>Emoji-Songs "+(emojiIdx+1)+"/"+D.emoji.length+"</h2>"+
+    h="<div class='card'><h2>Emoji-Eskalation "+(emojiIdx+1)+"/"+D.emoji.length+"</h2>"+
       "<div class='big' style='font-size:58px;margin:20px 0'>"+s[0]+"</div>"+
       "<div class='status'><b>Status:</b> "+phaseText+"</div>"+
       "<div class='status' style='border:2px solid #16834b;background:#eefaf3'><b>🔐 Lösung nur für Spielleiter</b><br><b>Titel:</b> "+s[1]+"<br><b>Interpret:</b> "+s[2]+"</div>"+
@@ -1095,7 +1095,7 @@ function startRound(sec){
   if(modeName==="quiz"){
     const q=D.quiz[qidx]; sendAll({type:"start",kind:"quiz",end,title:"Frage "+(qidx+1)+": "+q[0],options:q[1],scores:{...quizScores}});
   }else{
-    sendAll({type:"start",kind:"estimate",end,title:"Schätzmeister: "+D.estimate[eidx][0],scores:{...estimateScores}});
+    sendAll({type:"start",kind:"estimate",end,title:"Dicht daneben: "+D.estimate[eidx][0],scores:{...estimateScores}});
   }
   renderHost();
 }
@@ -1112,7 +1112,7 @@ function revealQuiz(auto=false){
   });
   html+="<p><b>Richtig: "+String.fromCharCode(65+correct)+" · "+q[1][correct]+"</b></p>"+quizScoreHtml(quizScores);
   const hr=$("hostReveal"); if(hr)hr.innerHTML="<div class='card'>"+html+"</div>";
-  sendAll({type:"reveal",html,scores:{...quizScores}}); sendShortStandings(quizScores,"KROATIEN QUIZ · NACH FRAGE "+(qidx+1));
+  sendAll({type:"reveal",html,scores:{...quizScores}}); sendShortStandings(quizScores,"ADRIA-ABITUR · NACH FRAGE "+(qidx+1));
   renderHost();
   const hr2=$("hostReveal"); if(hr2)hr2.innerHTML="<div class='card'>"+html+"</div>";
 }
@@ -1128,7 +1128,7 @@ function revealEstimate(auto=false){
   arr.forEach((x,i)=>html+="<div class='status "+(i===0?"ok":"")+"'><b>"+(i+1)+". Platz · "+(pts[i]||0)+" Punkt"+((pts[i]||0)===1?"":"e")+":</b> "+D.teams[x[0]].name+" – "+x[1].toLocaleString("de-DE")+" km</div>");
   html+=estimateScoreHtml(estimateScores);
   const hr=$("hostReveal"); if(hr)hr.innerHTML="<div class='card'>"+html+"</div>";
-  sendAll({type:"reveal",html,scores:{...estimateScores},scoreKind:"estimate",kind:"estimate"}); sendShortStandings(estimateScores,"SCHÄTZMEISTER · NACH RUNDE "+(eidx+1));
+  sendAll({type:"reveal",html,scores:{...estimateScores},scoreKind:"estimate",kind:"estimate"}); sendShortStandings(estimateScores,"DICHT DANEBEN · NACH RUNDE "+(eidx+1));
   renderHost();
   const hr2=$("hostReveal"); if(hr2)hr2.innerHTML="<div class='card'>"+html+"</div>";
 }
@@ -1241,7 +1241,7 @@ function handleEmojiAnswer(team,value){
       emojiPoints[team]+=1;
       emojiPhase="done";
       clearInterval(timerInt);
-      sendAll({type:"reveal",html:"<div class='status ok'><b>Interpret: "+s[2]+"</b></div><div class='status'><b>"+D.teams[team].name+" war zuerst richtig: +1 Punkt</b></div>"+teamScoreHtml(emojiPoints,"EMOJI SONG · PUNKTE")}); sendShortStandings(emojiPoints,"EMOJI SONG · NACH SONG "+(emojiIdx+1));
+      sendAll({type:"reveal",html:"<div class='status ok'><b>Interpret: "+s[2]+"</b></div><div class='status'><b>"+D.teams[team].name+" war zuerst richtig: +1 Punkt</b></div>"+teamScoreHtml(emojiPoints,"EMOJI-ESKALATION · PUNKTE")}); sendShortStandings(emojiPoints,"EMOJI-ESKALATION · NACH SONG "+(emojiIdx+1));
       renderHost();
     }
   }else{
@@ -1260,14 +1260,14 @@ function emojiManualArtistReveal(){
   if(emojiPhase!=="artist")return;
   const s=D.emoji[emojiIdx];
   emojiPhase="done";
-  sendAll({type:"reveal",html:"<div class='status'><b>Spielleiter löst auf.</b></div><div class='status ok'>Interpret: "+s[2]+"</div>"+teamScoreHtml(emojiPoints,"EMOJI SONG · PUNKTE")});
-  sendShortStandings(emojiPoints,"EMOJI SONG · NACH SONG "+(emojiIdx+1));
+  sendAll({type:"reveal",html:"<div class='status'><b>Spielleiter löst auf.</b></div><div class='status ok'>Interpret: "+s[2]+"</div>"+teamScoreHtml(emojiPoints,"EMOJI-ESKALATION · PUNKTE")});
+  sendShortStandings(emojiPoints,"EMOJI-ESKALATION · NACH SONG "+(emojiIdx+1));
   renderHost();
 }
 function zgHostHtml(){
   const rem=zgRemaining();
   const round=ZG_ROUNDS[zgRound];
-  let body="<div class='card'><h2>🏨 ZIMMERGAME</h2>"+
+  let body="<div class='card'><h2>🏨 BETTGEFLÜSTER</h2>"+
     "<p class='muted'>Nur für die Zimmerauslosung: <b>Fabian und Jan spielen nicht mit.</b> Alle anderen Spiele bleiben unverändert.</p>"+
     "<div class='zg-rounds'>"+ZG_ROUNDS.map((r,i)=>"<div class='zg-round "+(i===zgRound?"active":i<zgRound?"done":"")+"'>"+(i+1)+". "+r.title.split("·").pop().trim()+"</div>").join("")+"</div>"+
     zgDuoHtml()+
@@ -1304,7 +1304,7 @@ function zgHostHtml(){
     body+=zgRpsHostHtml();
   }
 
-  body+="<details style='margin-top:18px'><summary><b>Zimmergame zurücksetzen</b></summary><button id='zgReset' class='danger' style='width:100%;margin-top:10px'>KOMPLETT ZURÜCKSETZEN</button></details></div>";
+  body+="<details style='margin-top:18px'><summary><b>Bettgeflüster zurücksetzen</b></summary><button id='zgReset' class='danger' style='width:100%;margin-top:10px'>KOMPLETT ZURÜCKSETZEN</button></details></div>";
   return body;
 }
 
@@ -1349,8 +1349,8 @@ function zgStartRound(){
   const rem=zgRemaining();
   const end=(zgRound===0||zgRound===2)?Date.now()+60000:0;
   rem.forEach(n=>zgSend(n,{type:"zgState",round:zgRound,phase:"playing",title:ZG_ROUNDS[zgRound].title,question:ZG_ROUNDS[zgRound].question,end}));
-  // Fabian may be connected, but is explicitly not part of Zimmergame.
-  zgSend("Fabian",{type:"zgState",round:zgRound,phase:"excluded",title:"🏨 Zimmergame"});
+  // Fabian may be connected, but is explicitly not part of Bettgeflüster.
+  zgSend("Fabian",{type:"zgState",round:zgRound,phase:"excluded",title:"🏨 Bettgeflüster"});
   renderHost();
   if(end){
     setTimeout(()=>{if(modeName==="zimmer"&&zgRound<4&&zgPhase==="playing")zgRevealRound();},60500);
@@ -1474,7 +1474,7 @@ function zgResolveRps(){
 }
 
 function zgResetGame(){
-  if(!confirm("Zimmergame wirklich komplett zurücksetzen?"))return;
+  if(!confirm("Bettgeflüster wirklich komplett zurücksetzen?"))return;
   clearTimeout(zgRpsTimer);
   zgRound=0;zgPhase="idle";zgAnswers={};zgDuos=[];zgOut=new Set();zgWinner=null;zgRpsPlayers=[];zgRpsLives={};zgRpsChoices={};
   ZG_PLAYERS.forEach(n=>zgSend(n,{type:"zgState",round:0,phase:"ready",title:ZG_ROUNDS[0].title,question:ZG_ROUNDS[0].question}));
@@ -1495,7 +1495,7 @@ function zgClientRender(m){
   $("buzzState").textContent="";
   if(m.phase==="excluded"){
     $("playerAlert").className="status";
-    $("playerAlert").innerHTML="<b>Du spielst beim Zimmergame nicht mit.</b><br>Bei allen anderen Spielen bleibst du ganz normal dabei.";
+    $("playerAlert").innerHTML="<b>Du spielst beim Bettgeflüster nicht mit.</b><br>Bei allen anderen Spielen bleibst du ganz normal dabei.";
     return;
   }
   if(m.phase==="ready"){
