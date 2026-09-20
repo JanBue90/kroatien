@@ -160,6 +160,15 @@ button,select,input{max-width:100%;min-width:0}
   #playerView.tt-active .wrap{padding:5px}
 }
 
+
+/* v44 Blackout-Bilder: Foto auch auf Kapitän-Handy */
+.tour-captain-photo{max-height:38vh!important;margin:4px auto 7px!important;border-radius:12px!important}
+@media(max-width:700px){
+  .tour-captain-photo{max-height:34vh!important}
+  #capGame .tour-captain-photo + .status{padding:7px 9px;margin:4px 0;font-size:14px;line-height:1.18}
+  #tourCaptainBuzz{font-size:24px!important;padding:13px!important;margin:5px 0!important}
+}
+
 </style>
 </head>
 <body>
@@ -192,7 +201,7 @@ button,select,input{max-width:100%;min-width:0}
 <div class="tabs">
 <button data-mode="quiz">Adria-Abitur</button>
 <button data-mode="estimate">Dicht daneben</button>
-<button data-mode="category">Listen-Lotto</button><button data-mode="higherlower">Higher or Lower</button><button data-mode="higherlowerbed">Higher or Lower - Bedtime Story</button><button data-mode="emoji">Emoji-Eskalation</button><button data-mode="transfertinder">⚽ Transfer-Tinder</button><button data-mode="buzzer">Buzzer</button><button data-mode="tourpics">Blackout-Bilder</button><button data-mode="zimmer" class="good" style="font-size:17px;border:3px solid #0d6639">🏨 BETTGEFLÜSTER – ZIMMER AUSLOSEN</button>
+<button data-mode="category">Listen-Lotto</button><button data-mode="higherlower">Higher or Lower</button><button data-mode="higherlowerteam">Higher or Lower · TEAM</button><button data-mode="higherlowerbed">Higher or Lower - Bedtime Story</button><button data-mode="emoji">Emoji-Eskalation</button><button data-mode="transfertinder">⚽ Transfer-Tinder</button><button data-mode="buzzer">Buzzer</button><button data-mode="tourpics">Blackout-Bilder</button><button data-mode="zimmer" class="good" style="font-size:17px;border:3px solid #0d6639">🏨 BETTGEFLÜSTER – ZIMMER AUSLOSEN</button>
 </div>
 <div id="hostGame"></div>
 </section>
@@ -953,6 +962,33 @@ function hlBeginQuestion(){clearInterval(hlTimer);if(!hl)return;const alive=hlAl
 function hlChoose(choice,by){if(!hl||hl.phase!=='question')return;const p=hl.players.find(x=>x.name===by&&x.life>0);if(!p||hl.answers[by])return;hl.answers[by]=choice;renderHost();hlBroadcast();if(hlAlive().every(x=>hl.answers[x.name])){clearInterval(hlTimer);hlResolve()}}
 function hlResolve(){if(!hl||hl.phase!=='question')return;clearInterval(hlTimer);const q=hl.deck[hl.idx],right=q.a>q.t?'higher':'lower';let lines=[];hlAlive().forEach(p=>{const c=hl.answers[p.name],label=c?(c==='higher'?'HÖHER':'NIEDRIGER'):'KEINE ANTWORT';if(!c){p.life=Math.max(0,p.life-1);lines.push(p.name+": "+label+" – falsch · 1 Leben weg");}else if(c!==right){p.life=Math.max(0,p.life-1);lines.push(p.name+": "+label+" – falsch · 1 Leben weg");}else lines.push(p.name+": "+label+" – richtig");});hl.result=lines;hl.actual=hlFmt(q.a,q.u);hl.phase='result';hl.end=null;const alive=hlAlive();if(alive.length<=1)hl.winner=alive[0]?alive[0].name:'Niemand';renderHost();hlBroadcast()}
 function hlNext(){if(!hl)return;if(hl.winner){hl.phase='winner';renderHost();hlBroadcast();return}hl.idx++;if(hl.idx>=hl.deck.length){hl.deck=hlShuffle(HL_BANK);hl.idx=0}hlBeginQuestion()}
+
+let hlt=null,hltTimer=null;
+function hltAlive(){return hlt?hlt.teams.filter(t=>t.life>0):[]}
+function hltScoreHtml(){if(!hlt)return "";return "<div class='tour-score'>"+hlt.teams.map(t=>"<div class='status' style='"+(t.life<=0?"opacity:.45;":"")+"'><b>"+D.teams[t.name].name+"</b><br><span style='font-size:22px'>"+"❤️".repeat(t.life)+"🖤".repeat(Math.max(0,t.max-t.life))+"</span>"+(t.life<=0?"<br><b>RAUS</b>":"")+"</div>").join("")+"</div>"}
+function hltBroadcast(extra={}){if(!hlt)return;const q=hlt.deck[hlt.idx];sendAll({type:"hltState",phase:hlt.phase,question:q?q.q:"",threshold:q?hlFmt(q.t,q.u):"",category:q?q.cat:"",idx:hlt.idx,teams:hlt.teams.map(x=>({name:x.name,label:D.teams[x.name].name,life:x.life,max:x.max})),answers:hlt.answers||{},result:hlt.result||null,actual:hlt.actual||null,winner:hlt.winner?D.teams[hlt.winner].name:null,end:hlt.end||null,...extra})}
+function hltStart(){
+  const teams=["team1","team2","team3"].map(n=>{const el=document.querySelector('.hltLife[data-team="'+n+'"]');const life=Math.max(1,Math.min(5,el?+el.value:3));return {name:n,life,max:life}});
+  hlt={teams,deck:hlShuffle(HL_BANK),idx:0,phase:"question",answers:{},result:null,actual:null,winner:null,end:null};hltBeginQuestion()
+}
+function hltBeginQuestion(){clearInterval(hltTimer);if(!hlt)return;const alive=hltAlive();if(alive.length<=1){hlt.winner=alive[0]?alive[0].name:null;hlt.phase="winner";hlt.end=null;renderHost();hltBroadcast();return}hlt.answers={};hlt.result=null;hlt.actual=null;hlt.phase="question";hlt.end=Date.now()+30000;renderHost();hltBroadcast();hltTimer=setInterval(()=>{if(!hlt||hlt.phase!=="question"){clearInterval(hltTimer);return}if(Date.now()>=hlt.end){clearInterval(hltTimer);hltResolve();return}renderHost();hltBroadcast({tick:true})},250)}
+function hltChoose(choice,team){
+  if(!hlt||hlt.phase!=="question")return;
+  const t=hlt.teams.find(x=>x.name===team&&x.life>0);
+  if(!t||hlt.answers[team])return;
+  hlt.answers[team]=choice;
+  // Sobald alle noch lebenden Teams getippt haben, sofort auflösen.
+  if(hltAlive().every(x=>hlt.answers[x.name])){
+    clearInterval(hltTimer);
+    hltResolve();
+    return;
+  }
+  renderHost();
+  hltBroadcast();
+}
+function hltResolve(){if(!hlt||hlt.phase!=="question")return;clearInterval(hltTimer);const q=hlt.deck[hlt.idx],right=q.a>q.t?"higher":"lower";let lines=[];hltAlive().forEach(t=>{const c=hlt.answers[t.name],label=c?(c==="higher"?"HÖHER":"NIEDRIGER"):"KEINE ANTWORT";if(!c||c!==right){t.life=Math.max(0,t.life-1);lines.push(D.teams[t.name].name+": "+label+" – falsch · 1 Leben weg")}else lines.push(D.teams[t.name].name+": "+label+" – richtig")});hlt.result=lines;hlt.actual=hlFmt(q.a,q.u);hlt.phase="result";hlt.end=null;const alive=hltAlive();if(alive.length<=1)hlt.winner=alive[0]?alive[0].name:null;renderHost();hltBroadcast()}
+function hltNext(){if(!hlt)return;if(hlt.winner){hlt.phase="winner";renderHost();hltBroadcast();return}hlt.idx++;if(hlt.idx>=hlt.deck.length){hlt.deck=hlShuffle(HL_BANK);hlt.idx=0}hltBeginQuestion()}
+
 let timerInt=null, answers={}, used=new Set(), qidx=0, eidx=0, currentClientKind=null;
 let quizScores={team1:0,team2:0,team3:0}, quizAwarded=new Set(), clientQuizScores={team1:0,team2:0,team3:0};
 let estimateScores={team1:0,team2:0,team3:0}, estimateAwarded=new Set(), clientEstimateScores={team1:0,team2:0,team3:0};
@@ -1111,6 +1147,7 @@ function joinPlayer(){
 }
 function onHostMessage(m,c){
   if(m.type==="hlChoice" && modeName==="higherlower") { hlChoose(m.choice,m.name); return; }
+  if(m.type==="hltChoice" && modeName==="higherlowerteam") { hltChoose(m.choice,m.team); return; }
   if(m.type==="hlbChoice" && modeName==="higherlowerbed") { hlbChoose(m.choice,m.name); return; }
   if(m.type==="join"){conns[m.role]=c; refreshConnections();}
   if(m.type==="tourBuzz" && modeName==="tourpics" && buzzOpen && ["team1","team2","team3"].includes(m.team) && !buzzOrder.includes(m.team)){
@@ -1176,6 +1213,22 @@ function onClientMessage(m){
     else if(role&&role.startsWith("team")){$("capTimer").textContent="";$("capGame").innerHTML=m.html;}
     return;
   }
+  if(m.type==="hltState"){
+    clearInterval(timerInt);
+    const score="<div style='display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 12px'>"+(m.teams||[]).map(t=>"<div style='font-size:12px;line-height:1.25;padding:5px 7px;border:1px solid #33445f;border-radius:10px;background:#0b1628;"+(t.life<=0?"opacity:.4;":"")+"'><b>"+t.label+"</b><br><span style='font-size:13px'>"+"❤️".repeat(t.life)+"🖤".repeat(Math.max(0,t.max-t.life))+"</span>"+(t.life<=0?" <b>RAUS</b>":"")+"</div>").join("")+"</div>";
+    const questionBody="<div class='big' style='font-size:30px'>"+m.question+"</div><div class='muted'>Höher oder niedriger als</div><div class='big' style='font-size:48px'>"+m.threshold+"</div>";
+    const resultBody="<div class='big' style='font-size:48px;text-align:center'>Antwort "+m.actual+"</div>"+(m.result||[]).map(x=>"<div class='status'>"+x+"</div>").join("");
+    let body=m.phase==="winner"?"<div class='big' style='font-size:60px;text-align:center'>🏆 "+m.winner+" GEWINNT!</div>":(m.phase==="result"?resultBody:questionBody)+score;
+    const setTimer=(el)=>{if(!el)return;if(m.phase!=="question"){el.textContent="";return}const tick=()=>el.textContent=Math.max(0,Math.ceil(((m.end||Date.now())-Date.now())/1000));tick();timerInt=setInterval(tick,250)};
+    if(role==="screen"){$("screenTitle").textContent="⬆️⬇️ HIGHER OR LOWER · TEAM";$("screenStatus").innerHTML=body;setTimer($("screenTimer"));}
+    else if(role&&role.startsWith("team")){
+      const mine=(m.teams||[]).find(t=>t.name===role),answered=m.answers&&m.answers[role];
+      $("capGame").innerHTML=body+((m.phase==="question"&&mine&&mine.life>0&&!answered)?"<div class='grid'><button id='hltCapHi' class='good' style='font-size:25px'>⬆ HÖHER</button><button id='hltCapLo' class='danger' style='font-size:25px'>⬇ NIEDRIGER</button></div>":(m.phase==="question"&&answered?"<div class='status ok'>✅ Teamantwort abgegeben – wartet auf die anderen Teams.</div>":""));
+      setTimer($("capTimer"));const hi=$("hltCapHi"),lo=$("hltCapLo");if(hi)hi.onclick=()=>conn.send({type:"hltChoice",choice:"higher",team:role});if(lo)lo.onclick=()=>conn.send({type:"hltChoice",choice:"lower",team:role});
+    }
+    return;
+  }
+
   if(m.type==="hlState"){
     clearInterval(timerInt);
     const score="<div style='display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 12px'>"+(m.players||[]).map(p=>"<div style='font-size:12px;line-height:1.25;padding:5px 7px;border:1px solid #33445f;border-radius:10px;background:#0b1628;"+(p.life<=0?"opacity:.4;":"")+"'><b>"+p.name+"</b><br><span style='font-size:13px'>"+"❤️".repeat(p.life)+"🖤".repeat(Math.max(0,p.max-p.life))+"</span>"+(p.life<=0?" <b>RAUS</b>":"")+"</div>").join("")+"</div>";
@@ -1256,10 +1309,10 @@ function onClientMessage(m){
 
   if(m.type==="tourState" && role&&role.startsWith("team")){
     clearInterval(timerInt);$("capTimer").textContent="";const my=role,score=teamScoreHtml(m.scores||{},"BLACKOUT-BILDER · PUNKTE");
-    if(m.phase==="idle")$("capGame").innerHTML="<div class='status'>📺 Nächstes Foto kommt auf dem TV.</div>"+score;
-    else if(m.phase==="location"){$("capGame").innerHTML="<div class='status'><b>Nur du als Kapitän buzzert.</b><br>Dein Team schaut auf den TV und gibt dir Bescheid.</div><button id='tourCaptainBuzz' class='danger' style='width:100%;font-size:32px;padding:24px'>🔴 BUZZERN</button>"+score;const z=$("tourCaptainBuzz");if(z)z.onclick=()=>{conn.send({type:"tourBuzz",team:my});z.disabled=true;z.textContent="GESENDET …";};}
-    else if(m.phase==="year")$("capGame").innerHTML="<div class='status ok'><b>Ort: "+m.round.place+"</b><br>"+(m.winner===my?"Euer Team nennt jetzt das Jahr!":"Das andere Team nennt das Jahr.")+"</div>"+score;
-    else $("capGame").innerHTML="<div class='status ok'><b>"+m.round.place+" · "+m.round.year+"</b></div>"+score;
+    if(m.phase==="idle")$("capGame").innerHTML="<div class='status'>📺 Nächstes Foto kommt gleich.</div>"+score;
+    else if(m.phase==="location"){$("capGame").innerHTML="<img class='tour-photo tour-captain-photo' src='"+m.round.img+"'><div class='status'><b>Nur du als Kapitän buzzert.</b><br>Beratet euch im Team – sobald ihr den Ort wisst: buzzern.</div><button id='tourCaptainBuzz' class='danger' style='width:100%;font-size:27px;padding:16px'>🔴 BUZZERN</button>"+score;const z=$("tourCaptainBuzz");if(z)z.onclick=()=>{conn.send({type:"tourBuzz",team:my});z.disabled=true;z.textContent="GESENDET …";};}
+    else if(m.phase==="year")$("capGame").innerHTML="<img class='tour-photo tour-captain-photo' src='"+m.round.img+"'><div class='status ok'><b>Ort: "+m.round.place+"</b><br>"+(m.winner===my?"Euer Team nennt jetzt das Jahr!":"Das andere Team nennt das Jahr.")+"</div>"+score;
+    else $("capGame").innerHTML="<img class='tour-photo tour-captain-photo' src='"+m.round.img+"'><div class='status ok'><b>"+m.round.place+" · "+m.round.year+"</b></div>"+score;
     return;
   }
   if(m.type==="tourBuzzState" && role&&role.startsWith("team")){const z=$("tourCaptainBuzz");if(z){z.disabled=!m.open||m.order.includes(role);if(m.order.includes(role))z.textContent="GEBUZZERT · PLATZ "+(m.order.indexOf(role)+1);}return;}
@@ -1458,6 +1511,7 @@ function setMode(m){
   if(m==="emoji" && !["idle","title","artist","done"].includes(emojiPhase)) resetEmojiRound();
   renderHost();
   if(m==="higherlower" && hl) hlBroadcast();
+  if(m==="higherlowerteam" && hlt) hltBroadcast();
   if(m==="higherlowerbed" && hlb) hlbBroadcast();
   if(m==="transfertinder") ttBroadcast();
 }
@@ -1476,6 +1530,7 @@ function hostRulesHtml(mode){
     estimate:["Dicht daneben","Alle Teams geben gleichzeitig eine Schätzung ab. 60 Sekunden. Je Frage: nächstes Team 2 Punkte, zweitnächstes 1 Punkt, drittes 0."],
     category:["Listen-Lotto","Ein Team ist jeweils 35 Sekunden dran und nennt passende Begriffe. Bereits genannte Antworten zählen nicht. Falsche Antwort = Team raus; gespielt wird bis ein Team übrig ist."],
     higherlower:["Higher or Lower","Alle ausgewählten Spieler antworten gleichzeitig: höher oder niedriger. 30 Sekunden pro Frage. Falsch oder keine Antwort = 1 Leben weg. Letzter Spieler mit Leben gewinnt."],
+    higherlowerteam:["Higher or Lower · TEAM","Team 1, Team 2 und Team 3 spielen jede Frage gleichzeitig. Nur die drei Kapitäne tippen am Handy HÖHER oder NIEDRIGER; alle anderen schauen über TV / Zuschauer mit und beraten. Der Spielleiter stellt vor dem Start für jedes Team 1–5 Leben ein. Pro Frage laufen 30 Sekunden – der Timer ist auch beim Spielleiter sichtbar. Sobald alle noch im Spiel befindlichen Teams früher getippt haben, wird sofort automatisch aufgelöst. Falsch oder keine Antwort nach 30 Sekunden = 1 Teamleben weg. Nach jeder Runde wird die richtige Antwort und die Auswertung aller Teams gezeigt."],
     higherlowerbed:["Higher or Lower – Bedtime Story","Wie Higher or Lower: alle gleichzeitig, 30 Sekunden, falsch/keine Antwort = 1 Leben weg. Die ersten 12 Fragen sind feste Kegelclub-Fragen, danach kommen zufällige Fragen."],
     emoji:["Emoji-Eskalation","Die Teams erraten zuerst den Songtitel (+2), danach den Interpreten (+1). Maximal 3 Versuche je Team und Phase. Der Spielleiter sieht die Lösung."],
     transfertinder:["Transfer-Tinder","Karrierestationen werden nacheinander eingeblendet. Jeder Spieler darf für sein Team buzzern und sagt die Lösung laut. Richtige Lösung = 1 Punkt. Falsch = das komplette Team ist für diesen Fußballer raus. Kommt keiner drauf, mit „Lösen / Auflösen“ alle Stationen und die Lösung zeigen."],
@@ -1516,6 +1571,12 @@ function renderHost(){
     if(!hlb){h="<div class='card'><h2>🌙 Higher or Lower - Bedtime Story</h2><p class='muted'>Alle ausgewählten Spieler beantworten <b>dieselbe Frage gleichzeitig</b>. Pro Frage laufen 30 Sekunden. Keine Antwort = 1 Leben weg. Die ersten 12 Fragen sind feste Kegelclub-Fragen, danach folgen die normalen Fragen zufällig.</p><h3>Spieler & Leben auswählen</h3><div class='tour-score'>"+HL_NAMES.map(n=>"<label class='status' style='display:block'><input class='hlbPick' type='checkbox' value='"+n+"'> <b>"+n+"</b><br>Leben: <select class='hlbLife' data-name='"+n+"'>"+[1,2,3,4,5].map(x=>"<option "+(x===3?"selected":"")+">"+x+"</option>").join("")+"</select></label>").join("")+"</div><button id='hlbStart' class='good' style='width:100%;margin-top:14px'>BEDTIME STORY STARTEN</button></div>";}
     else if(hlb.phase==='winner'){h="<div class='card' style='text-align:center'><div style='font-size:70px'>🏆</div><h2 class='big'>"+hlb.winner+" GEWINNT!</h2>"+hlbScoreHtml()+"<button id='hlbRestart' style='width:100%;margin-top:14px'>NEUES SPIEL</button></div>";}
     else {const q=hlb.deck[hlb.idx],secs=hlb.end?Math.max(0,Math.ceil((hlb.end-Date.now())/1000)):0,period=q.period?"<div class='muted' style='font-size:13px;margin-top:-10px'>(Zeitraum: "+q.period+")</div>":"";h="<div class='card'><h2>🌙 Higher or Lower - Bedtime Story</h2><div class='pill'>Frage "+(hlb.idx+1)+" · "+q.cat+"</div>"+hlbScoreHtml()+(hlb.phase==='question'?"<div class='big' style='font-size:34px;margin:20px 0 8px'>"+q.q+"</div>"+period+"<div class='muted' style='margin-top:14px'>Ist die richtige Antwort höher oder niedriger als:</div><div class='big' style='font-size:55px'>"+hlFmt(q.t,q.u)+"</div><div class='status ok' style='font-size:20px'><b>🔐 Spielleiter-Lösung: Antwort "+hlFmt(q.a,q.u)+"</b></div><div class='timer'>"+secs+"</div><div class='status'>"+hlbAlive().map(p=>(hlb.answers[p.name]?"✅ ":"⏳ ")+p.name).join(" · ")+"</div><p class='muted'>Alle Spieler antworten gleichzeitig auf dem eigenen Handy.</p>":"<div class='big' style='font-size:52px;text-align:center;margin:25px 0'>Antwort "+hlb.actual+"</div>"+(hlb.result||[]).map(x=>"<div class='status'>"+x+"</div>").join("")+"<button id='hlbNext' style='width:100%'>NÄCHSTE FRAGE →</button>")+"</div>";}
+  }
+
+  if(modeName==="higherlowerteam"){
+    if(!hlt){h="<div class='card'><h2>⬆️⬇️ Higher or Lower · TEAM</h2><p class='muted'>Team 1, Team 2 und Team 3 spielen <b>jede Frage gleichzeitig</b>. Nur die Kapitäne antworten am Handy. Alle anderen schauen über TV / Zuschauer mit und beraten ihr Team. Pro Frage: 30 Sekunden. Sobald alle Teams getippt haben, erfolgt die Auflösung sofort.</p><h3>Teamleben festlegen</h3><div class='tour-score'>"+["team1","team2","team3"].map(n=>"<label class='status' style='display:block'><b>"+D.teams[n].name+"</b><br>Leben: <select class='hltLife' data-team='"+n+"'>"+[1,2,3,4,5].map(x=>"<option "+(x===3?"selected":"")+">"+x+"</option>").join("")+"</select></label>").join("")+"</div><button id='hltStart' class='good' style='width:100%;margin-top:14px'>TEAM-SPIEL STARTEN</button></div>";}
+    else if(hlt.phase==="winner"){h="<div class='card' style='text-align:center'><div style='font-size:70px'>🏆</div><h2 class='big'>"+(hlt.winner?D.teams[hlt.winner].name:"NIEMAND")+" GEWINNT!</h2>"+hltScoreHtml()+"<button id='hltRestart' style='width:100%;margin-top:14px'>NEUES TEAM-SPIEL</button></div>";}
+    else {const q=hlt.deck[hlt.idx],secs=hlt.end?Math.max(0,Math.ceil((hlt.end-Date.now())/1000)):0;h="<div class='card'><h2>⬆️⬇️ Higher or Lower · TEAM</h2><div class='pill'>Frage "+(hlt.idx+1)+" · "+q.cat+"</div>"+hltScoreHtml()+(hlt.phase==="question"?"<div class='big' style='font-size:34px;margin:20px 0'>"+q.q+"</div><div class='muted'>Ist die richtige Antwort höher oder niedriger als:</div><div class='big' style='font-size:55px'>"+hlFmt(q.t,q.u)+"</div><div class='status ok' style='font-size:20px'><b>🔐 Spielleiter-Lösung: Antwort "+hlFmt(q.a,q.u)+"</b></div><div class='muted' style='text-align:center;margin-top:8px'><b>RESTZEIT</b></div><div class='timer'>"+secs+"</div><div class='status'>"+hltAlive().map(t=>(hlt.answers[t.name]?"✅ ":"⏳ ")+D.teams[t.name].name).join(" · ")+"</div><p class='muted'>Alle Teams spielen gleichzeitig. Nur die drei Kapitäne geben die Teamantwort ab. Sind alle Antworten da, wird sofort aufgelöst.</p>":"<div class='big' style='font-size:52px;text-align:center;margin:25px 0'>Antwort "+hlt.actual+"</div>"+(hlt.result||[]).map(x=>"<div class='status'>"+x+"</div>").join("")+"<button id='hltNext' style='width:100%'>NÄCHSTE FRAGE →</button>")+"</div>";}
   }
 
   if(modeName==="higherlower"){
@@ -1598,6 +1659,9 @@ function bindHostControls(){
   const hlbs=$("hlbStart");if(hlbs)hlbs.addEventListener("click",hlbStart);
   const hlbn=$("hlbNext");if(hlbn)hlbn.addEventListener("click",hlbNext);
   const hlbr=$("hlbRestart");if(hlbr)hlbr.addEventListener("click",()=>{clearInterval(hlbTimer);hlb=null;renderHost();sendAll({type:"reset"});});
+  const hlts=$("hltStart");if(hlts)hlts.addEventListener("click",hltStart);
+  const hltn=$("hltNext");if(hltn)hltn.addEventListener("click",hltNext);
+  const hltr=$("hltRestart");if(hltr)hltr.addEventListener("click",()=>{clearInterval(hltTimer);hlt=null;renderHost();sendAll({type:"reset"});});
   const hls=$("hlStart");if(hls)hls.addEventListener("click",hlStart);
   const hln=$("hlNext");if(hln)hln.addEventListener("click",hlNext);
   const hlr=$("hlRestart");if(hlr)hlr.addEventListener("click",()=>{clearInterval(hlTimer);hl=null;renderHost();sendAll({type:"reset"});});
