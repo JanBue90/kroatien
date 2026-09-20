@@ -111,7 +111,7 @@ button,select,input{max-width:100%;min-width:0}
  .pm-config{grid-template-columns:1fr}
 }
 
-/* v18 Kegeltour-Fotospiel */
+/* v18 Blackout-Bilderpiel */
 .tour-photo{display:block;width:100%;max-height:58vh;object-fit:contain;border-radius:18px;background:#101820;box-shadow:0 10px 28px #0002}
 .tour-host-photo{max-height:420px;margin:10px auto}
 .tour-score{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:7px;margin-top:12px}.tour-score .status{text-align:center}
@@ -172,9 +172,9 @@ button,select,input{max-width:100%;min-width:0}
 <section id="hostView" class="hide">
 <div class="card"><div class="muted">Raumcode</div><div id="roomCode" class="big code"></div><div id="connections"></div></div>
 <div class="tabs">
-<button data-mode="quiz">Kroatien-Quiz</button>
+<button data-mode="quiz">Adria-Abitur</button>
 <button data-mode="estimate">Dicht daneben</button>
-<button data-mode="category">Kategorien</button><button data-mode="higherlower">Higher or Lower</button><button data-mode="emoji">Emoji-Eskalation</button><button data-mode="buzzer">Buzzer-Spiel</button><button data-mode="tourpics">Kegeltour-Fotos</button><button data-mode="zimmer" class="good" style="font-size:17px;border:3px solid #0d6639">🏨 BETTGEFLÜSTER – ZIMMER AUSLOSEN</button>
+<button data-mode="category">Listen-Lotto</button><button data-mode="higherlower">Higher or Lower</button><button data-mode="higherlowerbed">Higher or Lower - Bedtime Story</button><button data-mode="emoji">Emoji-Eskalation</button><button data-mode="buzzer">Buzzer</button><button data-mode="tourpics">Blackout-Bilder</button><button data-mode="zimmer" class="good" style="font-size:17px;border:3px solid #0d6639">🏨 BETTGEFLÜSTER – ZIMMER AUSLOSEN</button>
 </div>
 <div id="hostGame"></div>
 </section>
@@ -194,8 +194,8 @@ button,select,input{max-width:100%;min-width:0}
 <script>
 "use strict";
 const D=window.GAME_DATA;
-// v27 Kategorien-Fortschritt + Quiz-Punktestand/Auto-Auflösung.
-// v26 Kategorien-Datenfix: Bei Ein-Buchstaben-KFZ werden die Staedte geraten; fehlender Bond-Titel ergaenzt.
+// v27 Listen-Lotto-Fortschritt + Quiz-Punktestand/Auto-Auflösung.
+// v26 Listen-Lotto-Datenfix: Bei Ein-Buchstaben-KFZ werden die Staedte geraten; fehlender Bond-Titel ergaenzt.
 (()=>{
   const keys=Object.keys(D.categories||{});
   const kfzKey=keys.find(k=>/kfz|kennzeichen/i.test(k));
@@ -344,7 +344,7 @@ button,select,input{max-width:100%;min-width:0}
  .pm-config{grid-template-columns:1fr}
 }
 
-/* v18 Kegeltour-Fotospiel */
+/* v18 Blackout-Bilderpiel */
 .tour-photo{display:block;width:100%;max-height:58vh;object-fit:contain;border-radius:18px;background:#101820;box-shadow:0 10px 28px #0002}
 .tour-host-photo{max-height:420px;margin:10px auto}
 .tour-score{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:7px;margin-top:12px}.tour-score .status{text-align:center}
@@ -405,9 +405,9 @@ button,select,input{max-width:100%;min-width:0}
 <section id="hostView" class="hide">
 <div class="card"><div class="muted">Raumcode</div><div id="roomCode" class="big code"></div><div id="connections"></div></div>
 <div class="tabs">
-<button data-mode="quiz">Kroatien-Quiz</button>
+<button data-mode="quiz">Adria-Abitur</button>
 <button data-mode="estimate">Dicht daneben</button>
-<button data-mode="category">Kategorien</button><button data-mode="higherlower">Higher or Lower</button><button data-mode="emoji">Emoji-Eskalation</button><button data-mode="buzzer">Buzzer-Spiel</button><button data-mode="tourpics">Kegeltour-Fotos</button><button data-mode="zimmer" class="good" style="font-size:17px;border:3px solid #0d6639">🏨 BETTGEFLÜSTER – ZIMMER AUSLOSEN</button>
+<button data-mode="category">Listen-Lotto</button><button data-mode="higherlower">Higher or Lower</button><button data-mode="higherlowerbed">Higher or Lower - Bedtime Story</button><button data-mode="emoji">Emoji-Eskalation</button><button data-mode="buzzer">Buzzer</button><button data-mode="tourpics">Blackout-Bilder</button><button data-mode="zimmer" class="good" style="font-size:17px;border:3px solid #0d6639">🏨 BETTGEFLÜSTER – ZIMMER AUSLOSEN</button>
 </div>
 <div id="hostGame"></div>
 </section>
@@ -427,8 +427,8 @@ button,select,input{max-width:100%;min-width:0}
 <script>
 "use strict";
 const D=window.GAME_DATA;
-// v27 Kategorien-Fortschritt + Quiz-Punktestand/Auto-Auflösung.
-// v26 Kategorien-Datenfix: Bei Ein-Buchstaben-KFZ werden die Staedte geraten; fehlender Bond-Titel ergaenzt.
+// v27 Listen-Lotto-Fortschritt + Quiz-Punktestand/Auto-Auflösung.
+// v26 Listen-Lotto-Datenfix: Bei Ein-Buchstaben-KFZ werden die Staedte geraten; fehlender Bond-Titel ergaenzt.
 (()=>{
   const keys=Object.keys(D.categories||{});
   const kfzKey=keys.find(k=>/kfz|kennzeichen/i.test(k));
@@ -485,6 +485,32 @@ for(let km=2;km<=30;km+=2){let v=km*1000;a.push({cat:"Einheiten",q:`Wie viele Me
 for(let e=5;e<=100;e+=5){let v=e*100;a.push({cat:"Geld",q:`Wie viele Cent sind ${e} Euro?`,t:v+(e%10?100:-100),a:v,u:"Cent",n:`${e} € = ${v} Cent.`})}
 for(let w=2;w<=20;w++){let v=w*6;a.push({cat:"Spiel & Würfel",q:`Maximale Augensumme mit ${w} normalen Würfeln?`,t:v+(w%2?3:-3),a:v,u:"",n:`${w} × 6 = ${v}.`})}
 let seen=new Set(),out=[];for(const x of a){if(!seen.has(x.q)){seen.add(x.q);out.push(x)}}return out.slice(0,250)}
+
+const HLB_FIXED=[
+  ["Kegelclub 2026","Anzahl erzielter Tore Stempo",50,48,"","48 · Zeitraum 01.01.–30.08.2026"],
+  ["Kegelclub 2026","Durchschnitt hohe Hausnummer Mattis",436,751,"","751 · Zeitraum 01.01.–30.08.2026"],
+  ["Kegelclub 2026","Durchschnittliche Differenz beim Werfen Maurice",8,13,"","13 · Zeitraum 01.01.–30.08.2026"],
+  ["Kegelclub 2026","Vorlagen Fußball Fabian",25,22,"","22 · Zeitraum 01.01.–30.08.2026"],
+  ["Kegelclub 2026","Anzahl erzielter Punkte Jan",20,18,"","18 · Zeitraum 01.01.–30.08.2026"],
+  ["Kegelclub 2026","Anzahl erzielter Tore Patrick",10,6,"","6 · Zeitraum 01.01.–30.08.2026"],
+  ["Kegelclub 2026","Durchschnitt tiefe Hausnummer Mitch",141,119,"","119 · Zeitraum 01.01.–30.08.2026"],
+  ["Kegelclub 2026","Gegebene Runden Jan",3,4,"","4 · Zeitraum 01.01.–30.08.2026"],
+  ["Kegelclub 2026","Durchschnittliche Tore Markus",6,5.5,"","5,5 · Zeitraum 01.01.–30.08.2026"],
+  ["Kegelclub 2026","Anwesende Kegelbrüder im August",6,4,"","4 · Zeitraum 01.01.–30.08.2026"],
+  ["Kegelclub 2026","Siege Patrick im Fußball",5,3,"","3 · Zeitraum 01.01.–30.08.2026"],
+  ["Kegelclub 2026","Anzahl Pudel Kevin",15,12,"","12 · Zeitraum 01.01.–30.08.2026"]
+].map(x=>({cat:x[0],q:x[1],t:x[2],a:x[3],u:x[4],n:x[5]}));
+let hlb=null,hlbTimer=null;
+function hlbAlive(){return hlb?hlb.players.filter(p=>p.life>0):[]}
+function hlbScoreHtml(){if(!hlb)return "";return "<div class='tour-score'>"+hlb.players.map(p=>"<div class='status' style='"+(p.life<=0?"opacity:.45;":"")+"'><b>"+p.name+"</b><br><span style='font-size:22px'>"+"❤️".repeat(p.life)+"🖤".repeat(Math.max(0,p.max-p.life))+"</span>"+(p.life<=0?"<br><b>RAUS</b>":"")+"</div>").join("")+"</div>"}
+function hlbDeck(){return [...HLB_FIXED,...hlShuffle(HL_BANK)]}
+function hlbBroadcast(extra={}){if(!hlb)return;const q=hlb.deck[hlb.idx];sendAll({type:"hlbState",phase:hlb.phase,question:q?q.q:"",threshold:q?hlFmt(q.t,q.u):"",category:q?q.cat:"",idx:hlb.idx,players:hlb.players.map(x=>({name:x.name,life:x.life,max:x.max})),answers:hlb.answers||{},result:hlb.result||null,actual:hlb.actual||null,note:hlb.note||null,winner:hlb.winner||null,end:hlb.end||null,...extra})}
+function hlbStart(){const chosen=[...document.querySelectorAll('.hlbPick:checked')].map(x=>x.value);if(chosen.length<2)return alert('Bitte mindestens 2 Spieler auswählen.');const players=chosen.map(n=>{const el=document.querySelector('.hlbLife[data-name="'+n+'"]');const life=el?+el.value:3;return {name:n,life,max:life}});hlb={players,deck:hlbDeck(),idx:0,phase:'question',answers:{},result:null,actual:null,note:null,winner:null,end:null};hlbBeginQuestion()}
+function hlbBeginQuestion(){clearInterval(hlbTimer);if(!hlb)return;const alive=hlbAlive();if(alive.length<=1){hlb.winner=alive[0]?alive[0].name:'Niemand';hlb.phase='winner';hlb.end=null;renderHost();hlbBroadcast();return}hlb.answers={};hlb.result=null;hlb.actual=null;hlb.note=null;hlb.phase='question';hlb.end=Date.now()+30000;renderHost();hlbBroadcast();hlbTimer=setInterval(()=>{if(!hlb||hlb.phase!=='question'){clearInterval(hlbTimer);return}if(Date.now()>=hlb.end){clearInterval(hlbTimer);hlbResolve(true);return}hlbBroadcast({tick:true})},1000)}
+function hlbChoose(choice,by){if(!hlb||hlb.phase!=='question')return;const p=hlb.players.find(x=>x.name===by&&x.life>0);if(!p||hlb.answers[by])return;hlb.answers[by]=choice;renderHost();hlbBroadcast();if(hlbAlive().every(x=>hlb.answers[x.name])){clearInterval(hlbTimer);hlbResolve(false)}}
+function hlbResolve(timeout){if(!hlb||hlb.phase!=='question')return;clearInterval(hlbTimer);const q=hlb.deck[hlb.idx],right=q.a>q.t?'higher':'lower';let lines=[];hlbAlive().forEach(p=>{const c=hlb.answers[p.name];if(!c){p.life=Math.max(0,p.life-1);lines.push(p.name+': keine Antwort – 1 Leben weg');}else if(c!==right){p.life=Math.max(0,p.life-1);lines.push(p.name+': falsch – 1 Leben weg');}else lines.push(p.name+': richtig');});hlb.result=lines;hlb.actual=hlFmt(q.a,q.u);hlb.note=q.n;hlb.phase='result';hlb.end=null;const alive=hlbAlive();if(alive.length<=1){hlb.winner=alive[0]?alive[0].name:'Niemand';}renderHost();hlbBroadcast()}
+function hlbNext(){if(!hlb)return;if(hlb.winner){hlb.phase='winner';renderHost();hlbBroadcast();return}hlb.idx++;if(hlb.idx>=hlb.deck.length)hlb.deck=hlbDeck();hlbBeginQuestion()}
+
 const HL_BANK=hlBuildBank(); let hl=null;
 function hlShuffle(a){a=[...a];for(let i=a.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 function hlFmt(v,u){return Number(v).toLocaleString("de-DE",{maximumFractionDigits:3})+(u?" "+u:"")}
@@ -654,6 +680,7 @@ function joinPlayer(){
 }
 function onHostMessage(m,c){
   if(m.type==="hlChoice" && modeName==="higherlower") { hlChoose(m.choice,m.name); return; }
+  if(m.type==="hlbChoice" && modeName==="higherlowerbed") { hlbChoose(m.choice,m.name); return; }
   if(m.type==="join"){conns[m.role]=c; refreshConnections();}
   if(m.type==="tourBuzz" && modeName==="tourpics" && buzzOpen && ["team1","team2","team3"].includes(m.team) && !buzzOrder.includes(m.team)){
     buzzOrder.push(m.team); if(buzzOrder.length===1){buzzAnswerIndex=0;startBuzzAnswerTimer();}
@@ -727,6 +754,18 @@ function onClientMessage(m){
     return;
   }
 
+
+  if(m.type==="hlbState"){
+    clearInterval(timerInt);
+    const score="<div style='display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 12px'>"+(m.players||[]).map(p=>"<div style='font-size:12px;line-height:1.25;padding:5px 7px;border:1px solid #33445f;border-radius:10px;background:#0b1628;"+(p.life<=0?"opacity:.4;":"")+"'><b>"+p.name+"</b><br><span style='font-size:13px'>"+"❤️".repeat(p.life)+"🖤".repeat(Math.max(0,p.max-p.life))+"</span>"+(p.life<=0?" <b>RAUS</b>":"")+"</div>").join("")+"</div>";
+    let secs=m.end?Math.max(0,Math.ceil((m.end-Date.now())/1000)):0;
+    let body=m.phase==="winner"?"<div class='big' style='font-size:60px;text-align:center'>🏆 "+m.winner+" GEWINNT!</div>":"<div class='big' style='font-size:30px'>"+m.question+"</div><div class='muted'>Höher oder niedriger als</div><div class='big' style='font-size:48px'>"+m.threshold+"</div>"+(m.phase==='result'?"<div class='status'><b>Antwort: "+m.actual+"</b><br>"+(m.note||"")+"</div>"+(m.result||[]).map(x=>"<div class='status'>"+x+"</div>").join(""):"")+score;
+    if(role==="screen"){$("screenTitle").textContent="⬆️⬇️ HIGHER OR LOWER - BEDTIME STORY";$("screenTimer").textContent=m.phase==='question'?secs:"";$("screenStatus").innerHTML=body;}
+    else if(role&&role.startsWith("team")){$("capTimer").textContent=m.phase==='question'?secs:"";$("capGame").innerHTML=body;}
+    else if(role&&role.startsWith("player:")){const me=role.slice(7),mine=(m.players||[]).find(p=>p.name===me);$("buzzBtn").classList.add("hide");$("playerTourBox").classList.add("hide");$("playerBuzzBoard").classList.remove("hide");$("playerAlert").className="status";$("playerAlert").innerHTML=body;$("playerCountdown").textContent=m.phase==='question'?secs:"";const answered=m.answers&&m.answers[me];$("playerRanking").innerHTML=(m.phase==='question'&&mine&&mine.life>0&&!answered)?"<div class='grid'><button id='hlbPhoneHi' class='good' style='font-size:25px'>⬆ HÖHER</button><button id='hlbPhoneLo' class='danger' style='font-size:25px'>⬇ NIEDRIGER</button></div>":(m.phase==='question'&&answered?"<div class='status ok'>✅ Antwort abgegeben – warte auf die anderen.</div>":"");const hi=$("hlbPhoneHi"),lo=$("hlbPhoneLo");if(hi)hi.onclick=()=>conn.send({type:"hlbChoice",choice:"higher",name:me});if(lo)lo.onclick=()=>conn.send({type:"hlbChoice",choice:"lower",name:me});}
+    return;
+  }
+
   if(m.type==="zgState" && role && role.startsWith("player:")){ zgClientRender(m); return; }
   if(m.type==="zgLive" && role && role.startsWith("player:")){ zgSpectatorRender(m); return; }
   if(m.type==="zgRpsResult" && role && role.startsWith("player:")){ zgClientRpsResult(m); return; }
@@ -757,7 +796,7 @@ function onClientMessage(m){
   }
 
   if(m.type==="tourState" && role&&role.startsWith("team")){
-    clearInterval(timerInt);$("capTimer").textContent="";const my=role,score=teamScoreHtml(m.scores||{},"KEGELTOUR-FOTOS · PUNKTE");
+    clearInterval(timerInt);$("capTimer").textContent="";const my=role,score=teamScoreHtml(m.scores||{},"BLACKOUT-BILDER · PUNKTE");
     if(m.phase==="idle")$("capGame").innerHTML="<div class='status'>📺 Nächstes Foto kommt auf dem TV.</div>"+score;
     else if(m.phase==="location"){$("capGame").innerHTML="<div class='status'><b>Nur du als Kapitän buzzert.</b><br>Dein Team schaut auf den TV und gibt dir Bescheid.</div><button id='tourCaptainBuzz' class='danger' style='width:100%;font-size:32px;padding:24px'>🔴 BUZZERN</button>"+score;const z=$("tourCaptainBuzz");if(z)z.onclick=()=>{conn.send({type:"tourBuzz",team:my});z.disabled=true;z.textContent="GESENDET …";};}
     else if(m.phase==="year")$("capGame").innerHTML="<div class='status ok'><b>Ort: "+m.round.place+"</b><br>"+(m.winner===my?"Euer Team nennt jetzt das Jahr!":"Das andere Team nennt das Jahr.")+"</div>"+score;
@@ -960,6 +999,7 @@ function setMode(m){
   if(m==="emoji" && !["idle","title","artist","done"].includes(emojiPhase)) resetEmojiRound();
   renderHost();
   if(m==="higherlower" && hl) hlBroadcast();
+  if(m==="higherlowerbed" && hlb) hlbBroadcast();
 }
 function answerStatus(category=false){
   return "<div class='card'>"+["team1","team2","team3"].map(t=>{
@@ -983,15 +1023,22 @@ function renderHost(){
       "<p><button id='startBtn'>60 SEK. START</button> <button id='revealBtn' class='secondary'>AUSWERTEN</button></p>"+
       answerStatus(false)+"<div id='hostReveal'></div>"+estimateScoreHtml(estimateScores)+"<div class='grid'><button id='prevBtn' class='secondary'>←</button><button id='nextBtn'>NÄCHSTE →</button></div></div>";
   } else if(modeName==="category"){
-    h="<div class='card'><h2>Kategorien-Battle</h2><select id='catSelect' style='width:100%'>"+
+    h="<div class='card'><h2>Listen-Lotto-Battle</h2><select id='catSelect' style='width:100%'>"+
       Object.keys(D.categories).map(x=>"<option "+(x===catName?"selected":"")+">"+x+"</option>").join("")+
       "</select><p><select id='turnTeam'>"+["team1","team2","team3"].map(t=>"<option value='"+t+"' "+(catOut.has(t)?"disabled":"")+">"+D.teams[t].name+(catOut.has(t)?" — RAUS":"")+"</option>").join("")+"</select> <button id='catStart'>35 SEK. START</button></p>"+
-      answerStatus(true)+teamScoreHtml(categoryScores,"KATEGORIEN · PUNKTE")+"<div>"+D.categories[catName].map(x=>"<span class='pill "+(used.has(norm(x))?"check":"")+"'>"+x+"</span>").join("")+"</div>"+categoryProgressHtml(used.size,D.categories[catName].length)+"</div>";
+      answerStatus(true)+teamScoreHtml(categoryScores,"LISTEN-LOTTO · PUNKTE")+"<div>"+D.categories[catName].map(x=>"<span class='pill "+(used.has(norm(x))?"check":"")+"'>"+x+"</span>").join("")+"</div>"+categoryProgressHtml(used.size,D.categories[catName].length)+"</div>";
   }
 
   if(modeName==="zimmer"){
     h=zgHostHtml();
   }
+
+  if(modeName==="higherlowerbed"){
+    if(!hlb){h="<div class='card'><h2>🌙 Higher or Lower - Bedtime Story</h2><p class='muted'>Alle ausgewählten Spieler beantworten <b>dieselbe Frage gleichzeitig</b>. Pro Frage laufen 30 Sekunden. Keine Antwort = 1 Leben weg. Die ersten 12 Fragen sind feste Kegelclub-Fragen (Zeitraum 01.01.–30.08.2026), danach folgen die normalen Fragen zufällig.</p><h3>Spieler & Leben auswählen</h3><div class='tour-score'>"+HL_NAMES.map(n=>"<label class='status' style='display:block'><input class='hlbPick' type='checkbox' value='"+n+"'> <b>"+n+"</b><br>Leben: <select class='hlbLife' data-name='"+n+"'>"+[1,2,3,4,5].map(x=>"<option "+(x===3?"selected":"")+">"+x+"</option>").join("")+"</select></label>").join("")+"</div><button id='hlbStart' class='good' style='width:100%;margin-top:14px'>BEDTIME STORY STARTEN</button></div>";}
+    else if(hlb.phase==='winner'){h="<div class='card' style='text-align:center'><div style='font-size:70px'>🏆</div><h2 class='big'>"+hlb.winner+" GEWINNT!</h2>"+hlbScoreHtml()+"<button id='hlbRestart' style='width:100%;margin-top:14px'>NEUES SPIEL</button></div>";}
+    else {const q=hlb.deck[hlb.idx],secs=hlb.end?Math.max(0,Math.ceil((hlb.end-Date.now())/1000)):0;h="<div class='card'><h2>🌙 Higher or Lower - Bedtime Story</h2><div class='pill'>Frage "+(hlb.idx+1)+" · "+q.cat+"</div>"+hlbScoreHtml()+"<div class='big' style='font-size:34px;margin:20px 0'>"+q.q+"</div><div class='muted'>Ist die richtige Antwort höher oder niedriger als:</div><div class='big' style='font-size:55px'>"+hlFmt(q.t,q.u)+"</div>"+(hlb.phase==='question'?"<div class='timer'>"+secs+"</div><div class='status'>"+hlbAlive().map(p=>(hlb.answers[p.name]?"✅ ":"⏳ ")+p.name).join(" · ")+"</div><p class='muted'>Alle Spieler antworten gleichzeitig auf dem eigenen Handy.</p>":"<div class='status ok'><b>Antwort: "+hlb.actual+"</b><br>"+hlb.note+"</div>"+(hlb.result||[]).map(x=>"<div class='status'>"+x+"</div>").join("")+"<button id='hlbNext' style='width:100%'>NÄCHSTE FRAGE →</button>")+"</div>";}
+  }
+
   if(modeName==="higherlower"){
     if(!hl){h="<div class='card'><h2>⬆️⬇️ Higher or Lower</h2><p class='muted'>Einzelspiel · unabhängig von der Olympiade/Zimmerverteilung · 390 Fragen · bei jedem Start zufällig gemischt.</p><h3>Spieler & Leben auswählen</h3><div class='tour-score'>"+HL_NAMES.map(n=>"<label class='status' style='display:block'><input class='hlPick' type='checkbox' value='"+n+"'> <b>"+n+"</b><br>Leben: <select class='hlLife' data-name='"+n+"'>"+[1,2,3,4,5].map(x=>"<option "+(x===3?"selected":"")+">"+x+"</option>").join("")+"</select></label>").join("")+"</div><button id='hlStart' class='good' style='width:100%;margin-top:14px'>SPIEL STARTEN</button></div>";}
     else if(hl.phase==='winner'){h="<div class='card' style='text-align:center'><div style='font-size:70px'>🏆</div><h2 class='big'>"+hl.winner+" GEWINNT!</h2>"+hlScoreHtml()+"<button id='hlRestart' style='width:100%;margin-top:14px'>NEUES SPIEL</button></div>";}
@@ -1000,7 +1047,7 @@ function renderHost(){
   if(modeName==="tourpics"){
     const r=TOUR_ROUNDS[tourIdx], cur=buzzOrder[buzzAnswerIndex]||null;
     const scoreNames=["team1","team2","team3"];
-    h="<div class='card'><h2>📸 Kegeltour-Fotos "+(tourIdx+1)+"/"+TOUR_ROUNDS.length+"</h2><img class='tour-photo tour-host-photo' src='"+r.img+"'>"+
+    h="<div class='card'><h2>📸 Blackout-Bilder "+(tourIdx+1)+"/"+TOUR_ROUNDS.length+"</h2><img class='tour-photo tour-host-photo' src='"+r.img+"'>"+
       "<div class='status'><b>Lösung:</b> "+r.place+" · "+r.year+"</div>"+
       (tourPhase==="idle"?"<button id='tourStart' class='good' style='width:100%'>RUNDE STARTEN + BUZZER FREIGEBEN</button>":"")+
       (tourPhase==="location"?"<div class='status ok' style='font-size:22px'><b>Gesucht: ORT (2 Punkte)</b><br>"+(cur?"Antwortet: <b>"+tourLabel(cur)+"</b>":"Warte auf Buzzer …")+(cur?"<div id='buzzAnswerCountdown' class='big' style='font-size:54px;text-align:center;margin-top:8px'>"+(buzzExpired?"0":buzzAnswerEnd?Math.max(0,Math.ceil((buzzAnswerEnd-Date.now())/1000)):"10")+"</div>":"")+(buzzExpired?"<div style='text-align:center;background:#fff0c9;padding:10px;border-radius:12px'><b>⏱ ZEIT ABGELAUFEN – DU ENTSCHEIDEST</b></div>":"")+"</div>"+(cur?"<div class='grid'><button id='tourLocWrong' class='danger'>ORT FALSCH → NÄCHSTER</button><button id='tourLocRight' class='good'>ORT RICHTIG +2</button></div>":""):"")+
@@ -1023,7 +1070,7 @@ function renderHost(){
       "<label style='grid-column:1/-1'>KI-Mix<input id='pmMixFile' type='file' accept='image/*'></label></div><button id='pmSave' style='margin-top:10px'>BILD-DATEN SPEICHERN</button></details></div>";
   }
   if(modeName==="buzzer"){
-    h="<div class='card'><h2>🔴 Buzzer-Spiel</h2><p class='muted'>Alle 12 Spieler buzzern auf dem eigenen Handy. Die Reihenfolge bleibt erhalten, damit bei einer falschen Antwort der Nächste dran ist.</p><div class='grid'><button id='buzzOpenBtn' class='good'>BUZZER FREIGEBEN</button><button id='buzzCloseBtn' class='secondary'>SPERREN</button><button id='buzzResetBtn' class='danger'>NEUE RUNDE</button></div><h3>Reihenfolge</h3>"+(buzzOrder.length?buzzOrder.map((n,i)=>"<div class='status' style='font-size:"+(i===0?26:18)+"px'><b>"+(i+1)+". "+n+"</b></div>").join(""):"<div class='status'>Noch niemand gebuzzert.</div>")+"<div id='buzzTurnBox'>"+(buzzOrder.length?"<div class='status ok' style='font-size:24px'><b>Antwortet: "+buzzOrder[Math.min(buzzAnswerIndex,buzzOrder.length-1)]+"</b><div id='buzzAnswerCountdown' class='big' style='font-size:42px'>"+(buzzAnswerEnd?Math.max(0,Math.ceil((buzzAnswerEnd-Date.now())/1000)):"10")+"</div></div>":"")+"</div>"+
+    h="<div class='card'><h2>🔴 Buzzer</h2><p class='muted'>Alle 12 Spieler buzzern auf dem eigenen Handy. Die Reihenfolge bleibt erhalten, damit bei einer falschen Antwort der Nächste dran ist.</p><div class='grid'><button id='buzzOpenBtn' class='good'>BUZZER FREIGEBEN</button><button id='buzzCloseBtn' class='secondary'>SPERREN</button><button id='buzzResetBtn' class='danger'>NEUE RUNDE</button></div><h3>Reihenfolge</h3>"+(buzzOrder.length?buzzOrder.map((n,i)=>"<div class='status' style='font-size:"+(i===0?26:18)+"px'><b>"+(i+1)+". "+n+"</b></div>").join(""):"<div class='status'>Noch niemand gebuzzert.</div>")+"<div id='buzzTurnBox'>"+(buzzOrder.length?"<div class='status ok' style='font-size:24px'><b>Antwortet: "+buzzOrder[Math.min(buzzAnswerIndex,buzzOrder.length-1)]+"</b><div id='buzzAnswerCountdown' class='big' style='font-size:42px'>"+(buzzAnswerEnd?Math.max(0,Math.ceil((buzzAnswerEnd-Date.now())/1000)):"10")+"</div></div>":"")+"</div>"+
       (buzzOrder.length?"<div class='grid'><button id='buzzWrongBtn' class='danger'>FALSCH → NÄCHSTER</button><button id='buzzRightBtn' class='good'>RICHTIG ✓</button></div>":"")+
       "<p><b>Status:</b> "+(buzzOpen?"🟢 Buzzer offen":"🔒 Buzzer gesperrt")+"</p></div>";
   }
@@ -1054,6 +1101,9 @@ function bindHostControls(){
   const catStart=$("catStart"); if(catStart)catStart.addEventListener("click",startCategory);
   document.querySelectorAll(".acceptCat").forEach(b=>b.addEventListener("click",()=>acceptCategory(b.dataset.team)));
   document.querySelectorAll(".rejectCat").forEach(b=>b.addEventListener("click",()=>rejectCategory(b.dataset.team)));
+  const hlbs=$("hlbStart");if(hlbs)hlbs.addEventListener("click",hlbStart);
+  const hlbn=$("hlbNext");if(hlbn)hlbn.addEventListener("click",hlbNext);
+  const hlbr=$("hlbRestart");if(hlbr)hlbr.addEventListener("click",()=>{clearInterval(hlbTimer);hlb=null;renderHost();sendAll({type:"reset"});});
   const hls=$("hlStart");if(hls)hls.addEventListener("click",hlStart);
   const hlh=$("hlHi");if(hlh)hlh.addEventListener("click",()=>hlChoose("higher",hlActive().name));
   const hll=$("hlLo");if(hll)hll.addEventListener("click",()=>hlChoose("lower",hlActive().name));
@@ -1268,7 +1318,7 @@ function zgHostHtml(){
   const rem=zgRemaining();
   const round=ZG_ROUNDS[zgRound];
   let body="<div class='card'><h2>🏨 BETTGEFLÜSTER</h2>"+
-    "<p class='muted'>Nur für die Zimmerauslosung: <b>Fabian und Jan spielen nicht mit.</b> Alle anderen Spiele bleiben unverändert.</p>"+
+    "<div class='status' style='text-align:left'><b>Regeln Bettgeflüster</b><br>• Jans Mitbewohner ist bereits <b>Fabian</b>. Deshalb spielen <b>Jan und Fabian nicht mit</b>.<br>• Wer eine Runde gewinnt und weiter ist, <b>sucht sich einen Zimmerpartner</b> aus.<br>• Der Spieler, der am Ende übrig bleibt, bekommt zunächst den <b>Couchplatz</b>.<br>• <b>Achtung:</b> Für den „Couch-Verlierer“ gibt es am Ende noch einen Twist. Dieser wird erst vor Ort erklärt, <b>nachdem die Zimmer ausgesucht wurden</b>.</div>"+
     "<div class='zg-rounds'>"+ZG_ROUNDS.map((r,i)=>"<div class='zg-round "+(i===zgRound?"active":i<zgRound?"done":"")+"'>"+(i+1)+". "+r.title.split("·").pop().trim()+"</div>").join("")+"</div>"+
     zgDuoHtml()+
     "<div class='status'><b>Noch im Spiel ("+rem.length+"):</b> "+rem.map(zgEsc).join(", ")+"</div>"+
@@ -1642,7 +1692,7 @@ function rejectCategory(t){
   if(catOut.size===2){
     const winner=["team1","team2","team3"].find(k=>!catOut.has(k));
     if(winner&&!categoryAwarded.has(catName)){categoryScores[winner]++;categoryAwarded.add(catName);}
-    sendShortStandings(categoryScores,"KATEGORIEN · NACH "+catName);
+    sendShortStandings(categoryScores,"LISTEN-LOTTO · NACH "+catName);
   }
   renderHost();
 }
