@@ -142,6 +142,24 @@ button,select,input{max-width:100%;min-width:0}
   .zg-rps button{font-size:17px;min-height:82px;padding:8px}
 }
 
+
+/* v43 Transfer-Tinder mobile compact */
+.tt-stage{padding:6px 8px!important;margin:4px 0!important;font-size:15px!important;line-height:1.12}
+.tt-stage .pill{padding:2px 6px;font-size:11px;margin:1px}
+#playerView.tt-active .card{padding:9px!important}
+#playerView.tt-active h2{font-size:20px;margin:5px 0}
+#playerView.tt-active .pill{font-size:11px;padding:3px 6px;margin:2px}
+#playerView.tt-active #playerAlert{padding:6px;margin:4px 0}
+#playerView.tt-active #buzzBtn{height:86px!important;min-height:86px!important;font-size:27px!important;border-radius:15px!important;margin:6px 0!important}
+#playerView.tt-active #playerRanking .status{padding:5px 7px;margin:3px 0;font-size:13px}
+#playerView.tt-active #playerCountdown{font-size:38px;min-height:0;margin:3px 0}
+.tt-score-mini{display:flex;gap:4px;flex-wrap:wrap;margin:4px 0}
+.tt-score-mini .pill{font-size:11px!important}
+@media(max-width:700px){
+  .tt-stage{font-size:14px!important}
+  #playerView.tt-active .wrap{padding:5px}
+}
+
 </style>
 </head>
 <body>
@@ -453,7 +471,7 @@ function ttNewGame(){
 function ttTeamName(k){return D.teams[k]?D.teams[k].name:k}
 function ttPoints(){return 1}
 function ttStageHtml(p,limit,showAnswer=false){
-  let rows=p.stages.slice(0,limit).map((x,i)=>"<div class='status' style='font-size:20px'><b>"+x[0]+"</b>"+(x[1]?" · <span class='pill'>"+x[1]+"</span>":"")+"<br><b>"+x[2]+"</b></div>").join("");
+  let rows=p.stages.slice(0,limit).map((x,i)=>"<div class='status tt-stage'><b>"+x[0]+"</b>"+(x[1]?" · <span class='pill'>"+x[1]+"</span>":"")+" · <b>"+x[2]+"</b></div>").join("");
   return rows+(showAnswer?"<div class='status ok' style='font-size:34px;text-align:center'><b>⚽ "+p.name+"</b></div>":"");
 }
 function ttScoreHtml(){
@@ -474,7 +492,7 @@ function ttStartRound(){
 function ttRevealNext(){
   if(ttPhase!=="playing")return;
   const p=TT_PLAYERS[ttIdx];
-  if(ttReveal<p.stages.length){ttReveal++;ttBuzzOrder=[];ttAnswerIndex=0;ttAnswerEnd=0;ttLockedTeams=new Set();buzzExpired=false;buzzOpen=true;ttBroadcast();renderHost();}
+  if(ttReveal<p.stages.length){ttReveal++;ttBuzzOrder=[];ttAnswerIndex=0;ttAnswerEnd=0;/* ausgeschlossene Teams bleiben für diesen Fußballer raus */buzzExpired=false;buzzOpen=true;ttBroadcast();renderHost();}
 }
 function ttBuzz(name){
   if(ttPhase!=="playing"||!buzzOpen||ttBuzzOrder.includes(name))return;
@@ -1186,10 +1204,12 @@ function onClientMessage(m){
   }
 
 
+  if(m.type!=="ttState" && $("playerView")) $("playerView").classList.remove("tt-active");
   if(m.type==="ttState"){
     clearInterval(timerInt);
-    const stages=(m.stages||[]).map(x=>"<div class='status' style='font-size:20px'><b>"+x[0]+"</b>"+(x[1]?" · "+x[1]:"")+"<br><b>"+x[2]+"</b></div>").join("");
-    const score="<div style='display:flex;gap:8px;flex-wrap:wrap'>"+["team1","team2","team3"].map(t=>"<div class='pill'>"+D.teams[t].name+": <b>"+m.scores[t]+" P</b></div>").join("")+"</div>";
+    if($("playerView")) $("playerView").classList.add("tt-active");
+    const stages=(m.stages||[]).map(x=>"<div class='status tt-stage'><b>"+x[0]+"</b>"+(x[1]?" · "+x[1]:"")+" · <b>"+x[2]+"</b></div>").join("");
+    const score="<div class='tt-score-mini'>"+["team1","team2","team3"].map(t=>"<div class='pill'>"+D.teams[t].name+": <b>"+m.scores[t]+" P</b></div>").join("")+"</div>";
     const solved=m.phase==="solved"?"<div class='status ok' style='font-size:36px;text-align:center'><b>⚽ "+m.answer+"</b></div>":"";
     const body="<div class='pill'>Spieler "+(m.idx+1)+"/"+m.total+"</div><h2>⚽ Transfer-Tinder</h2>"+stages+solved+score;
     if(role==="screen"){$("screenTitle").textContent="⚽ TRANSFER-TINDER";$("screenStatus").innerHTML=body+(m.phase==="playing"?"<div class='status'>"+(m.current?"🔥 Es antwortet: <b>"+m.current+"</b>":"🟢 Buzzer frei")+"</div>":"");if(m.answerEnd)countdown(m.answerEnd,$("screenTimer"));else $("screenTimer").textContent="";}
@@ -1198,7 +1218,7 @@ function onClientMessage(m){
       const me=role.slice(7),myTeam=TT_TEAMS[me],locked=(m.locked||[]).includes(myTeam),pos=(m.order||[]).indexOf(me);
       $("playerTourBox").classList.add("hide");$("playerBuzzBoard").classList.remove("hide");$("playerAlert").className="status";$("playerAlert").innerHTML=body;
       $("buzzBtn").classList.toggle("hide",m.phase!=="playing"||pos>=0||locked);$("buzzBtn").disabled=!m.buzzOpen||locked||pos>=0;
-      $("buzzState").innerHTML=locked?"❌ Dein Team ist bei dieser Station raus.":(pos>=0?"Du hast gebuzzert: Platz "+(pos+1):(m.buzzOpen?"🟢 BUZZER FREI!":"🔒 Buzzer gesperrt"));
+      $("buzzState").innerHTML=locked?"❌ Dein ganzes Team ist für diesen Fußballer raus.":(pos>=0?"Du hast gebuzzert: Platz "+(pos+1):(m.buzzOpen?"🟢 BUZZER FREI!":"🔒 Buzzer gesperrt"));
       $("playerRanking").innerHTML=(m.order||[]).map((n,i)=>"<div class='status'><b>"+(i+1)+". "+n+"</b>"+(n===m.current?" ← DRAN":"")+"</div>").join("");
       if(m.current===me&&m.answerEnd)countdown(m.answerEnd,$("playerCountdown"));else $("playerCountdown").textContent="";
     }
@@ -1449,6 +1469,25 @@ function answerStatus(category=false){
     return "<div class='status'><b>"+D.teams[t].name+":</b> "+val+decide+out+"</div>";
   }).join("")+"</div>";
 }
+
+function hostRulesHtml(mode){
+  const R={
+    quiz:["Adria-Abitur","20 Kroatien-Fragen. Die Teams antworten gleichzeitig auf ihren Geräten. 30 Sekunden pro Frage. Richtige Antworten zählen; am Ende entscheidet der Punktestand."],
+    estimate:["Dicht daneben","Alle Teams geben gleichzeitig eine Schätzung ab. 60 Sekunden. Je Frage: nächstes Team 2 Punkte, zweitnächstes 1 Punkt, drittes 0."],
+    category:["Listen-Lotto","Ein Team ist jeweils 35 Sekunden dran und nennt passende Begriffe. Bereits genannte Antworten zählen nicht. Falsche Antwort = Team raus; gespielt wird bis ein Team übrig ist."],
+    higherlower:["Higher or Lower","Alle ausgewählten Spieler antworten gleichzeitig: höher oder niedriger. 30 Sekunden pro Frage. Falsch oder keine Antwort = 1 Leben weg. Letzter Spieler mit Leben gewinnt."],
+    higherlowerbed:["Higher or Lower – Bedtime Story","Wie Higher or Lower: alle gleichzeitig, 30 Sekunden, falsch/keine Antwort = 1 Leben weg. Die ersten 12 Fragen sind feste Kegelclub-Fragen, danach kommen zufällige Fragen."],
+    emoji:["Emoji-Eskalation","Die Teams erraten zuerst den Songtitel (+2), danach den Interpreten (+1). Maximal 3 Versuche je Team und Phase. Der Spielleiter sieht die Lösung."],
+    transfertinder:["Transfer-Tinder","Karrierestationen werden nacheinander eingeblendet. Jeder Spieler darf für sein Team buzzern und sagt die Lösung laut. Richtige Lösung = 1 Punkt. Falsch = das komplette Team ist für diesen Fußballer raus. Kommt keiner drauf, mit „Lösen / Auflösen“ alle Stationen und die Lösung zeigen."],
+    buzzer:["Buzzer","Alle Spieler buzzern einzeln auf dem Handy. Die Reihenfolge wird gespeichert. Der Erste hat 10 Sekunden zum Antworten; bei falsch ist der Nächste dran."],
+    tourpics:["Blackout-Bilder","Foto ansehen und buzzern. Zuerst wird der Ort geraten (+2 Punkte). Das Team mit richtigem Ort darf anschließend das Jahr raten (+1 Punkt)."],
+    zimmer:["Bettgeflüster","Jan und Fabian spielen nicht mit. Die übrigen Spieler spielen mehrere Ausscheidungsrunden. Wer weiterkommt, darf sich einen Zimmerpartner aussuchen. Für den Couch-Kandidaten gibt es später noch einen Twist – erst nach der Zimmerwahl erklären."],
+    promimix:["Promi-Mix","Das KI-Mix-Bild wird Stück für Stück aufgedeckt. Sobald jemand die Kombination erkennt, wird gelöst und anschließend die Originalbilder gezeigt."]
+  };
+  const r=R[mode]; if(!r)return "";
+  return "<details class='status' open style='border:2px solid #17324d;background:#f7fafc;margin-bottom:10px'><summary style='cursor:pointer;font-weight:900'>📣 REGELN VOR DEM START – "+r[0]+"</summary><div style='margin-top:7px;line-height:1.35'>"+r[1]+"</div></details>";
+}
+
 function renderHost(){
   let h="";
   if(modeName==="quiz"){
@@ -1543,7 +1582,7 @@ function renderHost(){
       "<div class='card'>"+["team1","team2","team3"].map(t=>"<div class='status'><b>"+D.teams[t].name+"</b> · Punkte: <b style='font-size:22px'>"+("I".repeat(emojiPoints[t])||"–")+"</b> <span class='muted'>("+emojiPoints[t]+")</span> · Versuche: "+emojiAttempts[t]+"/3</div>").join("")+"</div>"+
       "<div class='grid'><button id='emojiPrev' class='secondary'>←</button><button id='emojiNext'>NÄCHSTER SONG →</button></div></div>";
   }
-  $("hostGame").innerHTML=h;
+  $("hostGame").innerHTML=hostRulesHtml(modeName)+h;
   bindHostControls();
 }
 function bindHostControls(){
