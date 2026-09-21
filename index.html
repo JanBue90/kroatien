@@ -2364,6 +2364,25 @@ function acceptCategory(t){
 }
 
 
+
+
+
+$("hostBtn").addEventListener("click",()=>{
+  const pw=prompt("Spielleiter-Passwort:");
+  if(pw===null)return;
+  if(pw!=="Janyo"){alert("Falsches Passwort.");return;}
+  host();
+});
+$("captainBtn").addEventListener("click",()=>openJoin("captain"));
+$("screenBtn").addEventListener("click",()=>openJoin("screen"));
+$("playerBtn").addEventListener("click",()=>openJoin("player"));
+$("playerJoinBtn").addEventListener("click",joinPlayer);
+$("buzzBtn").addEventListener("click",()=>{if(conn&&role.startsWith("player:")){conn.send({type:"buzz",name:role.slice(7)});$("buzzBtn").disabled=true;$("buzzState").textContent="Gesendet …";}});
+$("screenJoinBtn").addEventListener("click",()=>join("screen"));
+document.querySelectorAll("[data-team]").forEach(b=>b.addEventListener("click",()=>join(b.dataset.team)));
+document.querySelectorAll("[data-mode]").forEach(b=>b.addEventListener("click",()=>setMode(b.dataset.mode)));
+
+
 /* ===================== QUOTEN-KOMA ===================== */
 const QK_MARKETS=[
  {id:"result",cat:"Spielausgang",name:"Spielausgang",o:[["de","Deutschland gewinnt",2.20],["draw","Unentschieden",3.50],["nl","Niederlande gewinnt",2.90]]},
@@ -2484,20 +2503,5 @@ function qkBindHost(){
  document.querySelectorAll(".qkSettle").forEach(b=>b.onclick=()=>qkSettle(b.dataset.m,b.dataset.o));document.querySelectorAll(".qkUndo").forEach(b=>b.onclick=()=>qkUndo(b.dataset.m));
 }
 /* =================== /QUOTEN-KOMA ===================== */
-
-$("hostBtn").addEventListener("click",()=>{
-  const pw=prompt("Spielleiter-Passwort:");
-  if(pw===null)return;
-  if(pw!=="Janyo"){alert("Falsches Passwort.");return;}
-  host();
-});
-$("captainBtn").addEventListener("click",()=>openJoin("captain"));
-$("screenBtn").addEventListener("click",()=>openJoin("screen"));
-$("playerBtn").addEventListener("click",()=>openJoin("player"));
-$("playerJoinBtn").addEventListener("click",joinPlayer);
-$("buzzBtn").addEventListener("click",()=>{if(conn&&role.startsWith("player:")){conn.send({type:"buzz",name:role.slice(7)});$("buzzBtn").disabled=true;$("buzzState").textContent="Gesendet …";}});
-$("screenJoinBtn").addEventListener("click",()=>join("screen"));
-document.querySelectorAll("[data-team]").forEach(b=>b.addEventListener("click",()=>join(b.dataset.team)));
-document.querySelectorAll("[data-mode]").forEach(b=>b.addEventListener("click",()=>setMode(b.dataset.mode)));
 </script>
 </body></html>
