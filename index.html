@@ -993,6 +993,8 @@ let timerInt=null, answers={}, used=new Set(), qidx=0, eidx=0, currentClientKind
 let quizScores={team1:0,team2:0,team3:0}, quizAwarded=new Set(), clientQuizScores={team1:0,team2:0,team3:0};
 let estimateScores={team1:0,team2:0,team3:0}, estimateAwarded=new Set(), clientEstimateScores={team1:0,team2:0,team3:0};
 let categoryScores={team1:0,team2:0,team3:0}, categoryAwarded=new Set();
+let catTurnTeam="team1", catLastTeam=null;
+let emojiGuesses={title:{team1:[],team2:[],team3:[]},artist:{team1:[],team2:[],team3:[]}};
 function teamScoreHtml(scores,title){return "<div class='card'><h3>"+title+"</h3>"+["team1","team2","team3"].map(t=>"<div class='status'><b>"+D.teams[t].name+"</b>: <b style='font-size:24px'>"+(scores[t]||0)+"</b></div>").join("")+"</div>";}
 function sendShortStandings(scores,title){const msg={type:"gameStandings",html:teamScoreHtml(scores,title)};["team1","team2","team3"].forEach(t=>{if(conns[t])conns[t].send(msg)});if(conns.screen)conns.screen.send(msg);}
 
@@ -1207,6 +1209,18 @@ function refreshConnections(){
 }
 function sendAll(msg){Object.values(conns).forEach(c=>{try{c.send(msg)}catch(e){}});}
 function onClientMessage(m){
+  if(m.type==="emojiGuess"){
+    const label=m.phase==="title"?"Titel":"Interpret";
+    const html="<div class='status'><b>"+m.team+"</b> · "+label+"-Guess: <b>"+m.value+"</b></div>";
+    if(role==="screen"){
+      let box=$("screenStatus");
+      if(box) box.insertAdjacentHTML("beforeend",html);
+    }else if(role&&role.startsWith("team")){
+      let box=$("capGame");
+      if(box) box.insertAdjacentHTML("beforeend",html);
+    }
+    return;
+  }
   if(m.type==="gameStandings"){
     clearInterval(timerInt);
     if(role==="screen"){$("screenTimer").textContent="";$("screenTitle").textContent="🏆 KURZER PUNKTSTAND";$("screenStatus").innerHTML=m.html;}
@@ -1461,7 +1475,7 @@ function startLocal(m){
     }else{
       $("screenStatus").innerHTML="<div class='muted'>Antworten noch verborgen</div>";
     }
-    countdown(m.end,$("screenTimer"));
+    if(m.noTimer){ $("screenTimer").textContent=""; } else countdown(m.end,$("screenTimer"));
     return;
   }
   let h="<h2>"+m.title+"</h2>";
@@ -1480,7 +1494,7 @@ function startLocal(m){
   $("capGame").innerHTML=h;
   document.querySelectorAll(".qanswer").forEach(b=>b.addEventListener("click",()=>submitChoice(Number(b.dataset.value),b)));
   const sb=$("sendText"); if(sb)sb.addEventListener("click",submitText);
-  countdown(m.end,$("capTimer"),()=>lockCaptain("Zeit abgelaufen"));
+  if(m.noTimer){ $("capTimer").textContent=""; } else countdown(m.end,$("capTimer"),()=>lockCaptain("Zeit abgelaufen"));
 }
 function submitChoice(v,b){
   document.querySelectorAll(".qanswer").forEach(x=>x.classList.remove("sel"));
@@ -1524,23 +1538,49 @@ function answerStatus(category=false){
   }).join("")+"</div>";
 }
 
+
+function pointStoreForMode(mode){
+  if(mode==="quiz")return quizScores;
+  if(mode==="estimate")return estimateScores;
+  if(mode==="category")return categoryScores;
+  if(mode==="emoji")return emojiPoints;
+  if(mode==="transfertinder")return ttScores;
+  if(mode==="tourpics")return tourScores;
+  return null;
+}
+function manualPointsHtml(mode){
+  const store=pointStoreForMode(mode); if(!store)return "";
+  return "<details class='status' style='margin:10px 0;border:2px solid #b68b00;background:#fffaf0'><summary style='cursor:pointer;font-weight:900'>✍️ PUNKTE MANUELL VERGEBEN / KORRIGIEREN</summary><div class='muted' style='margin:7px 0'>Für Korrekturen oder Sonderfälle. Plus und Minus wirken sofort auf den aktuellen Spielstand.</div><div class='grid'>"+["team1","team2","team3"].map(t=>"<div class='status'><b>"+D.teams[t].name+"</b><br><button class='manualPoint' data-team='"+t+"' data-delta='-1'>−1</button> <b style='font-size:22px'>"+(store[t]||0)+"</b> <button class='manualPoint good' data-team='"+t+"' data-delta='1'>+1</button></div>").join("")+"</div></details>";
+}
+function adjustManualPoint(team,delta){
+  const store=pointStoreForMode(modeName); if(!store)return;
+  store[team]=Math.max(0,(Number(store[team])||0)+Number(delta));
+  if(modeName==="transfertinder")ttBroadcast();
+  if(modeName==="tourpics"){tourSendState();tourCaptainBuzzState(buzzOpen);}
+  if(modeName==="quiz")sendShortStandings(quizScores,"ADRIA-ABITUR · MANUELLE KORREKTUR");
+  if(modeName==="estimate")sendShortStandings(estimateScores,"DICHT DANEBEN · MANUELLE KORREKTUR");
+  if(modeName==="category")sendShortStandings(categoryScores,"LISTEN-LOTTO · MANUELLE KORREKTUR");
+  if(modeName==="emoji")sendShortStandings(emojiPoints,"EMOJI-ESKALATION · MANUELLE KORREKTUR");
+  renderHost();
+}
+
 function hostRulesHtml(mode){
   const R={
-    quiz:["Adria-Abitur","20 Kroatien-Fragen. Die Teams antworten gleichzeitig auf ihren Geräten. 30 Sekunden pro Frage. Richtige Antworten zählen; am Ende entscheidet der Punktestand."],
-    estimate:["Dicht daneben","Alle Teams geben gleichzeitig eine Schätzung ab. 60 Sekunden. Je Frage: nächstes Team 2 Punkte, zweitnächstes 1 Punkt, drittes 0."],
-    category:["Listen-Lotto","Ein Team ist jeweils 35 Sekunden dran und nennt passende Begriffe. Bereits genannte Antworten zählen nicht. Falsche Antwort = Team raus; gespielt wird bis ein Team übrig ist."],
-    higherlower:["Higher or Lower","Alle ausgewählten Spieler antworten gleichzeitig: höher oder niedriger. 30 Sekunden pro Frage. Falsch oder keine Antwort = 1 Leben weg. Letzter Spieler mit Leben gewinnt."],
-    higherlowerteam:["Higher or Lower · TEAM","Team 1, Team 2 und Team 3 spielen jede Frage gleichzeitig. Nur die drei Kapitäne tippen am Handy HÖHER oder NIEDRIGER; alle anderen schauen über TV / Zuschauer mit und beraten. Der Spielleiter stellt vor dem Start für jedes Team 1–5 Leben ein. Pro Frage laufen 30 Sekunden – der Timer ist auch beim Spielleiter sichtbar. Sobald alle noch im Spiel befindlichen Teams früher getippt haben, wird sofort automatisch aufgelöst. Falsch oder keine Antwort nach 30 Sekunden = 1 Teamleben weg. Nach jeder Runde wird die richtige Antwort und die Auswertung aller Teams gezeigt."],
-    higherlowerbed:["Higher or Lower – Bedtime Story","Wie Higher or Lower: alle gleichzeitig, 30 Sekunden, falsch/keine Antwort = 1 Leben weg. Die ersten 12 Fragen sind feste Kegelclub-Fragen, danach kommen zufällige Fragen."],
-    emoji:["Emoji-Eskalation","Die Teams erraten zuerst den Songtitel (+2), danach den Interpreten (+1). Maximal 3 Versuche je Team und Phase. Der Spielleiter sieht die Lösung."],
-    transfertinder:["Transfer-Tinder","Karrierestationen werden nacheinander eingeblendet. Jeder Spieler darf für sein Team buzzern und sagt die Lösung laut. Richtige Lösung = 1 Punkt. Falsch = das komplette Team ist für diesen Fußballer raus. Kommt keiner drauf, mit „Lösen / Auflösen“ alle Stationen und die Lösung zeigen."],
-    buzzer:["Buzzer","Alle Spieler buzzern einzeln auf dem Handy. Die Reihenfolge wird gespeichert. Der Erste hat 10 Sekunden zum Antworten; bei falsch ist der Nächste dran."],
-    tourpics:["Blackout-Bilder","Foto ansehen und buzzern. Zuerst wird der Ort geraten (+2 Punkte). Das Team mit richtigem Ort darf anschließend das Jahr raten (+1 Punkt)."],
-    zimmer:["Bettgeflüster","Jan und Fabian spielen nicht mit. Die übrigen Spieler spielen mehrere Ausscheidungsrunden. Wer weiterkommt, darf sich einen Zimmerpartner aussuchen. Für den Couch-Kandidaten gibt es später noch einen Twist – erst nach der Zimmerwahl erklären."],
-    promimix:["Promi-Mix","Das KI-Mix-Bild wird Stück für Stück aufgedeckt. Sobald jemand die Kombination erkennt, wird gelöst und anschließend die Originalbilder gezeigt."]
+    quiz:{name:"Adria-Abitur",who:"Kapitäne",buzz:"Nein",text:"20 Kroatien-Fragen. Alle drei Teams antworten gleichzeitig über ihre Kapitäne. Pro Frage laufen 30 Sekunden. Richtige Antwort = 1 Punkt. Sobald alle Teams geantwortet haben, wird automatisch aufgelöst."},
+    estimate:{name:"Dicht daneben",who:"Kapitäne",buzz:"Nein",text:"Alle drei Kapitäne geben gleichzeitig eine Schätzung in Kilometern ab. Pro Frage laufen 60 Sekunden. Bei der Auflösung sehen Spielleiter, Kapitäne und TV/Zuschauer die richtige Zahl, jede Schätzung und die jeweilige Differenz. Nächstes Team = 2 Punkte, zweites = 1 Punkt, drittes = 0."},
+    category:{name:"Listen-Lotto",who:"Kapitäne",buzz:"Nein",text:"Die Teams spielen nacheinander. Das aktive Team hat 35 Sekunden für einen gültigen Begriff. Richtige Antwort = nächstes noch aktives Team wird automatisch ausgewählt. Falsche Antwort = Team ist für die Kategorie raus und nicht mehr auswählbar. Im Dropdown wird das zuletzt antwortende Team markiert. Letztes Team gewinnt die Kategorie."},
+    higherlower:{name:"Higher or Lower",who:"Einzelspieler",buzz:"Nein",text:"Alle ausgewählten Einzelspieler beantworten dieselbe Frage gleichzeitig mit HÖHER oder NIEDRIGER. 30 Sekunden pro Frage. Falsch oder keine Antwort = 1 Leben weg. Mit 0 Leben scheidet der Spieler aus; letzter Spieler mit Leben gewinnt."},
+    higherlowerteam:{name:"Higher or Lower · TEAM",who:"Kapitäne",buzz:"Nein",text:"Alle drei Teams spielen gleichzeitig; nur die Kapitäne tippen HÖHER oder NIEDRIGER. Die übrigen Spieler beraten über TV/Zuschauer mit. 1–5 Teamleben einstellbar. 30 Sekunden pro Frage; sobald alle noch aktiven Teams geantwortet haben, wird automatisch aufgelöst. Falsch oder keine Antwort = 1 Teamleben weg."},
+    higherlowerbed:{name:"Higher or Lower – Bedtime Story",who:"Einzelspieler",buzz:"Nein",text:"Wie Higher or Lower: alle ausgewählten Einzelspieler antworten gleichzeitig. 30 Sekunden pro Frage; falsch oder keine Antwort = 1 Leben weg. Die ersten 12 Fragen sind feste Kegelclub-Fragen, danach folgen zufällige Fragen."},
+    emoji:{name:"Emoji-Eskalation",who:"Kapitäne",buzz:"Nein",text:"Die Kapitäne raten ohne Countdown. Zuerst wird der Songtitel gesucht (+2 Punkte), danach der Interpret (+1 Punkt). Maximal 3 Versuche je Team und Phase. Jeder abgesendete Guess wird sofort beim Spielleiter, allen Kapitänen und auf TV/Zuschauer angezeigt."},
+    transfertinder:{name:"Transfer-Tinder",who:"Einzelspieler",buzz:"Ja",text:"Die Karrierestationen eines Fußballers werden nacheinander aufgedeckt. Alle Einzelspieler dürfen auf ihrem Handy für ihr Team buzzern und sagen die Lösung laut. Nach dem Buzz: 10 Sekunden. Richtig = 1 Punkt für das Team. Falsch = komplettes Team für diesen Fußballer raus. „Lösen / Auflösen“ zeigt alle Stationen ohne Punkt."},
+    buzzer:{name:"Buzzer",who:"Einzelspieler",buzz:"Ja",text:"Alle Einzelspieler buzzern auf dem eigenen Handy. Die Reihenfolge wird gespeichert. Der Erste hat 10 Sekunden zum Antworten. Bei einer falschen Antwort ist automatisch der nächste Spieler in der Buzzer-Reihenfolge dran."},
+    tourpics:{name:"Blackout-Bilder",who:"Kapitäne",buzz:"Ja",text:"Die Teams beraten gemeinsam, nur die Kapitäne buzzern. Das Foto wird auf TV/Zuschauer und bei den Kapitänen gezeigt. Richtiger Ort = 2 Punkte. Danach darf dasselbe Team das Jahr raten; richtiges Jahr = +1 Punkt."},
+    zimmer:{name:"Bettgeflüster",who:"Einzelspieler",buzz:"Je nach Runde",text:"Jan und Fabian spielen nicht mit. Die übrigen Spieler treten in mehreren digitalen Ausscheidungsrunden an. Wer weiterkommt, kann das restliche Spiel live verfolgen und erhält später die Zimmerwahl. Das finale Stein-Schere-Papier entscheidet den Sieger."},
+    promimix:{name:"Promi-Mix",who:"Einzelspieler / Zuschauer",buzz:"Nein",text:"Das KI-Mix-Bild wird Stück für Stück aufgedeckt. Sobald die Kombination erkannt wird, löst der Spielleiter auf und zeigt anschließend die Originalbilder."}
   };
   const r=R[mode]; if(!r)return "";
-  return "<details class='status' open style='border:2px solid #17324d;background:#f7fafc;margin-bottom:10px'><summary style='cursor:pointer;font-weight:900'>📣 REGELN VOR DEM START – "+r[0]+"</summary><div style='margin-top:7px;line-height:1.35'>"+r[1]+"</div></details>";
+  return "<div class='status' style='border:2px solid #17324d;background:#f7fafc;margin-bottom:10px'><div style='font-size:19px;font-weight:900'>📣 "+r.name+"</div><div style='display:flex;gap:7px;flex-wrap:wrap;margin:8px 0'><span class='pill'>👥 "+r.who+"</span><span class='pill'>🔴 Buzzer: "+r.buzz+"</span></div><div style='line-height:1.4'>"+r.text+"</div></div>";
 }
 
 function renderHost(){
@@ -1559,7 +1599,7 @@ function renderHost(){
   } else if(modeName==="category"){
     h="<div class='card'><h2>Listen-Lotto-Battle</h2><select id='catSelect' style='width:100%'>"+
       Object.keys(D.categories).map(x=>"<option "+(x===catName?"selected":"")+">"+x+"</option>").join("")+
-      "</select><p><select id='turnTeam'>"+["team1","team2","team3"].map(t=>"<option value='"+t+"' "+(catOut.has(t)?"disabled":"")+">"+D.teams[t].name+(catOut.has(t)?" — RAUS":"")+"</option>").join("")+"</select> <button id='catStart'>35 SEK. START</button></p>"+
+      "</select><p><select id='turnTeam'>"+["team1","team2","team3"].map(t=>"<option value='"+t+"' "+(catOut.has(t)?"disabled ":"")+(t===catTurnTeam?"selected ":"")+">"+D.teams[t].name+(catOut.has(t)?" — RAUS":"")+(t===catLastTeam?" — zuletzt geantwortet":"")+"</option>").join("")+"</select> <button id='catStart'>35 SEK. START</button></p>"+
       answerStatus(true)+teamScoreHtml(categoryScores,"LISTEN-LOTTO · PUNKTE")+"<div>"+D.categories[catName].map(x=>"<span class='pill "+(used.has(norm(x))?"check":"")+"'>"+x+"</span>").join("")+"</div>"+categoryProgressHtml(used.size,D.categories[catName].length)+"</div>";
   }
 
@@ -1640,19 +1680,20 @@ function renderHost(){
       (emojiPhase==="title"?"<button id='emojiRevealTitle' class='secondary'>TITEL MANUELL AUFLÖSEN</button>":"")+
       (emojiPhase==="artist"?"<div class='status ok'><b>Titel: "+s[1]+"</b></div><button id='emojiRevealArtist' class='secondary'>INTERPRET MANUELL AUFLÖSEN / WEITER</button>":"")+
       (emojiPhase==="done"?"<div class='status ok'><b>"+s[1]+"</b> · "+s[2]+"</div>":"")+
-      "<div class='card'>"+["team1","team2","team3"].map(t=>"<div class='status'><b>"+D.teams[t].name+"</b> · Punkte: <b style='font-size:22px'>"+("I".repeat(emojiPoints[t])||"–")+"</b> <span class='muted'>("+emojiPoints[t]+")</span> · Versuche: "+emojiAttempts[t]+"/3</div>").join("")+"</div>"+
+      "<div class='card'>"+["team1","team2","team3"].map(t=>"<div class='status'><b>"+D.teams[t].name+"</b> · Punkte: <b style='font-size:22px'>"+("I".repeat(emojiPoints[t])||"–")+"</b> <span class='muted'>("+emojiPoints[t]+")</span> · Versuche: "+emojiAttempts[t]+"/3<br><span class='muted'>Titel-Guesses: "+(emojiGuesses.title[t].join(" · ")||"—")+"<br>Interpret-Guesses: "+(emojiGuesses.artist[t].join(" · ")||"—")+"</span></div>").join("")+"</div>"+
       "<div class='grid'><button id='emojiPrev' class='secondary'>←</button><button id='emojiNext'>NÄCHSTER SONG →</button></div></div>";
   }
-  $("hostGame").innerHTML=hostRulesHtml(modeName)+h;
+  $("hostGame").innerHTML=hostRulesHtml(modeName)+manualPointsHtml(modeName)+h;
   bindHostControls();
 }
 function bindHostControls(){
+  document.querySelectorAll(".manualPoint").forEach(b=>b.addEventListener("click",()=>adjustManualPoint(b.dataset.team,Number(b.dataset.delta))));
   const start=$("startBtn"), reveal=$("revealBtn"), prev=$("prevBtn"), next=$("nextBtn");
   if(start)start.addEventListener("click",()=>startRound(modeName==="estimate"?60:30));
   if(reveal)reveal.addEventListener("click",()=>modeName==="quiz"?revealQuiz():revealEstimate());
   if(prev)prev.addEventListener("click",()=>{answers={};if(modeName==="quiz")qidx=Math.max(0,qidx-1);else eidx=Math.max(0,eidx-1);renderHost();});
   if(next)next.addEventListener("click",()=>{answers={};if(modeName==="quiz")qidx=Math.min(D.quiz.length-1,qidx+1);else eidx=Math.min(D.estimate.length-1,eidx+1);renderHost();});
-  const cs=$("catSelect"); if(cs)cs.addEventListener("change",()=>{catName=cs.value;used=new Set();catOut=new Set();answers={};renderHost();});
+  const cs=$("catSelect"); if(cs)cs.addEventListener("change",()=>{catName=cs.value;used=new Set();catOut=new Set();answers={};catTurnTeam="team1";catLastTeam=null;renderHost();});
   const catStart=$("catStart"); if(catStart)catStart.addEventListener("click",startCategory);
   document.querySelectorAll(".acceptCat").forEach(b=>b.addEventListener("click",()=>acceptCategory(b.dataset.team)));
   document.querySelectorAll(".rejectCat").forEach(b=>b.addEventListener("click",()=>rejectCategory(b.dataset.team)));
@@ -1693,6 +1734,7 @@ function bindHostControls(){
   const bry=$("buzzRightBtn"); if(bry)bry.addEventListener("click",finishBuzzAnswer);
   const es=$("emojiStart"); if(es)es.addEventListener("click",startEmojiTitle);
   const er=$("emojiRevealTitle"); if(er)er.addEventListener("click",()=>startEmojiArtist(null));
+  const era=$("emojiRevealArtist"); if(era)era.addEventListener("click",emojiManualArtistReveal);
   const ep=$("emojiPrev"); if(ep)ep.addEventListener("click",()=>changeEmoji(-1));
   const en=$("emojiNext"); if(en)en.addEventListener("click",()=>changeEmoji(1));
   const zstart=$("zgStart"); if(zstart)zstart.addEventListener("click",zgStartRound);
@@ -1737,16 +1779,26 @@ function revealEstimate(auto=false){
     arr.forEach((x,i)=>estimateScores[x[0]]=(estimateScores[x[0]]||0)+(pts[i]||0));
     estimateAwarded.add(eidx);
   }
-  let html="<p><b>Lösung: "+sol.toLocaleString("de-DE")+" km</b></p>";
-  arr.forEach((x,i)=>html+="<div class='status "+(i===0?"ok":"")+"'><b>"+(i+1)+". Platz · "+(pts[i]||0)+" Punkt"+((pts[i]||0)===1?"":"e")+":</b> "+D.teams[x[0]].name+" – "+x[1].toLocaleString("de-DE")+" km</div>");
+  let html="<p><b>Richtige Zahl: "+sol.toLocaleString("de-DE")+" km</b></p>";
+  ["team1","team2","team3"].forEach(t=>{
+    const row=arr.find(x=>x[0]===t);
+    if(!row){
+      html+="<div class='status'><b>"+D.teams[t].name+"</b> · keine Schätzung</div>";
+      return;
+    }
+    const place=arr.indexOf(row), got=pts[place]||0;
+    html+="<div class='status "+(place===0?"ok":"")+"'><b>"+(place+1)+". Platz · "+got+" Punkt"+(got===1?"":"e")+": "+D.teams[t].name+"</b><br>Geschätzt: <b>"+row[1].toLocaleString("de-DE")+" km</b> · Differenz: <b>"+row[2].toLocaleString("de-DE")+" km</b></div>";
+  });
   html+=estimateScoreHtml(estimateScores);
   const hr=$("hostReveal"); if(hr)hr.innerHTML="<div class='card'>"+html+"</div>";
-  sendAll({type:"reveal",html,scores:{...estimateScores},scoreKind:"estimate",kind:"estimate"}); sendShortStandings(estimateScores,"DICHT DANEBEN · NACH RUNDE "+(eidx+1));
+  sendAll({type:"reveal",html,scores:{...estimateScores},scoreKind:"estimate",kind:"estimate"});
+  sendShortStandings(estimateScores,"DICHT DANEBEN · NACH RUNDE "+(eidx+1));
   renderHost();
   const hr2=$("hostReveal"); if(hr2)hr2.innerHTML="<div class='card'>"+html+"</div>";
 }
 function startCategory(){
   answers={}; const t=$("turnTeam").value;
+  catTurnTeam=t;
   if(!t || catOut.has(t)){alert("Dieses Team ist für diese Kategorie bereits raus.");renderHost();return;}
   const end=Date.now()+35000;
   const msg={type:"start",kind:"category",end,title:catName,usedCount:used.size,totalCount:D.categories[catName].length};
@@ -1825,6 +1877,7 @@ function emojiCorrect(input,target){
 }
 function resetEmojiRound(){
   emojiPhase="idle"; emojiWinner=null; emojiAttempts={team1:0,team2:0,team3:0}; emojiPoints={team1:0,team2:0,team3:0}; answers={};
+  emojiGuesses={title:{team1:[],team2:[],team3:[]},artist:{team1:[],team2:[],team3:[]}};
 }
 function changeEmoji(d){
   emojiIdx=Math.max(0,Math.min(D.emoji.length-1,emojiIdx+d)); resetEmojiRound(); sendAll({type:"reset"}); renderHost();
@@ -1842,6 +1895,9 @@ function handleEmojiAnswer(team,value){
   const s=D.emoji[emojiIdx];
   if(emojiAttempts[team]>=3){sendEmojiFeedback(team,"Keine Versuche mehr.");return;}
   emojiAttempts[team]++;
+  const phaseKey=emojiPhase==="title"?"title":"artist";
+  emojiGuesses[phaseKey][team].push(String(value));
+  sendAll({type:"emojiGuess",phase:phaseKey,team:D.teams[team].name,value:String(value)});
   const target=emojiPhase==="title"?s[1]:s[2];
   if(emojiCorrect(value,target)){
     if(emojiPhase==="title"){
@@ -2244,10 +2300,20 @@ function categoryMatches(input,list){
   if(matches.length)return matches;
   const one=fuzzyMatch(input,list); return one?[one]:[];
 }
+function nextCategoryTeam(after){
+  const order=["team1","team2","team3"], start=order.indexOf(after);
+  for(let i=1;i<=order.length;i++){
+    const t=order[(start+i)%order.length];
+    if(!catOut.has(t)) return t;
+  }
+  return null;
+}
 function rejectCategory(t){
   const a=answers[t];
   if(a===undefined)return;
   catOut.add(t);
+  catLastTeam=t;
+  catTurnTeam=nextCategoryTeam(t);
   const msg={type:"categoryRejected",team:D.teams[t].name,answer:String(a),usedCount:used.size,totalCount:D.categories[catName].length};
   ["team1","team2","team3"].forEach(k=>{if(conns[k])conns[k].send(msg);});
   if(conns.screen)conns.screen.send(msg);
@@ -2282,6 +2348,8 @@ function acceptCategory(t){
   const fresh=matches.filter(x=>!used.has(norm(x)));
   if(!fresh.length){alert("Schon genannt: "+matches.join(" + "));return;}
   fresh.forEach(x=>used.add(norm(x)));
+  catLastTeam=t;
+  catTurnTeam=nextCategoryTeam(t);
   const msg={type:"categoryAccepted",team:D.teams[t].name,answer:String(a),matches:fresh,usedCount:used.size,totalCount:D.categories[catName].length};
   ["team1","team2","team3"].forEach(k=>{if(conns[k])conns[k].send(msg);});
   if(conns.screen)conns.screen.send(msg);
