@@ -1071,6 +1071,71 @@ function zgDuoHtml(){
 
 let emojiIdx=0, emojiPhase="idle", emojiWinner=null, emojiAttempts={team1:0,team2:0,team3:0}, emojiPoints={team1:0,team2:0,team3:0};
 
+/* ===== CRASH-SAFE SPIELSTÄNDE ===== */
+const GAME_SAVE_KEY="saufynauten_allgames_v1";
+function gsArr(v){return Array.from(v||[])}
+function gsSet(v){return new Set(Array.isArray(v)?v:[])}
+function saveAllGameStates(){
+ try{
+  localStorage.setItem(GAME_SAVE_KEY,JSON.stringify({
+   modeName,
+   quiz:{qidx,quizScores,quizAwarded:gsArr(quizAwarded)},
+   estimate:{eidx,estimateScores,estimateAwarded:gsArr(estimateAwarded)},
+   category:{categoryScores,categoryAwarded:gsArr(categoryAwarded),catTurnTeam,catLastTeam,catName,catOut:gsArr(catOut),used:gsArr(used)},
+   higherlower:{hl},higherlowerteam:{hlt},higherlowerbed:{hlb},
+   emoji:{emojiIdx,emojiPhase,emojiWinner,emojiAttempts,emojiPoints,emojiGuesses},
+   transfertinder:{TT_PLAYERS,ttIdx,ttReveal,ttPhase,ttBuzzOrder,ttAnswerIndex,ttAnswerEnd,ttScores,ttWinner,ttLockedTeams:gsArr(ttLockedTeams)},
+   buzzer:{buzzOrder,buzzOpen,buzzAnswerIndex,buzzAnswerEnd,buzzExpired},
+   tourpics:{tourIdx,tourPhase,tourScores,tourLocationWinner,tourStandingsShown},
+   promimix:{promiIdx,promiReveal,promiSolved},
+   zimmer:{zgRound,zgPhase,zgAnswers,zgDuos,zgOut:gsArr(zgOut),zgWinner,zgReactionStarts,zgRpsPlayers,zgRpsLives,zgRpsChoices,zgRpsToken,zgRpsEnd}
+  }));
+ }catch(e){console.warn("Autosave fehlgeschlagen",e)}
+}
+function restoreAllGameStates(){
+ try{
+  const x=JSON.parse(localStorage.getItem(GAME_SAVE_KEY)||"null");if(!x)return;
+  if(x.modeName)modeName=x.modeName;
+  if(x.quiz){qidx=x.quiz.qidx??qidx;quizScores=x.quiz.quizScores||quizScores;quizAwarded=gsSet(x.quiz.quizAwarded)}
+  if(x.estimate){eidx=x.estimate.eidx??eidx;estimateScores=x.estimate.estimateScores||estimateScores;estimateAwarded=gsSet(x.estimate.estimateAwarded)}
+  if(x.category){categoryScores=x.category.categoryScores||categoryScores;categoryAwarded=gsSet(x.category.categoryAwarded);catTurnTeam=x.category.catTurnTeam||catTurnTeam;catLastTeam=x.category.catLastTeam??catLastTeam;catName=x.category.catName||catName;catOut=gsSet(x.category.catOut);used=gsSet(x.category.used)}
+  if(x.higherlower)hl=x.higherlower.hl||null;
+  if(x.higherlowerteam)hlt=x.higherlowerteam.hlt||null;
+  if(x.higherlowerbed)hlb=x.higherlowerbed.hlb||null;
+  if(x.emoji){emojiIdx=x.emoji.emojiIdx??emojiIdx;emojiPhase=x.emoji.emojiPhase||emojiPhase;emojiWinner=x.emoji.emojiWinner??null;emojiAttempts=x.emoji.emojiAttempts||emojiAttempts;emojiPoints=x.emoji.emojiPoints||emojiPoints;emojiGuesses=x.emoji.emojiGuesses||emojiGuesses}
+  if(x.transfertinder){TT_PLAYERS=x.transfertinder.TT_PLAYERS||TT_PLAYERS;ttIdx=x.transfertinder.ttIdx??ttIdx;ttReveal=x.transfertinder.ttReveal||0;ttPhase=x.transfertinder.ttPhase||"idle";ttBuzzOrder=x.transfertinder.ttBuzzOrder||[];ttAnswerIndex=x.transfertinder.ttAnswerIndex||0;ttAnswerEnd=x.transfertinder.ttAnswerEnd||0;ttScores=x.transfertinder.ttScores||ttScores;ttWinner=x.transfertinder.ttWinner??null;ttLockedTeams=gsSet(x.transfertinder.ttLockedTeams)}
+  if(x.buzzer){buzzOrder=x.buzzer.buzzOrder||[];buzzOpen=!!x.buzzer.buzzOpen;buzzAnswerIndex=x.buzzer.buzzAnswerIndex||0;buzzAnswerEnd=x.buzzer.buzzAnswerEnd||0;buzzExpired=!!x.buzzer.buzzExpired}
+  if(x.tourpics){tourIdx=x.tourpics.tourIdx??tourIdx;tourPhase=x.tourpics.tourPhase||tourPhase;tourScores=x.tourpics.tourScores||tourScores;tourLocationWinner=x.tourpics.tourLocationWinner??null;tourStandingsShown=!!x.tourpics.tourStandingsShown}
+  if(x.promimix){promiIdx=x.promimix.promiIdx??promiIdx;promiReveal=x.promimix.promiReveal||0;promiSolved=!!x.promimix.promiSolved}
+  if(x.zimmer){zgRound=x.zimmer.zgRound??zgRound;zgPhase=x.zimmer.zgPhase||zgPhase;zgAnswers=x.zimmer.zgAnswers||{};zgDuos=x.zimmer.zgDuos||[];zgOut=gsSet(x.zimmer.zgOut);zgWinner=x.zimmer.zgWinner??null;zgReactionStarts=x.zimmer.zgReactionStarts||{};zgRpsPlayers=x.zimmer.zgRpsPlayers||[];zgRpsLives=x.zimmer.zgRpsLives||{};zgRpsChoices=x.zimmer.zgRpsChoices||{};zgRpsToken=x.zimmer.zgRpsToken||0;zgRpsEnd=x.zimmer.zgRpsEnd||0}
+ }catch(e){console.warn("Restore fehlgeschlagen",e)}
+}
+function resetCurrentGame(){
+ if(!confirm("Wirklich dieses Spiel komplett zurücksetzen?"))return;
+ clearInterval(timerInt);clearInterval(hlTimer);clearInterval(hltTimer);clearInterval(hlbTimer);clearInterval(ttTimer);clearInterval(buzzAnswerTimer);clearInterval(promiTimer);clearInterval(zgRpsTimer);answers={};
+ if(modeName==="quiz"){qidx=0;quizScores={team1:0,team2:0,team3:0};quizAwarded=new Set()}
+ else if(modeName==="estimate"){eidx=0;estimateScores={team1:0,team2:0,team3:0};estimateAwarded=new Set()}
+ else if(modeName==="category"){categoryScores={team1:0,team2:0,team3:0};categoryAwarded=new Set();catTurnTeam="team1";catLastTeam=null;catName=Object.keys(D.categories)[0];catOut=new Set();used=new Set()}
+ else if(modeName==="higherlower"){hl=null}
+ else if(modeName==="higherlowerteam"){hlt=null}
+ else if(modeName==="higherlowerbed"){hlb=null}
+ else if(modeName==="emoji"){emojiIdx=0;emojiPhase="idle";emojiWinner=null;emojiAttempts={team1:0,team2:0,team3:0};emojiPoints={team1:0,team2:0,team3:0};emojiGuesses={title:{team1:[],team2:[],team3:[]},artist:{team1:[],team2:[],team3:[]}}}
+ else if(modeName==="transfertinder"){ttIdx=0;ttReveal=0;ttPhase="idle";ttBuzzOrder=[];ttAnswerIndex=0;ttAnswerEnd=0;ttScores={team1:0,team2:0,team3:0};ttWinner=null;ttLockedTeams=new Set()}
+ else if(modeName==="buzzer"){buzzOrder=[];buzzOpen=false;buzzAnswerIndex=0;buzzAnswerEnd=0;buzzExpired=false}
+ else if(modeName==="tourpics"){tourIdx=0;tourPhase="idle";tourScores={};tourLocationWinner=null;tourStandingsShown=false}
+ else if(modeName==="promimix"){promiIdx=0;promiReveal=0;promiSolved=false}
+ else if(modeName==="zimmer"){zgResetGame();saveAllGameStates();return}
+ saveAllGameStates();sendAll({type:"reset"});renderHost();
+}
+function gameResetHtml(){
+ return "<div class='status' style='margin:10px 0;border:2px solid #c62828;background:#fff5f5'><b>💾 AUTOSAVE AKTIV</b><br><span class='muted'>Der aktuelle Spielstand wird automatisch im Browser gespeichert.</span><br><button id='gameHardReset' class='danger' style='margin-top:8px'>♻️ DIESES SPIEL ZURÜCKSETZEN</button></div>";
+}
+restoreAllGameStates();
+setInterval(saveAllGameStates,750);
+window.addEventListener("beforeunload",saveAllGameStates);
+/* ===== /CRASH-SAFE SPIELSTÄNDE ===== */
+
+
 function show(view){
   ["setup","hostView","captainView","playerView","screenView"].forEach(id=>$(id).classList.add("hide"));
   $(view).classList.remove("hide");
@@ -1691,8 +1756,9 @@ function renderHost(){
       "<div class='card'>"+["team1","team2","team3"].map(t=>"<div class='status'><b>"+D.teams[t].name+"</b> · Punkte: <b style='font-size:22px'>"+("I".repeat(emojiPoints[t])||"–")+"</b> <span class='muted'>("+emojiPoints[t]+")</span> · Versuche: "+emojiAttempts[t]+"/3<br><span class='muted'>Titel-Guesses: "+(emojiGuesses.title[t].join(" · ")||"—")+"<br>Interpret-Guesses: "+(emojiGuesses.artist[t].join(" · ")||"—")+"</span></div>").join("")+"</div>"+
       "<div class='grid'><button id='emojiPrev' class='secondary'>←</button><button id='emojiNext'>NÄCHSTER SONG →</button></div></div>";
   }
-  $("hostGame").innerHTML=hostRulesHtml(modeName)+manualPointsHtml(modeName)+h;
+  $("hostGame").innerHTML=gameResetHtml()+hostRulesHtml(modeName)+manualPointsHtml(modeName)+h;
   bindHostControls();
+  const ghr=$("gameHardReset");if(ghr)ghr.addEventListener("click",resetCurrentGame);
 }
 function bindHostControls(){
   document.querySelectorAll(".manualPoint").forEach(b=>b.addEventListener("click",()=>adjustManualPoint(b.dataset.team,Number(b.dataset.delta))));
@@ -2455,7 +2521,7 @@ function qkSubmit(team,bets,c){
  const used=new Set((qk.bets[team]||[]).map(b=>b.market)); let bal=qkBalance(team),accepted=0;
  for(const x of bets){
    const m=qkMarket(x.market),o=m&&qkOpt(x.market,x.option),st=Number(x.stake);
-   if(!m||!o||used.has(x.market)||!Number.isInteger(st)||st<1||st>25||st>bal)continue;
+   if(!m||!o||used.has(x.market)||!Number.isInteger(st)||st<1||st>20||st>bal)continue;
    qk.bets[team].push({id:Date.now()+"_"+Math.random().toString(36).slice(2),market:m.id,marketName:m.name,option:o[0],label:o[1],odds:o[2],stake:st,status:"open"});
    used.add(m.id);bal-=st;accepted++;
  }
@@ -2487,20 +2553,23 @@ function qkClientRender(m){
  if(!team)return;
  qkSlip=qkSlip.filter(x=>!((state.bets[team]||[]).some(b=>b.market===x.market)));
  const locked=new Set((state.bets[team]||[]).map(b=>b.market));
- let h="<div class='qk-head'><h2>🎰 QUOTEN-KOMA</h2><div class='qk-balance'>"+qkMoney(qkBalance(team))+"</div><div>verfügbares Guthaben · max. 25 € je Markt</div><div class='qk-status'>"+(state.finished?"ABGERECHNET":state.open?"WETTEN GEÖFFNET":"WETTSCHLUSS")+"</div></div>";
+ let h="<div class='qk-head'><h2>🎰 QUOTEN-KOMA</h2><div class='qk-balance'>"+qkMoney(qkBalance(team))+"</div><div>verfügbares Guthaben · <span style='display:inline-block;margin-top:8px;padding:8px 12px;border:3px solid #b00020;border-radius:12px;background:#fff3f3;color:#8b0018;font-size:20px;font-weight:1000'>⚠️ MAXIMAL 20 € PRO WETTE</span></div><div class='qk-status'>"+(state.finished?"ABGERECHNET":state.open?"WETTEN GEÖFFNET":"WETTSCHLUSS")+"</div></div>";
  if(state.published||state.finished)h+=qkBetsHtml(null,true)+qkRankHtml(); else h+=qkBetsHtml(team,false);
  if(state.open&&!state.finished){
    const cats=[...new Set(markets.map(x=>x.cat))];h+="<div class='card'><h2>Wettangebot</h2>"+cats.map(cat=>"<h2>"+cat+"</h2>"+markets.filter(x=>x.cat===cat).map(mm=>"<div class='qk-market "+(mm.boost?"qk-boost":"")+"'><h3>"+mm.name+(locked.has(mm.id)?" 🔒":"")+"</h3><div class='qk-odds'>"+mm.o.map(o=>"<button class='qk-pick "+(qkSlip.some(x=>x.market===mm.id&&x.option===o[0])?"sel":"")+"' data-m='"+mm.id+"' data-o='"+o[0]+"' "+(locked.has(mm.id)?"disabled":"")+">"+o[1]+" <b>"+Number(o[2]).toFixed(2).replace(".",",")+"</b></button>").join("")+"</div></div>").join("")).join("")+"</div>";
-   h+="<div class='qk-slip'><h3>🧾 Wettschein</h3><div id='qkSlipRows'>"+(qkSlip.length?qkSlip.map((x,i)=>{const mm=markets.find(z=>z.id===x.market),o=mm.o.find(z=>z[0]===x.option);return "<div class='status'><b>"+o[1]+" @ "+o[2].toFixed(2).replace(".",",")+"</b><br>"+mm.name+" · Einsatz <input class='qkStake' data-i='"+i+"' type='number' min='1' max='25' step='1' value='"+(x.stake||5)+"'> € <button class='qkRemove danger' data-i='"+i+"'>×</button></div>"}).join(""):"Noch nichts ausgewählt.")+"</div><button id='qkSubmit' class='good' style='width:100%' "+(!qkSlip.length?"disabled":"")+">WETTEN VERBINDLICH ABGEBEN</button></div>";
+   h+="<div class='qk-slip'><h3>🧾 Wettschein</h3><div id='qkSlipRows'>"+(qkSlip.length?qkSlip.map((x,i)=>{const mm=markets.find(z=>z.id===x.market),o=mm.o.find(z=>z[0]===x.option);return "<div class='status'><b>"+o[1]+" @ "+o[2].toFixed(2).replace(".",",")+"</b><br>"+mm.name+" · Einsatz <input class='qkStake' data-i='"+i+"' type='number' min='1' max='20' step='1' value='"+(x.stake||5)+"'> € <button class='qkRemove danger' data-i='"+i+"'>×</button></div>"}).join(""):"Noch nichts ausgewählt.")+"</div><button id='qkSubmit' class='good' style='width:100%' "+(!qkSlip.length?"disabled":"")+">WETTEN VERBINDLICH ABGEBEN</button></div>";
  }
  $("capGame").innerHTML=h; qkBindClient();
 }
 function qkBindClient(){
  document.querySelectorAll(".qk-pick").forEach(b=>b.onclick=()=>{const mid=b.dataset.m,oid=b.dataset.o; qkSlip=qkSlip.filter(x=>x.market!==mid);qkSlip.push({market:mid,option:oid,stake:5});qkClientRender({state:qkPublicState(),markets:QK_MARKETS});});
- document.querySelectorAll(".qkStake").forEach(e=>e.onchange=()=>{let v=Math.max(1,Math.min(25,Math.round(Number(e.value)||1)));qkSlip[+e.dataset.i].stake=v;e.value=v;});
+ document.querySelectorAll(".qkStake").forEach(e=>{
+   const clampStake=()=>{let raw=Number(e.value),over=raw>20,v=Math.max(1,Math.min(20,Math.round(raw||1)));qkSlip[+e.dataset.i].stake=v;e.value=v;if(over)alert("Maximal 20 € pro Wette. Der Einsatz wurde automatisch auf 20 € reduziert.");};
+   e.onchange=clampStake;e.onblur=clampStake;
+ });
  document.querySelectorAll(".qkRemove").forEach(b=>b.onclick=()=>{qkSlip.splice(+b.dataset.i,1);qkClientRender({state:qkPublicState(),markets:QK_MARKETS});});
  const sub=$("qkSubmit");if(sub)sub.onclick=()=>{
-   document.querySelectorAll(".qkStake").forEach(e=>{qkSlip[+e.dataset.i].stake=Math.max(1,Math.min(25,Math.round(Number(e.value)||1)));});
+   document.querySelectorAll(".qkStake").forEach(e=>{qkSlip[+e.dataset.i].stake=Math.max(1,Math.min(20,Math.round(Number(e.value)||1)));});
    if(!qkSlip.length){alert("Der Wettschein ist leer.");return;}
    const total=qkSlip.reduce((a,x)=>a+x.stake,0);
    if(total>qkBalance(role)){alert("Nicht genug Guthaben. Verfügbar: "+qkMoney(qkBalance(role)));return;}
