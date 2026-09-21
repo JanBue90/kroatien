@@ -1151,10 +1151,11 @@ function joinPlayer(){
   }
 }
 function onHostMessage(m,c){
+  if(m&&m.type==="qkBet" && modeName==="quotenkoma"){ qkSubmit(m.team,m.bets); return; }
   if(m.type==="hlChoice" && modeName==="higherlower") { hlChoose(m.choice,m.name); return; }
   if(m.type==="hltChoice" && modeName==="higherlowerteam") { hltChoose(m.choice,m.team); return; }
   if(m.type==="hlbChoice" && modeName==="higherlowerbed") { hlbChoose(m.choice,m.name); return; }
-  if(m.type==="join"){conns[m.role]=c; refreshConnections();}
+  if(m.type==="join"){conns[m.role]=c; refreshConnections(); if(modeName==="quotenkoma") setTimeout(()=>qkSendTo(m.role),50);}
   if(m.type==="tourBuzz" && modeName==="tourpics" && buzzOpen && ["team1","team2","team3"].includes(m.team) && !buzzOrder.includes(m.team)){
     buzzOrder.push(m.team); if(buzzOrder.length===1){buzzAnswerIndex=0;startBuzzAnswerTimer();}
     tourCaptainBuzzState(true); if(conns.screen)conns.screen.send(buzzBoardMessage()); renderHost(); return;
@@ -1212,6 +1213,7 @@ function refreshConnections(){
 }
 function sendAll(msg){Object.values(conns).forEach(c=>{try{c.send(msg)}catch(e){}});}
 function onClientMessage(m){
+  if(m&&m.type==="qkState"){ qkClientRender(m); return; }
   if(m.type==="emojiGuess"){
     const label=m.phase==="title"?"Titel":"Interpret";
     const html="<div class='status'><b>"+m.team+"</b> · "+label+"-Guess: <b>"+m.value+"</b></div>";
@@ -1527,6 +1529,7 @@ function setMode(m){
   }
   if(m==="emoji" && !["idle","title","artist","done"].includes(emojiPhase)) resetEmojiRound();
   renderHost();
+  if(m==="quotenkoma") qkBroadcast();
   if(m==="higherlower" && hl) hlBroadcast();
   if(m==="higherlowerteam" && hlt) hltBroadcast();
   if(m==="higherlowerbed" && hlb) hlbBroadcast();
@@ -1587,6 +1590,7 @@ function hostRulesHtml(mode){
 }
 
 function renderHost(){
+  if(modeName==="quotenkoma"){ $("hostGame").innerHTML=qkHostHtml(); qkBindHost(); qkBroadcast(); return; }
   let h="";
   if(modeName==="quiz"){
     const q=D.quiz[qidx];
@@ -2479,10 +2483,6 @@ function qkBindHost(){
  const r=$("qkReset");if(r)r.onclick=()=>{if(confirm("Wirklich ALLE Quoten-Koma-Wetten und Ergebnisse löschen?")){qk=qkDefault();qkSave();renderHost();}};
  document.querySelectorAll(".qkSettle").forEach(b=>b.onclick=()=>qkSettle(b.dataset.m,b.dataset.o));document.querySelectorAll(".qkUndo").forEach(b=>b.onclick=()=>qkUndo(b.dataset.m));
 }
-const _qkOldHostMsg=onHostMessage;onHostMessage=function(m,c){if(m&&m.type==="join"){_qkOldHostMsg(m,c);if(modeName==="quotenkoma")setTimeout(()=>qkSendTo(m.role),50);return;}if(m&&m.type==="qkBet"&&modeName==="quotenkoma"){qkSubmit(m.team,m.bets);return;}_qkOldHostMsg(m,c);};
-const _qkOldClientMsg=onClientMessage;onClientMessage=function(m){if(m&&m.type==="qkState"){qkClientRender(m);return;}_qkOldClientMsg(m);};
-const _qkOldSetMode=setMode;setMode=function(m){_qkOldSetMode(m);if(m==="quotenkoma")qkBroadcast();};
-const _qkOldRenderHost=renderHost;renderHost=function(){if(modeName==="quotenkoma"){$("hostGame").innerHTML=qkHostHtml();qkBindHost();qkBroadcast();return;}_qkOldRenderHost();};
 /* =================== /QUOTEN-KOMA ===================== */
 
 $("hostBtn").addEventListener("click",()=>{
