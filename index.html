@@ -169,9 +169,6 @@ button,select,input{max-width:100%;min-width:0}
   #tourCaptainBuzz{font-size:24px!important;padding:13px!important;margin:5px 0!important}
 }
 
-
-/* QUOTEN-KOMA */
-.qk-head{background:linear-gradient(135deg,#220033,#5a008a);color:#fff;border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:0 8px 24px #22003333}.qk-head h2{margin:0;font-size:30px}.qk-balance{font-size:34px;font-weight:1000}.qk-market{border:1px solid #d7c4e7;border-radius:14px;padding:12px;margin:10px 0;background:#fff}.qk-market h3{margin:0 0 8px}.qk-odds{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:7px}.qk-pick{border:2px solid #6d2a91;background:#f7effc;color:#321042;text-align:left}.qk-pick b{float:right}.qk-pick.sel{background:#5a008a;color:#fff}.qk-slip{position:sticky;bottom:8px;background:#170022;color:#fff;border:2px solid #a950d8;border-radius:16px;padding:12px;margin-top:12px;z-index:3}.qk-slip input{width:75px;background:#fff;color:#111;border:2px solid #a950d8}.qk-slip .status{background:#fff;color:#111;border-color:#d7c4e7}.qk-slip .status b{color:#321042}.qk-slip #qkSlipRows{color:#fff}.qk-slip button.good{background:#1f7a3d!important;color:#fff!important;border-color:#14552a!important}.qk-slip input{width:75px}.qk-table{width:100%;border-collapse:collapse}.qk-table th,.qk-table td{padding:7px;border-bottom:1px solid #ddd;text-align:left}.qk-win{background:#ddf7e5!important}.qk-lose{opacity:.6}.qk-boost{border:3px solid #ef7d00;background:#fff7e8}.qk-rank{font-size:24px;font-weight:900}.qk-status{font-weight:900;text-transform:uppercase;letter-spacing:.5px}.qk-danger{background:#8b0000;color:white}.qk-tv-team{border:2px solid #5a008a;border-radius:14px;padding:12px;margin:10px 0;background:#fff}.qk-small{font-size:12px;opacity:.75}
 </style>
 </head>
 <body>
@@ -194,7 +191,7 @@ button,select,input{max-width:100%;min-width:0}
 </div>
 <button id="screenJoinBtn" class="hide" style="width:100%;margin-top:10px">TV / ZUSCHAUER VERBINDEN</button>
 <div id="playerChoices" class="hide" style="margin-top:10px"><select id="playerSelect" style="width:100%">
-<option>Kevin</option><option>Markus</option><option>Stefan</option><option>Kay</option><option>Michel</option><option>Patrick</option><option>Mario</option><option>Fabian</option><option>Timo</option><option>Andre</option><option>Klemm</option><option>Swen</option>
+<option>Kevin</option><option>Markus</option><option>Stefan</option><option>Michel</option><option>Patrick</option><option>Mario</option><option>Fabian</option><option>Timo</option><option>Andre</option><option>Klemm</option><option>Swen</option>
 </select><button id="playerJoinBtn" type="button" style="width:100%;margin-top:10px">ALS SPIELER VERBINDEN</button></div>
 </div>
 </section>
@@ -204,7 +201,7 @@ button,select,input{max-width:100%;min-width:0}
 <div class="tabs">
 <button data-mode="quiz">Adria-Abitur</button>
 <button data-mode="estimate">Dicht daneben</button>
-<button data-mode="category">Listen-Lotto</button><button data-mode="higherlower">Higher or Lower</button><button data-mode="higherlowerteam">Higher or Lower · TEAM</button><button data-mode="higherlowerbed">Higher or Lower - Bedtime Story</button><button data-mode="emoji">Emoji-Eskalation</button><button data-mode="transfertinder">⚽ Transfer-Tinder</button><button data-mode="quotenkoma" style="background:#3b0066;color:#fff;border-color:#7b2cbf">🎰 QUOTEN-KOMA</button><button data-mode="buzzer">Buzzer</button><button data-mode="tourpics">Blackout-Bilder</button><button data-mode="zimmer" class="good" style="font-size:17px;border:3px solid #0d6639">🏨 BETTGEFLÜSTER – ZIMMER AUSLOSEN</button>
+<button data-mode="category">Listen-Lotto</button><button data-mode="higherlower">Higher or Lower</button><button data-mode="higherlowerteam">Higher or Lower · TEAM</button><button data-mode="higherlowerbed">Higher or Lower - Bedtime Story</button><button data-mode="emoji">Emoji-Eskalation</button><button data-mode="transfertinder">⚽ Transfer-Tinder</button><button data-mode="buzzer">Buzzer</button><button data-mode="tourpics">Blackout-Bilder</button><button data-mode="zimmer" class="good" style="font-size:17px;border:3px solid #0d6639">🏨 BETTGEFLÜSTER – ZIMMER AUSLOSEN</button>
 </div>
 <div id="hostGame"></div>
 </section>
@@ -220,10 +217,11 @@ button,select,input{max-width:100%;min-width:0}
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.5/dist/peerjs.min.js"></script>
-<script src="data.js?v=9"></script>
+<script src="data.js?v=8"></script>
 <script>
 "use strict";
 const D=window.GAME_DATA;
+if(D&&D.teams&&D.teams.team1&&D.teams.team1.players) D.teams.team1.players=String(D.teams.team1.players).replace(/\s*[·,/]?\s*Kay\s*/g," ").trim();
 // v27 Listen-Lotto-Fortschritt + Quiz-Punktestand/Auto-Auflösung.
 // v26 Listen-Lotto-Datenfix: Bei Ein-Buchstaben-KFZ werden die Staedte geraten; fehlender Bond-Titel ergaenzt.
 (()=>{
@@ -259,10 +257,10 @@ if(!Array.isArray(D.emoji)){
 const $=id=>document.getElementById(id);
 let peer=null, conns={}, conn=null, role=null, room=null, modeName="quiz";
 // v29 Higher or Lower – eigenständiges Einzelspiel innerhalb der Haupt-App
-const HL_NAMES=["Kevin","Markus","Stefan","Kay","Michel","Patrick","Mario","Fabian","Timo","Andre","Klemm","Swen","Jan"];
+const HL_NAMES=["Kevin","Markus","Stefan","Michel","Patrick","Mario","Fabian","Timo","Andre","Klemm","Swen","Jan"];
 
 const TT_TEAMS={
-  "Kevin":"team1","Markus":"team1","Stefan":"team1","Kay":"team1",
+  "Kevin":"team1","Markus":"team1","Stefan":"team1",
   "Michel":"team2","Patrick":"team2","Mario":"team2","Fabian":"team2",
   "Timo":"team3","Andre":"team3","Klemm":"team3","Swen":"team3"
 };
@@ -1011,20 +1009,19 @@ const TOUR_ROUNDS=[{"place":"Stuttgart","year":2023,"img":"tour_12.jpg"},{"place
 
 let tourIdx=0,tourPhase="idle",tourScores={},tourLocationWinner=null,tourStandingsShown=false;
 
-// Bettgeflüster: Fabian und Jan sind NUR hier ausgeschlossen.
-// In allen anderen Spielen bleibt die bestehende Spielerliste unverändert.
-const ZG_PLAYERS=["Kevin","Markus","Stefan","Kay","Michel","Patrick","Mario","Timo","Andre","Klemm","Swen"];
+// Bettgeflüster: Jan und Fabian sind fest zusammen und spielen nicht mit. Kay fährt nicht mit.
+const ZG_PLAYERS=["Kevin","Markus","Stefan","Michel","Patrick","Mario","Timo","Andre","Klemm","Swen"];
 const ZG_ROUNDS=[
-  {title:"Runde 1 · Dicht daneben",question:"Wie weit ist es ungefähr Luftlinie von Zadar bis zum Nordpol?",unit:"km",solution:5101},
-  {title:"Runde 2 · Zeitgefühl",question:"Stoppe die unsichtbare Uhr möglichst genau bei 10,00 Sekunden.",target:10000},
-  {title:"Runde 3 · Dinara",question:"Wie hoch ist der höchste Berg Kroatiens, der Berg Dinara?",unit:"m",solution:1831},
-  {title:"Runde 4 · Reaktionsblitz",question:"Warte auf JETZT! und drücke dann so schnell wie möglich."},
-  {title:"Runde 5 · Stein · Schere · Papier",question:"Best of Leben: Beide starten mit 3 Herzen."}
+  {title:"Runde 1 · Higher or Lower – Bedtime Stories",question:"Alle starten mit 3 Leben. Falsch oder keine Antwort = 1 Leben weg. Gespielt wird bis genau ein Sieger übrig bleibt."},
+  {title:"Runde 2 · Dicht daneben",question:"Wie weit ist es ungefähr Luftlinie von Zadar bis zum Nordpol?",unit:"km",solution:5101},
+  {title:"Runde 3 · Zeitgefühl",question:"Stoppe die unsichtbare Uhr möglichst genau bei 10,00 Sekunden.",target:10000},
+  {title:"Runde 4 · Dinara",question:"Wie hoch ist der höchste Berg Kroatiens, der Berg Dinara?",unit:"m",solution:1831},
+  {title:"Runde 5 · Reaktionsblitz",question:"Warte auf JETZT! und drücke dann so schnell wie möglich."}
 ];
 let zgRound=0, zgPhase="idle", zgAnswers={}, zgDuos=[], zgOut=new Set(), zgWinner=null;
-let zgReactionStarts={}, zgRpsPlayers=[], zgRpsLives={}, zgRpsChoices={}, zgRpsToken=0, zgRpsEnd=0, zgRpsTimer=null;
-let zgClientState={round:null,phase:"idle",submitted:false,localStart:0,reactionTimer:null,reactionGoAt:0,rpsChosen:false};
+let zgClientState={round:null,phase:"idle",submitted:false,localStart:0,reactionTimer:null,reactionGoAt:0};
 let zgLive={};
+let zgHl=null, zgHlTimer=null;
 function zgLiveBroadcast(){
   if(modeName!=="zimmer")return;
   const payload={type:"zgLive",round:zgRound,phase:zgPhase,live:zgLive,remaining:zgRemaining(),duos:zgDuos};
@@ -1038,103 +1035,27 @@ function zgLiveHostHtml(){
     if(v.kind==="timer") t=v.state==="running"?"⏱️ Uhr läuft …":v.state==="stopped"?"⏱️ gestoppt bei <b>"+(v.ms/1000).toFixed(2).replace(".",",")+" s</b>":"Bereit";
     else if(v.kind==="input") t="⌨️ Eingabe: <b>"+zgEsc(v.value||"—")+"</b>"+(v.sent?" ✅":"");
     else if(v.kind==="reaction") t=v.state==="waiting"?"⚡ wartet auf JETZT …":v.state==="go"?"🟢 JETZT!":v.early?"❌ Frühstart":"⚡ Reaktion: <b>"+(v.ms/1000).toFixed(3).replace(".",",")+" s</b>";
-    else if(v.kind==="rps") t=v.chosen?"✋ Auswahl abgegeben":"⏳ wählt …";
     return "<div class='status'><b>"+zgEsc(n)+":</b> "+t+"</div>";
   }).join("")+"</div>";
 }
 function zgSpectatorRender(m){
-  zgClientBase();
-  $("buzzState").textContent="";
-  $("playerAlert").className="status ok";
-  $("playerAlert").innerHTML="👀 <b>Du bist bereits im Zimmerteam.</b><br>Du siehst das aktuelle Spiel live.";
+  zgClientBase(); $("buzzState").textContent=""; $("playerAlert").className="status ok";
+  $("playerAlert").innerHTML="👀 <b>Dein Zimmerteam steht.</b><br>Du siehst das aktuelle Spiel live.";
   const live=m.live||{};
-  $("playerRanking").innerHTML="<h3>Aktuelle Runde "+(m.round+1)+"</h3>"+
-    (Object.entries(live).length?Object.entries(live).map(([n,v])=>{
-      let t="";
-      if(v.kind==="timer")t=v.state==="running"?"⏱️ Uhr läuft …":v.state==="stopped"?"⏱️ "+(v.ms/1000).toFixed(2).replace(".",",")+" s":"Bereit";
-      else if(v.kind==="input")t="⌨️ "+zgEsc(v.value||"—")+(v.sent?" ✅":"");
-      else if(v.kind==="reaction")t=v.state==="waiting"?"⚡ wartet …":v.state==="go"?"🟢 JETZT!":v.early?"❌ Frühstart":"⚡ "+(v.ms/1000).toFixed(3).replace(".",",")+" s";
-      else if(v.kind==="rps")t=v.chosen?"✋ gewählt":"⏳ wählt …";
-      return "<div class='status'><b>"+zgEsc(n)+":</b> "+t+"</div>";
-    }).join(""):"<div class='status'>Warte auf Aktionen …</div>");
+  $("playerRanking").innerHTML="<h3>Aktuelle Runde "+(m.round+1)+"</h3>"+(Object.entries(live).length?Object.entries(live).map(([n,v])=>{
+    let t=""; if(v.kind==="timer")t=v.state==="running"?"⏱️ Uhr läuft …":"⏱️ "+(v.ms/1000).toFixed(2).replace(".",",")+" s";
+    else if(v.kind==="input")t="⌨️ "+zgEsc(v.value||"—")+(v.sent?" ✅":"");
+    else if(v.kind==="reaction")t=v.state==="waiting"?"⚡ wartet …":v.state==="go"?"🟢 JETZT!":v.early?"❌ Frühstart":"⚡ "+(v.ms/1000).toFixed(3).replace(".",",")+" s";
+    return "<div class='status'><b>"+zgEsc(n)+":</b> "+t+"</div>";
+  }).join(""):"<div class='status'>Warte auf Aktionen …</div>");
 }
-
-
 function zgRemaining(){return ZG_PLAYERS.filter(n=>!zgOut.has(n));}
-function zgConnectedRemaining(){return zgRemaining().filter(n=>!!conns["player:"+n]);}
 function zgSend(name,msg){const c=conns["player:"+name];if(c)try{c.send(msg)}catch(e){}}
-function zgEsc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));}
-function zgDuoHtml(){
-  return "<div class='zg-duos'>"+zgDuos.map((d,i)=>"<div class='status ok'><b>Zimmerteam "+(i+1)+"</b><br>"+zgEsc(d[0])+" + "+zgEsc(d[1])+"</div>").join("")+"</div>";
-}
+function zgEsc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\\\"":"&quot;","'":"&#39;"}[c]));}
+function zgDuoHtml(){return "<div class='zg-duos'>"+zgDuos.map((d,i)=>"<div class='status ok'><b>Zimmerteam "+(i+1)+"</b><br>"+zgEsc(d[0])+" + "+zgEsc(d[1])+"</div>").join("")+"</div>";}
 
 
 let emojiIdx=0, emojiPhase="idle", emojiWinner=null, emojiAttempts={team1:0,team2:0,team3:0}, emojiPoints={team1:0,team2:0,team3:0};
-
-/* ===== CRASH-SAFE SPIELSTÄNDE ===== */
-const GAME_SAVE_KEY="saufynauten_allgames_v1";
-function gsArr(v){return Array.from(v||[])}
-function gsSet(v){return new Set(Array.isArray(v)?v:[])}
-function saveAllGameStates(){
- try{
-  localStorage.setItem(GAME_SAVE_KEY,JSON.stringify({
-   modeName,
-   quiz:{qidx,quizScores,quizAwarded:gsArr(quizAwarded)},
-   estimate:{eidx,estimateScores,estimateAwarded:gsArr(estimateAwarded)},
-   category:{categoryScores,categoryAwarded:gsArr(categoryAwarded),catTurnTeam,catLastTeam,catName,catOut:gsArr(catOut),used:gsArr(used)},
-   higherlower:{hl},higherlowerteam:{hlt},higherlowerbed:{hlb},
-   emoji:{emojiIdx,emojiPhase,emojiWinner,emojiAttempts,emojiPoints,emojiGuesses},
-   transfertinder:{TT_PLAYERS,ttIdx,ttReveal,ttPhase,ttBuzzOrder,ttAnswerIndex,ttAnswerEnd,ttScores,ttWinner,ttLockedTeams:gsArr(ttLockedTeams)},
-   buzzer:{buzzOrder,buzzOpen,buzzAnswerIndex,buzzAnswerEnd,buzzExpired},
-   tourpics:{tourIdx,tourPhase,tourScores,tourLocationWinner,tourStandingsShown},
-   promimix:{promiIdx,promiReveal,promiSolved},
-   zimmer:{zgRound,zgPhase,zgAnswers,zgDuos,zgOut:gsArr(zgOut),zgWinner,zgReactionStarts,zgRpsPlayers,zgRpsLives,zgRpsChoices,zgRpsToken,zgRpsEnd}
-  }));
- }catch(e){console.warn("Autosave fehlgeschlagen",e)}
-}
-function restoreAllGameStates(){
- try{
-  const x=JSON.parse(localStorage.getItem(GAME_SAVE_KEY)||"null");if(!x)return;
-  if(x.modeName)modeName=x.modeName;
-  if(x.quiz){qidx=x.quiz.qidx??qidx;quizScores=x.quiz.quizScores||quizScores;quizAwarded=gsSet(x.quiz.quizAwarded)}
-  if(x.estimate){eidx=x.estimate.eidx??eidx;estimateScores=x.estimate.estimateScores||estimateScores;estimateAwarded=gsSet(x.estimate.estimateAwarded)}
-  if(x.category){categoryScores=x.category.categoryScores||categoryScores;categoryAwarded=gsSet(x.category.categoryAwarded);catTurnTeam=x.category.catTurnTeam||catTurnTeam;catLastTeam=x.category.catLastTeam??catLastTeam;catName=x.category.catName||catName;catOut=gsSet(x.category.catOut);used=gsSet(x.category.used)}
-  if(x.higherlower)hl=x.higherlower.hl||null;
-  if(x.higherlowerteam)hlt=x.higherlowerteam.hlt||null;
-  if(x.higherlowerbed)hlb=x.higherlowerbed.hlb||null;
-  if(x.emoji){emojiIdx=x.emoji.emojiIdx??emojiIdx;emojiPhase=x.emoji.emojiPhase||emojiPhase;emojiWinner=x.emoji.emojiWinner??null;emojiAttempts=x.emoji.emojiAttempts||emojiAttempts;emojiPoints=x.emoji.emojiPoints||emojiPoints;emojiGuesses=x.emoji.emojiGuesses||emojiGuesses}
-  if(x.transfertinder){TT_PLAYERS=x.transfertinder.TT_PLAYERS||TT_PLAYERS;ttIdx=x.transfertinder.ttIdx??ttIdx;ttReveal=x.transfertinder.ttReveal||0;ttPhase=x.transfertinder.ttPhase||"idle";ttBuzzOrder=x.transfertinder.ttBuzzOrder||[];ttAnswerIndex=x.transfertinder.ttAnswerIndex||0;ttAnswerEnd=x.transfertinder.ttAnswerEnd||0;ttScores=x.transfertinder.ttScores||ttScores;ttWinner=x.transfertinder.ttWinner??null;ttLockedTeams=gsSet(x.transfertinder.ttLockedTeams)}
-  if(x.buzzer){buzzOrder=x.buzzer.buzzOrder||[];buzzOpen=!!x.buzzer.buzzOpen;buzzAnswerIndex=x.buzzer.buzzAnswerIndex||0;buzzAnswerEnd=x.buzzer.buzzAnswerEnd||0;buzzExpired=!!x.buzzer.buzzExpired}
-  if(x.tourpics){tourIdx=x.tourpics.tourIdx??tourIdx;tourPhase=x.tourpics.tourPhase||tourPhase;tourScores=x.tourpics.tourScores||tourScores;tourLocationWinner=x.tourpics.tourLocationWinner??null;tourStandingsShown=!!x.tourpics.tourStandingsShown}
-  if(x.promimix){promiIdx=x.promimix.promiIdx??promiIdx;promiReveal=x.promimix.promiReveal||0;promiSolved=!!x.promimix.promiSolved}
-  if(x.zimmer){zgRound=x.zimmer.zgRound??zgRound;zgPhase=x.zimmer.zgPhase||zgPhase;zgAnswers=x.zimmer.zgAnswers||{};zgDuos=x.zimmer.zgDuos||[];zgOut=gsSet(x.zimmer.zgOut);zgWinner=x.zimmer.zgWinner??null;zgReactionStarts=x.zimmer.zgReactionStarts||{};zgRpsPlayers=x.zimmer.zgRpsPlayers||[];zgRpsLives=x.zimmer.zgRpsLives||{};zgRpsChoices=x.zimmer.zgRpsChoices||{};zgRpsToken=x.zimmer.zgRpsToken||0;zgRpsEnd=x.zimmer.zgRpsEnd||0}
- }catch(e){console.warn("Restore fehlgeschlagen",e)}
-}
-function resetCurrentGame(){
- if(!confirm("Wirklich dieses Spiel komplett zurücksetzen?"))return;
- clearInterval(timerInt);clearInterval(hlTimer);clearInterval(hltTimer);clearInterval(hlbTimer);clearInterval(ttTimer);clearInterval(buzzAnswerTimer);clearInterval(promiTimer);clearInterval(zgRpsTimer);answers={};
- if(modeName==="quiz"){qidx=0;quizScores={team1:0,team2:0,team3:0};quizAwarded=new Set()}
- else if(modeName==="estimate"){eidx=0;estimateScores={team1:0,team2:0,team3:0};estimateAwarded=new Set()}
- else if(modeName==="category"){categoryScores={team1:0,team2:0,team3:0};categoryAwarded=new Set();catTurnTeam="team1";catLastTeam=null;catName=Object.keys(D.categories)[0];catOut=new Set();used=new Set()}
- else if(modeName==="higherlower"){hl=null}
- else if(modeName==="higherlowerteam"){hlt=null}
- else if(modeName==="higherlowerbed"){hlb=null}
- else if(modeName==="emoji"){emojiIdx=0;emojiPhase="idle";emojiWinner=null;emojiAttempts={team1:0,team2:0,team3:0};emojiPoints={team1:0,team2:0,team3:0};emojiGuesses={title:{team1:[],team2:[],team3:[]},artist:{team1:[],team2:[],team3:[]}}}
- else if(modeName==="transfertinder"){ttIdx=0;ttReveal=0;ttPhase="idle";ttBuzzOrder=[];ttAnswerIndex=0;ttAnswerEnd=0;ttScores={team1:0,team2:0,team3:0};ttWinner=null;ttLockedTeams=new Set()}
- else if(modeName==="buzzer"){buzzOrder=[];buzzOpen=false;buzzAnswerIndex=0;buzzAnswerEnd=0;buzzExpired=false}
- else if(modeName==="tourpics"){tourIdx=0;tourPhase="idle";tourScores={};tourLocationWinner=null;tourStandingsShown=false}
- else if(modeName==="promimix"){promiIdx=0;promiReveal=0;promiSolved=false}
- else if(modeName==="zimmer"){zgResetGame();saveAllGameStates();return}
- saveAllGameStates();sendAll({type:"reset"});renderHost();
-}
-function gameResetHtml(){
- return "<div class='status' style='margin:10px 0;border:2px solid #c62828;background:#fff5f5'><b>💾 AUTOSAVE AKTIV</b><br><span class='muted'>Der aktuelle Spielstand wird automatisch im Browser gespeichert.</span><br><button id='gameHardReset' class='danger' style='margin-top:8px'>♻️ DIESES SPIEL ZURÜCKSETZEN</button></div>";
-}
-restoreAllGameStates();
-setInterval(saveAllGameStates,750);
-window.addEventListener("beforeunload",saveAllGameStates);
-/* ===== /CRASH-SAFE SPIELSTÄNDE ===== */
-
 
 function show(view){
   ["setup","hostView","captainView","playerView","screenView"].forEach(id=>$(id).classList.add("hide"));
@@ -1216,11 +1137,10 @@ function joinPlayer(){
   }
 }
 function onHostMessage(m,c){
-  if(m&&m.type==="qkBet" && modeName==="quotenkoma"){ qkSubmit(m.team,m.bets,c); return; }
   if(m.type==="hlChoice" && modeName==="higherlower") { hlChoose(m.choice,m.name); return; }
   if(m.type==="hltChoice" && modeName==="higherlowerteam") { hltChoose(m.choice,m.team); return; }
   if(m.type==="hlbChoice" && modeName==="higherlowerbed") { hlbChoose(m.choice,m.name); return; }
-  if(m.type==="join"){conns[m.role]=c; refreshConnections(); if(modeName==="quotenkoma") setTimeout(()=>qkSendTo(m.role),50);}
+  if(m.type==="join"){conns[m.role]=c; refreshConnections();}
   if(m.type==="tourBuzz" && modeName==="tourpics" && buzzOpen && ["team1","team2","team3"].includes(m.team) && !buzzOrder.includes(m.team)){
     buzzOrder.push(m.team); if(buzzOrder.length===1){buzzAnswerIndex=0;startBuzzAnswerTimer();}
     tourCaptainBuzzState(true); if(conns.screen)conns.screen.send(buzzBoardMessage()); renderHost(); return;
@@ -1231,6 +1151,8 @@ function onHostMessage(m,c){
     if(buzzOrder.length===1){buzzAnswerIndex=0; startBuzzAnswerTimer();}
     broadcastBuzzOrder(); renderHost();
   }
+
+  if(m.type==="zgHlChoice" && modeName==="zimmer" && zgRound===0){ zgHlChoose(m.choice,m.name); return; }
 
   if(m.type==="zgLive" && modeName==="zimmer"){
     if(!ZG_PLAYERS.includes(m.name) || zgOut.has(m.name))return;
@@ -1244,10 +1166,10 @@ function onHostMessage(m,c){
     if(!ZG_PLAYERS.includes(name) || zgOut.has(name) || zgAnswers[name]!==undefined)return;
     zgAnswers[name]=Number(m.value);
     renderHost();
-    if(zgRound<4 && zgRemaining().every(n=>zgAnswers[n]!==undefined)) zgRevealRound();
+    if(zgRound>0 && zgRound<4 && zgRemaining().every(n=>zgAnswers[n]!==undefined)) zgRevealRound();
     return;
   }
-  if(m.type==="zgReaction" && modeName==="zimmer" && zgRound===3 && zgPhase==="playing"){
+  if(m.type==="zgReaction" && modeName==="zimmer" && zgRound===4 && zgPhase==="playing"){
     const name=m.name;
     if(!ZG_PLAYERS.includes(name) || zgOut.has(name) || zgAnswers[name]!==undefined)return;
     zgAnswers[name]={ms:Number(m.ms),early:!!m.early};
@@ -1278,8 +1200,6 @@ function refreshConnections(){
 }
 function sendAll(msg){Object.values(conns).forEach(c=>{try{c.send(msg)}catch(e){}});}
 function onClientMessage(m){
-  if(m&&m.type==="qkBetAck"){ alert(m.msg|| (m.ok?"Wetten erfolgreich abgegeben.":"Wette konnte nicht abgegeben werden.")); return; }
-  if(m&&m.type==="qkState"){ qkClientRender(m); return; }
   if(m.type==="emojiGuess"){
     const label=m.phase==="title"?"Titel":"Interpret";
     const html="<div class='status'><b>"+m.team+"</b> · "+label+"-Guess: <b>"+m.value+"</b></div>";
@@ -1365,7 +1285,6 @@ function onClientMessage(m){
 
   if(m.type==="zgState" && role && role.startsWith("player:")){ zgClientRender(m); return; }
   if(m.type==="zgLive" && role && role.startsWith("player:")){ zgSpectatorRender(m); return; }
-  if(m.type==="zgRpsResult" && role && role.startsWith("player:")){ zgClientRpsResult(m); return; }
 
   if(m.type==="buzzState" && role && role.startsWith("player:")){$("buzzBtn").disabled=!m.open;$("buzzState").textContent=m.open?"🟢 BUZZER FREI!":"🔒 Buzzer gesperrt";}
   if(m.type==="buzzReset" && role && role.startsWith("player:")){$("buzzBtn").classList.remove("hide");$("buzzBtn").disabled=true;$("playerBuzzBoard").classList.add("hide");$("playerRanking").innerHTML="";$("playerCountdown").textContent="";$("buzzState").textContent="Neue Runde – warte auf Jan …";}
@@ -1592,10 +1511,10 @@ function setMode(m){
   if(m==="zimmer"){
     ZG_PLAYERS.forEach(n=>zgSend(n,{type:"zgState",round:zgRound,phase:(zgOut.has(n)?"paired":"ready"),title:ZG_ROUNDS[zgRound].title,question:ZG_ROUNDS[zgRound].question}));
     zgSend("Fabian",{type:"zgState",round:zgRound,phase:"excluded",title:"🏨 Bettgeflüster"});
+    zgSend("Kay",{type:"zgState",round:zgRound,phase:"excluded",title:"🏨 Bettgeflüster"});
   }
   if(m==="emoji" && !["idle","title","artist","done"].includes(emojiPhase)) resetEmojiRound();
   renderHost();
-  if(m==="quotenkoma") qkBroadcast();
   if(m==="higherlower" && hl) hlBroadcast();
   if(m==="higherlowerteam" && hlt) hltBroadcast();
   if(m==="higherlowerbed" && hlb) hlbBroadcast();
@@ -1648,7 +1567,7 @@ function hostRulesHtml(mode){
     transfertinder:{name:"Transfer-Tinder",who:"Einzelspieler",buzz:"Ja",text:"Die Karrierestationen eines Fußballers werden nacheinander aufgedeckt. Alle Einzelspieler dürfen auf ihrem Handy für ihr Team buzzern und sagen die Lösung laut. Nach dem Buzz: 10 Sekunden. Richtig = 1 Punkt für das Team. Falsch = komplettes Team für diesen Fußballer raus. „Lösen / Auflösen“ zeigt alle Stationen ohne Punkt."},
     buzzer:{name:"Buzzer",who:"Einzelspieler",buzz:"Ja",text:"Alle Einzelspieler buzzern auf dem eigenen Handy. Die Reihenfolge wird gespeichert. Der Erste hat 10 Sekunden zum Antworten. Bei einer falschen Antwort ist automatisch der nächste Spieler in der Buzzer-Reihenfolge dran."},
     tourpics:{name:"Blackout-Bilder",who:"Kapitäne",buzz:"Ja",text:"Die Teams beraten gemeinsam, nur die Kapitäne buzzern. Das Foto wird auf TV/Zuschauer und bei den Kapitänen gezeigt. Richtiger Ort = 2 Punkte. Danach darf dasselbe Team das Jahr raten; richtiges Jahr = +1 Punkt."},
-    zimmer:{name:"Bettgeflüster",who:"Einzelspieler",buzz:"Je nach Runde",text:"Jan und Fabian spielen nicht mit. Die übrigen Spieler treten in mehreren digitalen Ausscheidungsrunden an. Wer weiterkommt, kann das restliche Spiel live verfolgen und erhält später die Zimmerwahl. Das finale Stein-Schere-Papier entscheidet den Sieger."},
+    zimmer:{name:"Bettgeflüster",who:"Einzelspieler",buzz:"Nein",text:"Jan und Fabian sind fest zusammen; Kay fährt nicht mit. Die 10 übrigen Spieler spielen fünf Runden. Runde 1 ist Higher or Lower – Bedtime Stories mit 3 Leben pro Spieler und Sudden Death bei gleichzeitigem Ausscheiden. Der Sieger jeder Runde wählt einen Zimmerpartner; danach ist das Paar raus. Keine Couch."},
     promimix:{name:"Promi-Mix",who:"Einzelspieler / Zuschauer",buzz:"Nein",text:"Das KI-Mix-Bild wird Stück für Stück aufgedeckt. Sobald die Kombination erkannt wird, löst der Spielleiter auf und zeigt anschließend die Originalbilder."}
   };
   const r=R[mode]; if(!r)return "";
@@ -1656,7 +1575,6 @@ function hostRulesHtml(mode){
 }
 
 function renderHost(){
-  if(modeName==="quotenkoma"){ $("hostGame").innerHTML=qkHostHtml(); qkBindHost(); qkBroadcast(); return; }
   let h="";
   if(modeName==="quiz"){
     const q=D.quiz[qidx];
@@ -1756,9 +1674,8 @@ function renderHost(){
       "<div class='card'>"+["team1","team2","team3"].map(t=>"<div class='status'><b>"+D.teams[t].name+"</b> · Punkte: <b style='font-size:22px'>"+("I".repeat(emojiPoints[t])||"–")+"</b> <span class='muted'>("+emojiPoints[t]+")</span> · Versuche: "+emojiAttempts[t]+"/3<br><span class='muted'>Titel-Guesses: "+(emojiGuesses.title[t].join(" · ")||"—")+"<br>Interpret-Guesses: "+(emojiGuesses.artist[t].join(" · ")||"—")+"</span></div>").join("")+"</div>"+
       "<div class='grid'><button id='emojiPrev' class='secondary'>←</button><button id='emojiNext'>NÄCHSTER SONG →</button></div></div>";
   }
-  $("hostGame").innerHTML=gameResetHtml()+hostRulesHtml(modeName)+manualPointsHtml(modeName)+h;
+  $("hostGame").innerHTML=hostRulesHtml(modeName)+manualPointsHtml(modeName)+h;
   bindHostControls();
-  const ghr=$("gameHardReset");if(ghr)ghr.addEventListener("click",resetCurrentGame);
 }
 function bindHostControls(){
   document.querySelectorAll(".manualPoint").forEach(b=>b.addEventListener("click",()=>adjustManualPoint(b.dataset.team,Number(b.dataset.delta))));
@@ -1815,8 +1732,7 @@ function bindHostControls(){
   const zreveal=$("zgReveal"); if(zreveal)zreveal.addEventListener("click",zgRevealRound);
   const zpair=$("zgPair"); if(zpair)zpair.addEventListener("click",zgConfirmPair);
   const znext=$("zgNext"); if(znext)znext.addEventListener("click",zgNextRound);
-  const zrps=$("zgRpsStart"); if(zrps)zrps.addEventListener("click",zgStartRpsMatch);
-  const zrpsnext=$("zgRpsNext"); if(zrpsnext)zrpsnext.addEventListener("click",zgStartRpsTurn);
+  const zhlNext=$("zgHlNext"); if(zhlNext)zhlNext.addEventListener("click",zgHlNextQuestion);
   const zreset=$("zgReset"); if(zreset)zreset.addEventListener("click",zgResetGame);
 }
 function startRound(sec){
@@ -2008,335 +1924,59 @@ function emojiManualArtistReveal(){
   renderHost();
 }
 function zgHostHtml(){
-  const rem=zgRemaining();
-  const round=ZG_ROUNDS[zgRound];
+  const rem=zgRemaining(), round=ZG_ROUNDS[zgRound];
   let body="<div class='card'><h2>🏨 BETTGEFLÜSTER</h2>"+
-    "<div class='status' style='text-align:left'><b>Regeln Bettgeflüster</b><br>• Jans Mitbewohner ist bereits <b>Fabian</b>. Deshalb spielen <b>Jan und Fabian nicht mit</b>.<br>• Wer eine Runde gewinnt und weiter ist, <b>sucht sich einen Zimmerpartner</b> aus.<br>• Der Spieler, der am Ende übrig bleibt, bekommt zunächst den <b>Couchplatz</b>.<br>• <b>Achtung:</b> Für den „Couch-Verlierer“ gibt es am Ende noch einen Twist. Dieser wird erst vor Ort erklärt, <b>nachdem die Zimmer ausgesucht wurden</b>.</div>"+
+    "<div class='status' style='text-align:left'><b>Regeln Bettgeflüster</b><br>• <b>Jan + Fabian</b> sind bereits ein Zimmerteam und spielen nicht mit.<br>• <b>Kay fährt nicht mit.</b> Damit spielen 10 Spieler um 5 weitere Zimmerteams.<br>• Der Sieger jeder Runde darf sich <b>einen Zimmerpartner aussuchen</b>. Beide sind danach raus.<br>• <b>Keine Couch:</b> Am Ende sind alle 12 Reisenden auf 6 Zimmerteams verteilt.<br>• Runde 1 ist <b>Higher or Lower – Bedtime Stories</b>: jeder startet mit 3 Leben; gespielt wird bis genau ein Sieger übrig bleibt.</div>"+
     "<div class='zg-rounds'>"+ZG_ROUNDS.map((r,i)=>"<div class='zg-round "+(i===zgRound?"active":i<zgRound?"done":"")+"'>"+(i+1)+". "+r.title.split("·").pop().trim()+"</div>").join("")+"</div>"+
-    zgDuoHtml()+
-    "<div class='status'><b>Noch im Spiel ("+rem.length+"):</b> "+rem.map(zgEsc).join(", ")+"</div>"+
+    zgDuoHtml()+"<div class='status'><b>Noch im Spiel ("+rem.length+"):</b> "+rem.map(zgEsc).join(", ")+"</div>"+
     "<h2>"+round.title+"</h2><div class='status' style='font-size:20px'><b>"+round.question+"</b></div>";
-
   if(zgRound===0){
-    body+="<div class='status'><b>Lösung:</b> ca. 5.101 km</div>";
-  }else if(zgRound===1){
-    body+="<div class='status'><b>Ziel:</b> exakt 10,00 Sekunden · Zeit ist während des Laufs unsichtbar.</div>";
-  }else if(zgRound===2){
-    body+="<div class='status'><b>Lösung:</b> 1.831 m<br><span class='muted'>Überboten = immer hinter jeder gültigen Schätzung ≤ 1.831 m.</span></div>";
-  }else if(zgRound===3){
-    body+="<div class='status'><b>Regel:</b> Auf jedem Handy erscheint JETZT! nach zufälliger Wartezeit. Frühstart = +1.000 ms Strafzeit.</div>";
-  }else{
-    body+="<div class='status'><b>Finale:</b> 3 Spieler übrig. Du wählst 2 für das Duell. Sieger darf anschließend aus den beiden anderen seinen Zimmerpartner wählen.</div>";
+    body+="<div class='status'><b>Higher or Lower:</b> Alle aktiven Spieler antworten gleichzeitig. 30 Sekunden je Frage. Falsch oder keine Antwort = 1 Leben weg. Wenn alle verbliebenen Spieler in derselben Frage ihr letztes Leben verlieren würden, startet Sudden Death: alle Betroffenen bleiben mit 1 Leben drin, bis genau ein Sieger feststeht.</div>";
+    if(!zgHl || zgPhase==="idle" || zgPhase==="ready") body+="<button id='zgStart' class='good' style='width:100%;font-size:20px'>HIGHER OR LOWER STARTEN</button>";
+    else if(zgPhase==="hlQuestion"){
+      const q=zgHl.deck[zgHl.idx], secs=Math.max(0,Math.ceil((zgHl.end-Date.now())/1000));
+      body+=zgHlScoreHtml()+"<div class='big' style='font-size:32px;margin:18px 0'>"+q.q+"</div>"+(q.period?"<div class='muted'>(Zeitraum: "+q.period+")</div>":"")+"<div class='muted'>Höher oder niedriger als:</div><div class='big' style='font-size:52px'>"+hlFmt(q.t,q.u)+"</div><div class='status ok'><b>🔐 Lösung: "+hlFmt(q.a,q.u)+"</b></div><div class='timer'>"+secs+"</div><div class='status'>"+zgHlAlive().map(n=>(zgHl.answers[n]?"✅ ":"⏳ ")+n).join(" · ")+"</div>";
+    } else if(zgPhase==="hlResult"){
+      body+=zgHlScoreHtml()+"<div class='big' style='font-size:44px;text-align:center'>Antwort "+zgHl.actual+"</div>"+(zgHl.result||[]).map(x=>"<div class='status'>"+x+"</div>").join("")+(zgHl.sudden?"<div class='status bad'><b>⚡ SUDDEN DEATH!</b><br>Alle wären gleichzeitig ausgeschieden. Die verbliebenen Spieler gehen mit 1 Leben weiter.</div>":"")+"<button id='zgHlNext' class='good' style='width:100%'>NÄCHSTE FRAGE →</button>";
+    } else if(zgPhase==="revealed") body+=zgWinnerPairHtml(rem);
+    else if(zgPhase==="paired") body+=zgPairedHtml();
+  } else {
+    if(zgRound===1) body+="<div class='status'><b>Lösung:</b> ca. 5.101 km</div>";
+    if(zgRound===2) body+="<div class='status'><b>Ziel:</b> exakt 10,00 Sekunden · Zeit ist während des Laufs unsichtbar.</div>";
+    if(zgRound===3) body+="<div class='status'><b>Lösung:</b> 1.831 m<br><span class='muted'>Überboten = immer hinter jeder gültigen Schätzung ≤ 1.831 m.</span></div>";
+    if(zgRound===4) body+="<div class='status'><b>Regel:</b> Auf jedem Handy erscheint JETZT! nach zufälliger Wartezeit. Frühstart = +1.000 ms Strafzeit.</div>";
+    if(zgPhase==="idle"||zgPhase==="ready") body+="<button id='zgStart' class='good' style='width:100%;font-size:20px'>RUNDE STARTEN</button>";
+    else if(zgPhase==="playing") body+="<div class='status ok'><b>RUNDE LÄUFT</b><br>"+rem.map(n=>(zgAnswers[n]!==undefined?"✅ ":"⏳ ")+zgEsc(n)).join(" · ")+"</div><button id='zgReveal' class='secondary' style='width:100%'>JETZT AUSWERTEN</button>"+zgLiveHostHtml();
+    else if(zgPhase==="revealed") body+=zgRankingHtml()+zgWinnerPairHtml(rem);
+    else if(zgPhase==="paired") body+=zgPairedHtml();
   }
-
-  if(zgRound<4){
-    if(zgPhase==="idle" || zgPhase==="ready"){
-      body+="<button id='zgStart' class='good' style='width:100%;font-size:20px'>RUNDE STARTEN</button>";
-    }else if(zgPhase==="playing"){
-      body+="<div class='status ok'><b>RUNDE LÄUFT</b><br>"+rem.map(n=>(zgAnswers[n]!==undefined?"✅ ":"⏳ ")+zgEsc(n)).join(" · ")+"</div>"+
-        "<button id='zgReveal' class='secondary' style='width:100%'>JETZT AUSWERTEN</button>"+zgLiveHostHtml();
-    }else if(zgPhase==="revealed"){
-      body+=zgRankingHtml()+"<div class='card'><h3>🏆 "+zgEsc(zgWinner)+" darf den Zimmerpartner wählen</h3>"+
-        "<select id='zgPartner' style='width:100%'>"+rem.filter(n=>n!==zgWinner).map(n=>"<option>"+zgEsc(n)+"</option>").join("")+"</select>"+
-        "<button id='zgPair' class='good' style='width:100%;margin-top:10px'>ZIMMERTEAM FESTLEGEN</button></div>";
-    }else if(zgPhase==="paired"){
-      body+="<div class='status ok' style='font-size:22px;text-align:center'><b>Zimmerteam "+zgDuos.length+" steht:</b><br>"+zgEsc(zgDuos.at(-1)[0])+" + "+zgEsc(zgDuos.at(-1)[1])+"</div>"+
-        "<button id='zgNext' style='width:100%'>NÄCHSTE RUNDE →</button>";
-    }
-  }else{
-    body+=zgRpsHostHtml();
-  }
-
   body+="<details style='margin-top:18px'><summary><b>Bettgeflüster zurücksetzen</b></summary><button id='zgReset' class='danger' style='width:100%;margin-top:10px'>KOMPLETT ZURÜCKSETZEN</button></details></div>";
   return body;
 }
-
-function zgRanking(){
-  const rem=zgRemaining();
-  if(zgRound===0){
-    return rem.map(n=>({name:n,value:zgAnswers[n],valid:true,score:Math.abs(Number(zgAnswers[n])-5101)}))
-      .filter(x=>Number.isFinite(x.value)).sort((a,b)=>a.score-b.score);
-  }
-  if(zgRound===1){
-    return rem.map(n=>({name:n,value:zgAnswers[n],valid:true,score:Math.abs(Number(zgAnswers[n])-10000)}))
-      .filter(x=>Number.isFinite(x.value)).sort((a,b)=>a.score-b.score);
-  }
-  if(zgRound===2){
-    return rem.map(n=>({name:n,value:zgAnswers[n],valid:Number(zgAnswers[n])<=1831,score:Math.abs(Number(zgAnswers[n])-1831)}))
-      .filter(x=>Number.isFinite(x.value)).sort((a,b)=>(b.valid-a.valid)||a.score-b.score);
-  }
-  if(zgRound===3){
-    return rem.map(n=>{
-      const a=zgAnswers[n]; if(!a)return null;
-      return {name:n,value:a.ms,early:a.early,valid:true,score:Number(a.ms)+(a.early?1000:0)};
-    }).filter(Boolean).sort((a,b)=>a.score-b.score);
-  }
-  return [];
-}
-
-function zgRankingHtml(){
-  const rank=zgRanking();
-  return "<div class='card'><h3>Rangliste</h3>"+rank.map((x,i)=>{
-    let val="";
-    if(zgRound===0) val=Number(x.value).toLocaleString("de-DE")+" km · Δ "+Math.round(x.score).toLocaleString("de-DE")+" km";
-    if(zgRound===1) val=(Number(x.value)/1000).toFixed(2).replace(".",",")+" s · Δ "+(x.score/1000).toFixed(2).replace(".",",")+" s";
-    if(zgRound===2) val=Number(x.value).toLocaleString("de-DE")+" m"+(!x.valid?" · ❌ ÜBERBOTEN":" · Δ "+Math.round(x.score)+" m");
-    if(zgRound===3) val=(Number(x.value)/1000).toFixed(3).replace(".",",")+" s"+(x.early?" + 1,000 s Strafe":"");
-    return "<div class='status zg-rank'><b>"+(i+1)+".</b><b>"+zgEsc(x.name)+"</b><span>"+val+"</span></div>";
-  }).join("")+"</div>";
-}
-
-function zgStartRound(){
-  if(zgRound>=4)return;
-  zgAnswers={}; zgWinner=null; zgLive={}; zgPhase="playing";
-  const rem=zgRemaining();
-  const end=(zgRound===0||zgRound===2)?Date.now()+60000:0;
-  rem.forEach(n=>zgSend(n,{type:"zgState",round:zgRound,phase:"playing",title:ZG_ROUNDS[zgRound].title,question:ZG_ROUNDS[zgRound].question,end}));
-  // Fabian may be connected, but is explicitly not part of Bettgeflüster.
-  zgSend("Fabian",{type:"zgState",round:zgRound,phase:"excluded",title:"🏨 Bettgeflüster"});
-  renderHost();
-  if(end){
-    setTimeout(()=>{if(modeName==="zimmer"&&zgRound<4&&zgPhase==="playing")zgRevealRound();},60500);
-  }
-}
-
-function zgRevealRound(){
-  if(zgRound>=4 || zgPhase!=="playing")return;
-  const rank=zgRanking();
-  if(!rank.length){alert("Noch keine Ergebnisse vorhanden.");return;}
-  zgPhase="revealed"; zgWinner=rank[0].name;
-  const html=zgRankingHtml();
-  zgRemaining().forEach(n=>zgSend(n,{type:"zgState",round:zgRound,phase:"revealed",winner:zgWinner,ranking:rank}));
-  renderHost();
-}
-
-function zgConfirmPair(){
-  if(zgPhase!=="revealed"||!zgWinner)return;
-  const sel=$("zgPartner"); if(!sel||!sel.value)return;
-  const partner=sel.value;
-  if(partner===zgWinner||zgOut.has(partner)){alert("Ungültiger Partner.");return;}
-  zgDuos.push([zgWinner,partner]); zgOut.add(zgWinner); zgOut.add(partner); zgPhase="paired";
-  zgSend(zgWinner,{type:"zgState",round:zgRound,phase:"paired",partner});
-  zgSend(partner,{type:"zgState",round:zgRound,phase:"paired",partner:zgWinner});
-  renderHost();
-}
-
-function zgNextRound(){
-  if(zgPhase!=="paired")return;
-  zgRound=Math.min(4,zgRound+1); zgPhase="idle"; zgAnswers={}; zgLive={}; zgWinner=null;
-  zgRemaining().forEach(n=>zgSend(n,{type:"zgState",round:zgRound,phase:"ready",title:ZG_ROUNDS[zgRound].title,question:ZG_ROUNDS[zgRound].question}));
-  renderHost();
-}
-
-function zgRpsHostHtml(){
-  const rem=zgRemaining();
-  if(zgPhase==="idle"||zgPhase==="ready"){
-    return "<div class='card'><h3>Finale mit 3 Spielern</h3><p>Alle drei spielen gleichzeitig mit 3 ❤️. Sobald der erste 0 ❤️ hat, ist er Couch-Kandidat; die beiden anderen bilden Zimmerteam 5.</p>"+
-      "<div class='grid'>"+rem.map(n=>"<div class='status' style='text-align:center'><b>"+zgEsc(n)+"</b><div class='zg-hearts'>❤️❤️❤️</div></div>").join("")+"</div>"+
-      "<button id='zgRpsStart' class='good' style='width:100%;margin-top:10px'>3ER-DUELL STARTEN</button></div>";
-  }
-  if(zgPhase==="rps"){
-    return "<div class='card'><div class='grid'>"+zgRpsPlayers.map(n=>"<div class='status' style='text-align:center'><b>"+zgEsc(n)+"</b><div class='zg-hearts'>"+("❤️".repeat(zgRpsLives[n])||"💀")+"</div>"+(zgRpsChoices[n]?"✅ gewählt":"⏳ wählt")+"</div>").join("")+"</div>"+
-      "<div class='status'><b>10 Sekunden.</b> Sobald alle drei gewählt haben, wird sofort aufgelöst.</div>"+zgLiveHostHtml()+"</div>";
-  }
-  if(zgPhase==="rpsBetween"){
-    return "<div class='card'><div class='grid'>"+zgRpsPlayers.map(n=>"<div class='status' style='text-align:center'><b>"+zgEsc(n)+"</b><div class='zg-hearts'>"+("❤️".repeat(zgRpsLives[n])||"💀")+"</div></div>").join("")+"</div>"+
-      "<button id='zgRpsNext' class='good' style='width:100%'>NÄCHSTE 10 SEKUNDEN STARTEN</button></div>";
-  }
-  if(zgPhase==="paired"){
-    const couch=zgRemaining()[0]||"—";
-    return "<div class='card'><div class='status ok' style='font-size:24px;text-align:center'><b>ALLE ZIMMERTEAMS STEHEN</b></div>"+zgDuoHtml()+
-      "<div class='status bad' style='font-size:28px;text-align:center'>🛋️ <b>Couch-Kandidat: "+zgEsc(couch)+"</b></div></div>";
-  }
-  return "";
-}
-
-function zgStartRpsMatch(){
-  const rem=zgRemaining();
-  if(rem.length!==3){alert("Für das Finale müssen genau 3 Spieler übrig sein.");return;}
-  zgRpsPlayers=[...rem]; zgRpsLives={}; rem.forEach(n=>zgRpsLives[n]=3);
-  zgStartRpsTurn();
-}
-function zgStartRpsTurn(){
-  clearTimeout(zgRpsTimer); zgPhase="rps"; zgRpsChoices={}; zgLive={}; zgRpsToken++; zgRpsEnd=Date.now()+10000;
-  zgRpsPlayers.forEach(n=>{
-    zgLive[n]={kind:"rps",chosen:false};
-    zgSend(n,{type:"zgState",round:4,phase:"rps",players:zgRpsPlayers,lives:zgRpsLives,token:zgRpsToken,end:zgRpsEnd});
-  });
-  zgLiveBroadcast(); renderHost();
-  const token=zgRpsToken;
-  zgRpsTimer=setTimeout(()=>{if(zgPhase==="rps"&&zgRpsToken===token)zgResolveRps();},10100);
-}
-function zgResolveRps(){
-  if(zgPhase!=="rps")return;
-  clearTimeout(zgRpsTimer);
-  const p=zgRpsPlayers, c=p.map(n=>zgRpsChoices[n]||null);
-  let loser=null, text="";
-  const missing=p.filter(n=>!zgRpsChoices[n]);
-  if(missing.length===1){loser=missing[0];text=loser+" hat nicht gewählt und verliert ❤️.";}
-  else if(missing.length>1){text="Mehrere ohne Auswahl – niemand verliert ein Leben.";}
-  else{
-    const uniq=[...new Set(c)];
-    if(uniq.length===1){text="Alle drei gleich – niemand verliert ❤️.";}
-    else if(uniq.length===3){text="Stein, Schere und Papier – niemand verliert ❤️.";}
-    else{
-      const counts={}; c.forEach(x=>counts[x]=(counts[x]||0)+1);
-      const single=Object.keys(counts).find(x=>counts[x]===1);
-      const pair=Object.keys(counts).find(x=>counts[x]===2);
-      const beats={Stein:"Schere",Schere:"Papier",Papier:"Stein"};
-      if(beats[pair]===single){
-        loser=p[c.indexOf(single)];
-        text=pair+" schlägt "+single+" – "+loser+" verliert ❤️.";
-      }else{
-        const pairPlayers=p.filter((n,i)=>c[i]===pair);
-        pairPlayers.forEach(n=>zgRpsLives[n]=Math.max(0,zgRpsLives[n]-1));
-        text=single+" schlägt "+pair+" – "+pairPlayers.join(" & ")+" verlieren je ❤️.";
-      }
-    }
-  }
-  if(loser)zgRpsLives[loser]=Math.max(0,zgRpsLives[loser]-1);
-  const eliminated=p.filter(n=>zgRpsLives[n]===0);
-  const choices={};p.forEach((n,i)=>choices[n]=c[i]);
-  if(eliminated.length){
-    // If two hit zero simultaneously, the one with fewer lives before this edge case is not distinguishable;
-    // use a sudden-death-safe fallback by restoring both to 1 and continuing.
-    if(eliminated.length>1){
-      eliminated.forEach(n=>zgRpsLives[n]=1);
-      text+=" Gleichzeitiges Ausscheiden – beide bekommen 1 ❤️ zurück, weiter geht's.";
-      zgRpsPlayers.forEach(n=>zgSend(n,{type:"zgRpsResult",text,choices,lives:zgRpsLives,winner:null}));
-      zgPhase="rpsBetween"; renderHost(); return;
-    }
-    const couch=eliminated[0], duo=p.filter(n=>n!==couch);
-    zgDuos.push(duo); duo.forEach(n=>zgOut.add(n));
-    zgWinner=duo.join(" + "); zgPhase="paired";
-    zgRpsPlayers.forEach(n=>zgSend(n,{type:"zgRpsResult",text,choices,lives:zgRpsLives,winner:zgWinner,couch,duo}));
-    renderHost(); return;
-  }
-  zgRpsPlayers.forEach(n=>zgSend(n,{type:"zgRpsResult",text,choices,lives:zgRpsLives,winner:null}));
-  zgPhase="rpsBetween"; renderHost();
-}
-
-function zgResetGame(){
-  if(!confirm("Bettgeflüster wirklich komplett zurücksetzen?"))return;
-  clearTimeout(zgRpsTimer);
-  zgRound=0;zgPhase="idle";zgAnswers={};zgDuos=[];zgOut=new Set();zgWinner=null;zgRpsPlayers=[];zgRpsLives={};zgRpsChoices={};
-  ZG_PLAYERS.forEach(n=>zgSend(n,{type:"zgState",round:0,phase:"ready",title:ZG_ROUNDS[0].title,question:ZG_ROUNDS[0].question}));
-  renderHost();
-}
-
-function zgClientBase(){
-  $("playerView").classList.remove("tour-active");
-  $("playerTourBox").classList.add("hide");
-  $("buzzBtn").classList.add("hide");
-  $("playerBuzzBoard").classList.remove("hide");
-  $("playerRanking").innerHTML="";
-  $("playerCountdown").textContent="";
-}
-function zgClientRender(m){
-  zgClientBase(); clearInterval(timerInt);
-  const name=role.slice(7);
-  $("buzzState").textContent="";
-  if(m.phase==="excluded"){
-    $("playerAlert").className="status";
-    $("playerAlert").innerHTML="<b>Du spielst beim Bettgeflüster nicht mit.</b><br>Bei allen anderen Spielen bleibst du ganz normal dabei.";
-    return;
-  }
-  if(m.phase==="ready"){
-    $("playerAlert").className="status";
-    $("playerAlert").innerHTML="<b>"+zgEsc(m.title)+"</b><br>Warte auf den Spielleiter …";
-    return;
-  }
-  if(m.phase==="paired"){
-    $("playerAlert").className="status ok";
-    $("playerAlert").innerHTML="🛏️ <b>Zimmerteam steht!</b><br>Du + <b>"+zgEsc(m.partner)+"</b>";
-    return;
-  }
-  if(m.phase==="spectator"){
-    $("playerAlert").className="status";
-    $("playerAlert").innerHTML="<b>Finalduell:</b><br>"+m.players.map(zgEsc).join(" vs. ")+"<br><span class='muted'>Du wartest auf das Ergebnis.</span>";
-    return;
-  }
-  if(m.phase==="revealed"){
-    const rank=m.ranking||[], pos=rank.findIndex(x=>x.name===name);
-    $("playerAlert").className=name===m.winner?"status ok":"status";
-    $("playerAlert").innerHTML=(name===m.winner?"🏆 <b>DU HAST GEWONNEN!</b><br>Du darfst deinen Zimmerpartner wählen.":"<b>Runde beendet.</b><br>Platz "+(pos+1));
-    $("playerRanking").innerHTML=rank.map((x,i)=>"<div class='status'><b>"+(i+1)+". "+zgEsc(x.name)+"</b></div>").join("");
-    return;
-  }
-  if(m.phase!=="playing" && m.phase!=="rps")return;
-
-  if(m.round===0 || m.round===2){
-    $("playerAlert").className="status";
-    $("playerAlert").innerHTML="<div class='zg-phone-title'>"+zgEsc(m.title)+"</div>"+zgEsc(m.question);
-    $("playerRanking").innerHTML="<input id='zgPhoneInput' type='number' inputmode='numeric' placeholder='"+(m.round===0?"Kilometer":"Meter")+"' style='width:100%;font-size:24px'><button id='zgPhoneSend' class='good' style='width:100%;margin-top:10px;font-size:20px'>ABSCHICKEN</button>";
-    if(m.end)countdown(m.end,$("playerCountdown"),()=>{const b=$("zgPhoneSend");if(b)b.disabled=true;});
-    const ze=$("zgPhoneInput");
-    ze.addEventListener("input",()=>conn.send({type:"zgLive",name,data:{kind:"input",value:ze.value,sent:false}}));
-    $("zgPhoneSend").onclick=()=>{
-      const e=$("zgPhoneInput");if(!e.value)return;
-      conn.send({type:"zgLive",name,data:{kind:"input",value:e.value,sent:true}});
-      conn.send({type:"zgAnswer",name,value:Number(e.value)});
-      e.disabled=true;$("zgPhoneSend").disabled=true;clearInterval(timerInt);$("playerCountdown").textContent="";
-      $("playerAlert").innerHTML="✅ <b>Gesendet!</b><br>Deine Schätzung: "+Number(e.value).toLocaleString("de-DE")+" "+(m.round===0?"km":"m")+"<br><span class='muted'>Warte auf die anderen …</span>";
-    };
-    return;
-  }
-  if(m.round===1){
-    $("playerAlert").className="status";
-    $("playerAlert").innerHTML="<div class='zg-phone-title'>⏱️ ZEITGEFÜHL</div>Ziel: möglichst genau <b>10,00 Sekunden</b>.";
-    $("playerRanking").innerHTML="<button id='zgTimeBtn' class='good zg-choice'>START</button><div id='zgTimeInfo' class='zg-phone-big'>Bereit</div>";
-    const b=$("zgTimeBtn"),info=$("zgTimeInfo");
-    b.onclick=()=>{
-      if(!zgClientState.localStart){
-        zgClientState.localStart=performance.now(); b.textContent="STOPP"; b.className="danger zg-choice"; info.textContent="???"; conn.send({type:"zgLive",name,data:{kind:"timer",state:"running"}});
-      }else{
-        const ms=Math.round(performance.now()-zgClientState.localStart); zgClientState.localStart=0;
-        b.disabled=true; info.textContent=(ms/1000).toFixed(2).replace(".",",")+" s"; conn.send({type:"zgLive",name,data:{kind:"timer",state:"stopped",ms}});
-        conn.send({type:"zgAnswer",name,value:ms});
-        $("playerAlert").innerHTML="✅ <b>Gestoppt!</b><br>Deine Zeit:";
-      }
-    };
-    return;
-  }
-  if(m.round===3){
-    $("playerAlert").className="status";
-    $("playerAlert").innerHTML="<div class='zg-phone-title'>⚡ REAKTIONSBLITZ</div>Drücke erst, wenn <b>JETZT!</b> erscheint.";
-    $("playerRanking").innerHTML="<button id='zgReactBtn' class='secondary zg-choice' style='min-height:180px;font-size:30px'>WARTEN …</button>";
-    const b=$("zgReactBtn");
-    const wait=2000+Math.floor(Math.random()*5001);
-    zgClientState.reactionGoAt=performance.now()+wait; conn.send({type:"zgLive",name,data:{kind:"reaction",state:"waiting"}});
-    zgClientState.reactionTimer=setTimeout(()=>{b.textContent="JETZT!";b.className="good zg-choice zg-go"; conn.send({type:"zgLive",name,data:{kind:"reaction",state:"go"}});},wait);
-    b.onclick=()=>{
-      clearTimeout(zgClientState.reactionTimer);
-      const now=performance.now(), early=now<zgClientState.reactionGoAt;
-      const ms=early?0:Math.round(now-zgClientState.reactionGoAt);
-      b.disabled=true;b.textContent=early?"FRÜHSTART!":"GESENDET!";
-      $("playerAlert").innerHTML=early?"❌ <b>Frühstart!</b><br>+1,000 Sekunden Strafzeit":"✅ <b>Reaktion gespeichert:</b><br>"+(ms/1000).toFixed(3).replace(".",",")+" s";
-      conn.send({type:"zgLive",name,data:{kind:"reaction",state:"done",ms,early}}); conn.send({type:"zgReaction",name,ms,early});
-    };
-    return;
-  }
-  if(m.round===4 && m.phase==="rps"){
-    $("playerAlert").className="status";
-    $("playerAlert").innerHTML="<div class='zg-phone-title'>3ER-FINALE</div><div>"+m.players.map(zgEsc).join(" · ")+"</div><div class='zg-hearts'>"+("❤️".repeat(m.lives[name])||"💀")+"</div>";
-    $("playerRanking").innerHTML="<div class='zg-rps'><button data-rps='Stein'>🪨<br>STEIN</button><button data-rps='Schere'>✂️<br>SCHERE</button><button data-rps='Papier'>📄<br>PAPIER</button></div>";
-    countdown(m.end,$("playerCountdown"),()=>document.querySelectorAll("[data-rps]").forEach(x=>x.disabled=true));
-    document.querySelectorAll("[data-rps]").forEach(b=>b.onclick=()=>{
-      document.querySelectorAll("[data-rps]").forEach(x=>x.disabled=true);
-      b.classList.add("good"); clearInterval(timerInt);$("playerCountdown").textContent="";
-      conn.send({type:"zgRpsChoice",name,choice:b.dataset.rps,token:m.token});
-      $("playerAlert").innerHTML="<b>Gewählt: "+b.dataset.rps+"</b><br>Warte auf die anderen …";
-    });
-  }
-}
-function zgClientRpsResult(m){
-  zgClientBase(); clearInterval(timerInt);
-  const name=role.slice(7);
-  $("playerAlert").className=m.winner===name?"status ok":"status";
-  $("playerAlert").innerHTML="<b>"+zgEsc(m.text)+"</b><br><div class='zg-hearts'>"+("❤️".repeat(m.lives[name]||0)||"💀")+"</div>"+
-    (m.couch?(name===m.couch?"🛋️ <b>Du bist der Couch-Kandidat.</b>":"🛏️ <b>Zimmerteam 5: "+m.duo.map(zgEsc).join(" + ")+"</b>"):"Warte auf den nächsten Zug …");
-  $("playerRanking").innerHTML=Object.entries(m.choices||{}).map(([n,c])=>"<div class='status'><b>"+zgEsc(n)+":</b> "+(c||"keine Auswahl")+"</div>").join("");
-}
+function zgWinnerPairHtml(rem){return "<div class='card'><h3>🏆 "+zgEsc(zgWinner)+" darf den Zimmerpartner wählen</h3><select id='zgPartner' style='width:100%'>"+rem.filter(n=>n!==zgWinner).map(n=>"<option>"+zgEsc(n)+"</option>").join("")+"</select><button id='zgPair' class='good' style='width:100%;margin-top:10px'>ZIMMERTEAM FESTLEGEN</button></div>";}
+function zgPairedHtml(){const last=zgDuos.at(-1);return "<div class='status ok' style='font-size:22px;text-align:center'><b>Zimmerteam "+zgDuos.length+" steht:</b><br>"+zgEsc(last[0])+" + "+zgEsc(last[1])+"</div>"+(zgDuos.length<5?"<button id='zgNext' style='width:100%'>NÄCHSTE RUNDE →</button>":"<div class='status ok' style='font-size:26px;text-align:center'><b>🏁 ALLE ZIMMER STEHEN!</b><br>Jan + Fabian sowie die fünf ausgespielten Paare. Keine Couch.</div>");}
+function zgHlAlive(){return zgHl?zgRemaining().filter(n=>(zgHl.lives[n]||0)>0):[];}
+function zgHlScoreHtml(){if(!zgHl)return "";return "<div class='tour-score'>"+zgRemaining().map(n=>"<div class='status' style='"+((zgHl.lives[n]||0)<=0?"opacity:.45;":"")+"'><b>"+zgEsc(n)+"</b><br><span style='font-size:22px'>"+"❤️".repeat(zgHl.lives[n]||0)+"🖤".repeat(3-(zgHl.lives[n]||0))+"</span>"+((zgHl.lives[n]||0)<=0?"<br><b>RAUS</b>":"")+"</div>").join("")+"</div>";}
+function zgHlStart(){const rem=zgRemaining();zgHl={lives:{},deck:hlbDeck(),idx:0,answers:{},result:null,actual:null,end:0,sudden:false};rem.forEach(n=>zgHl.lives[n]=3);zgHlBeginQuestion();}
+function zgHlBeginQuestion(){clearInterval(zgHlTimer);if(!zgHl)return;const alive=zgHlAlive();if(alive.length===1){zgWinner=alive[0];zgPhase="revealed";zgHl.end=0;zgHlBroadcast();renderHost();return;}zgHl.answers={};zgHl.result=null;zgHl.actual=null;zgHl.sudden=false;zgPhase="hlQuestion";zgHl.end=Date.now()+30000;zgHlBroadcast();renderHost();zgHlTimer=setInterval(()=>{if(zgPhase!=="hlQuestion"){clearInterval(zgHlTimer);return;}if(Date.now()>=zgHl.end){clearInterval(zgHlTimer);zgHlResolve();return;}renderHost();},250);}
+function zgHlBroadcast(){if(!zgHl)return;const q=zgHl.deck[zgHl.idx];zgRemaining().forEach(n=>zgSend(n,{type:"zgState",round:0,phase:zgPhase,title:ZG_ROUNDS[0].title,question:q?q.q:"",threshold:q?hlFmt(q.t,q.u):"",period:q&&q.period?q.period:"",lives:{...zgHl.lives},answers:{...zgHl.answers},result:zgHl.result,actual:zgHl.actual,end:zgHl.end,winner:zgWinner,sudden:zgHl.sudden}));}
+function zgHlChoose(choice,name){if(!zgHl||zgPhase!=="hlQuestion"||!zgHlAlive().includes(name)||zgHl.answers[name])return;zgHl.answers[name]=choice;zgHlBroadcast();renderHost();if(zgHlAlive().every(n=>zgHl.answers[n])){clearInterval(zgHlTimer);zgHlResolve();}}
+function zgHlResolve(){if(!zgHl||zgPhase!=="hlQuestion")return;clearInterval(zgHlTimer);const q=zgHl.deck[zgHl.idx],right=q.a>q.t?"higher":"lower",before=zgHlAlive();let lines=[];before.forEach(n=>{const c=zgHl.answers[n],label=c?(c==="higher"?"HÖHER":"NIEDRIGER"):"KEINE ANTWORT";if(!c||c!==right){zgHl.lives[n]=Math.max(0,zgHl.lives[n]-1);lines.push(n+": "+label+" – falsch · 1 Leben weg");}else lines.push(n+": "+label+" – richtig");});let alive=zgHlAlive();zgHl.sudden=false;if(alive.length===0&&before.length>1){before.forEach(n=>zgHl.lives[n]=1);alive=[...before];zgHl.sudden=true;}zgHl.result=lines;zgHl.actual=hlFmt(q.a,q.u);zgHl.end=0;if(alive.length===1){zgWinner=alive[0];zgPhase="revealed";}else zgPhase="hlResult";zgHlBroadcast();renderHost();}
+function zgHlNextQuestion(){if(!zgHl||zgPhase!=="hlResult")return;zgHl.idx++;if(zgHl.idx>=zgHl.deck.length)zgHl.deck=hlbDeck();zgHlBeginQuestion();}
+function zgRanking(){const rem=zgRemaining();if(zgRound===1)return rem.map(n=>({name:n,value:zgAnswers[n],valid:true,score:Math.abs(Number(zgAnswers[n])-5101)})).filter(x=>Number.isFinite(x.value)).sort((a,b)=>a.score-b.score);if(zgRound===2)return rem.map(n=>({name:n,value:zgAnswers[n],valid:true,score:Math.abs(Number(zgAnswers[n])-10000)})).filter(x=>Number.isFinite(x.value)).sort((a,b)=>a.score-b.score);if(zgRound===3)return rem.map(n=>({name:n,value:zgAnswers[n],valid:Number(zgAnswers[n])<=1831,score:Math.abs(Number(zgAnswers[n])-1831)})).filter(x=>Number.isFinite(x.value)).sort((a,b)=>(b.valid-a.valid)||a.score-b.score);if(zgRound===4)return rem.map(n=>{const a=zgAnswers[n];if(!a)return null;return {name:n,value:a.ms,early:a.early,valid:true,score:Number(a.ms)+(a.early?1000:0)};}).filter(Boolean).sort((a,b)=>a.score-b.score);return [];}
+function zgRankingHtml(){const rank=zgRanking();return "<div class='card'><h3>Rangliste</h3>"+rank.map((x,i)=>{let val="";if(zgRound===1)val=Number(x.value).toLocaleString("de-DE")+" km · Δ "+Math.round(x.score).toLocaleString("de-DE")+" km";if(zgRound===2)val=(Number(x.value)/1000).toFixed(2).replace(".",",")+" s · Δ "+(x.score/1000).toFixed(2).replace(".",",")+" s";if(zgRound===3)val=Number(x.value).toLocaleString("de-DE")+" m"+(!x.valid?" · ❌ ÜBERBOTEN":" · Δ "+Math.round(x.score)+" m");if(zgRound===4)val=(Number(x.value)/1000).toFixed(3).replace(".",",")+" s"+(x.early?" + 1,000 s Strafe":"");return "<div class='status zg-rank'><b>"+(i+1)+".</b><b>"+zgEsc(x.name)+"</b><span>"+val+"</span></div>";}).join("")+"</div>";}
+function zgStartRound(){if(zgRound===0){zgHlStart();return;}zgAnswers={};zgWinner=null;zgLive={};zgPhase="playing";const rem=zgRemaining(),end=(zgRound===1||zgRound===3)?Date.now()+60000:0;rem.forEach(n=>zgSend(n,{type:"zgState",round:zgRound,phase:"playing",title:ZG_ROUNDS[zgRound].title,question:ZG_ROUNDS[zgRound].question,end}));zgSend("Fabian",{type:"zgState",round:zgRound,phase:"excluded",title:"🏨 Bettgeflüster"});renderHost();if(end)setTimeout(()=>{if(modeName==="zimmer"&&zgPhase==="playing")zgRevealRound();},60500);}
+function zgRevealRound(){if(zgRound===0||zgPhase!=="playing")return;const rank=zgRanking();if(!rank.length){alert("Noch keine Ergebnisse vorhanden.");return;}zgPhase="revealed";zgWinner=rank[0].name;zgRemaining().forEach(n=>zgSend(n,{type:"zgState",round:zgRound,phase:"revealed",winner:zgWinner,ranking:rank}));renderHost();}
+function zgConfirmPair(){if(zgPhase!=="revealed"||!zgWinner)return;const sel=$("zgPartner");if(!sel||!sel.value)return;const partner=sel.value;if(partner===zgWinner||zgOut.has(partner)){alert("Ungültiger Partner.");return;}zgDuos.push([zgWinner,partner]);zgOut.add(zgWinner);zgOut.add(partner);zgPhase="paired";zgSend(zgWinner,{type:"zgState",round:zgRound,phase:"paired",partner});zgSend(partner,{type:"zgState",round:zgRound,phase:"paired",partner:zgWinner});renderHost();}
+function zgNextRound(){if(zgPhase!=="paired"||zgDuos.length>=5)return;zgRound=Math.min(4,zgRound+1);zgPhase="idle";zgAnswers={};zgLive={};zgWinner=null;zgHl=null;zgRemaining().forEach(n=>zgSend(n,{type:"zgState",round:zgRound,phase:"ready",title:ZG_ROUNDS[zgRound].title,question:ZG_ROUNDS[zgRound].question}));renderHost();}
+function zgResetGame(){if(!confirm("Bettgeflüster wirklich komplett zurücksetzen?"))return;clearInterval(zgHlTimer);zgRound=0;zgPhase="idle";zgAnswers={};zgDuos=[];zgOut=new Set();zgWinner=null;zgHl=null;ZG_PLAYERS.forEach(n=>zgSend(n,{type:"zgState",round:0,phase:"ready",title:ZG_ROUNDS[0].title,question:ZG_ROUNDS[0].question}));renderHost();}
+function zgClientBase(){$("playerView").classList.remove("tour-active");$("playerTourBox").classList.add("hide");$("buzzBtn").classList.add("hide");$("playerBuzzBoard").classList.remove("hide");$("playerRanking").innerHTML="";$("playerCountdown").textContent="";}
+function zgClientRender(m){zgClientBase();clearInterval(timerInt);const name=role.slice(7);$("buzzState").textContent="";if(m.phase==="excluded"){$("playerAlert").className="status";$("playerAlert").innerHTML="<b>Du spielst beim Bettgeflüster nicht mit.</b>";return;}if(m.phase==="ready"){$("playerAlert").className="status";$("playerAlert").innerHTML="<b>"+zgEsc(m.title)+"</b><br>Warte auf den Spielleiter …";return;}if(m.phase==="paired"){$("playerAlert").className="status ok";$("playerAlert").innerHTML="🛏️ <b>Zimmerteam steht!</b><br>Du + <b>"+zgEsc(m.partner)+"</b>";return;}if(m.phase==="revealed"){const rank=m.ranking||[],pos=rank.findIndex(x=>x.name===name);$("playerAlert").className=name===m.winner?"status ok":"status";$("playerAlert").innerHTML=name===m.winner?"🏆 <b>DU HAST GEWONNEN!</b><br>Du darfst deinen Zimmerpartner wählen.":"<b>Runde beendet.</b>"+(pos>=0?"<br>Platz "+(pos+1):"");$("playerRanking").innerHTML=rank.map((x,i)=>"<div class='status'><b>"+(i+1)+". "+zgEsc(x.name)+"</b></div>").join("");return;}
+  if(m.round===0&&(m.phase==="hlQuestion"||m.phase==="hlResult")){$("playerAlert").className="status";if(m.phase==="hlQuestion"){$("playerAlert").innerHTML="<div class='zg-phone-title'>🌙 HIGHER OR LOWER</div>"+zgEsc(m.question)+(m.period?"<div class='muted'>(Zeitraum: "+zgEsc(m.period)+")</div>":"")+"<div class='muted'>Höher oder niedriger als</div><div class='big'>"+zgEsc(m.threshold)+"</div><div class='zg-hearts'>"+"❤️".repeat(m.lives[name]||0)+"</div>";$("playerRanking").innerHTML="<div class='grid'><button id='zgHlHi' class='good' style='font-size:24px'>⬆ HÖHER</button><button id='zgHlLo' class='danger' style='font-size:24px'>⬇ NIEDRIGER</button></div>";if(m.end)countdown(m.end,$("playerCountdown"));const send=c=>{conn.send({type:"zgHlChoice",name,choice:c});document.querySelectorAll('#zgHlHi,#zgHlLo').forEach(x=>x.disabled=true);clearInterval(timerInt);$("playerCountdown").textContent="";};$("zgHlHi").onclick=()=>send("higher");$("zgHlLo").onclick=()=>send("lower");}else{$("playerAlert").innerHTML="<div class='big'>Antwort "+zgEsc(m.actual||"")+"</div><div class='zg-hearts'>"+"❤️".repeat(m.lives[name]||0)+"</div>"+(m.sudden?"<div class='status bad'><b>⚡ SUDDEN DEATH</b></div>":"");$("playerRanking").innerHTML=(m.result||[]).map(x=>"<div class='status'>"+zgEsc(x)+"</div>").join("");}return;}
+  if(m.phase!=="playing")return;
+  if(m.round===1||m.round===3){$("playerAlert").className="status";$("playerAlert").innerHTML="<div class='zg-phone-title'>"+zgEsc(m.title)+"</div>"+zgEsc(m.question);$("playerRanking").innerHTML="<input id='zgPhoneInput' type='number' inputmode='numeric' placeholder='"+(m.round===1?"Kilometer":"Meter")+"' style='width:100%;font-size:24px'><button id='zgPhoneSend' class='good' style='width:100%;margin-top:10px;font-size:20px'>ABSCHICKEN</button>";if(m.end)countdown(m.end,$("playerCountdown"),()=>{const b=$("zgPhoneSend");if(b)b.disabled=true;});const ze=$("zgPhoneInput");ze.addEventListener("input",()=>conn.send({type:"zgLive",name,data:{kind:"input",value:ze.value,sent:false}}));$("zgPhoneSend").onclick=()=>{const e=$("zgPhoneInput");if(!e.value)return;conn.send({type:"zgLive",name,data:{kind:"input",value:e.value,sent:true}});conn.send({type:"zgAnswer",name,value:Number(e.value)});e.disabled=true;$("zgPhoneSend").disabled=true;clearInterval(timerInt);$("playerCountdown").textContent="";};return;}
+  if(m.round===2){$("playerAlert").className="status";$("playerAlert").innerHTML="<div class='zg-phone-title'>⏱️ ZEITGEFÜHL</div>Ziel: möglichst genau <b>10,00 Sekunden</b>.";$("playerRanking").innerHTML="<button id='zgTimeBtn' class='good zg-choice'>START</button><div id='zgTimeInfo' class='zg-phone-big'>Bereit</div>";const b=$("zgTimeBtn"),info=$("zgTimeInfo");b.onclick=()=>{if(!zgClientState.localStart){zgClientState.localStart=performance.now();b.textContent="STOPP";b.className="danger zg-choice";info.textContent="???";conn.send({type:"zgLive",name,data:{kind:"timer",state:"running"}});}else{const ms=Math.round(performance.now()-zgClientState.localStart);zgClientState.localStart=0;b.disabled=true;info.textContent=(ms/1000).toFixed(2).replace(".",",")+" s";conn.send({type:"zgLive",name,data:{kind:"timer",state:"stopped",ms}});conn.send({type:"zgAnswer",name,value:ms});}};return;}
+  if(m.round===4){$("playerAlert").className="status";$("playerAlert").innerHTML="<div class='zg-phone-title'>⚡ REAKTIONSBLITZ</div>Drücke erst, wenn <b>JETZT!</b> erscheint.";$("playerRanking").innerHTML="<button id='zgReactBtn' class='secondary zg-choice' style='min-height:180px;font-size:30px'>WARTEN …</button>";const b=$("zgReactBtn"),wait=2000+Math.floor(Math.random()*5001);zgClientState.reactionGoAt=performance.now()+wait;conn.send({type:"zgLive",name,data:{kind:"reaction",state:"waiting"}});zgClientState.reactionTimer=setTimeout(()=>{b.textContent="JETZT!";b.className="good zg-choice zg-go";conn.send({type:"zgLive",name,data:{kind:"reaction",state:"go"}});},wait);b.onclick=()=>{clearTimeout(zgClientState.reactionTimer);const now=performance.now(),early=now<zgClientState.reactionGoAt,ms=early?0:Math.round(now-zgClientState.reactionGoAt);b.disabled=true;b.textContent=early?"FRÜHSTART!":"GESENDET!";conn.send({type:"zgLive",name,data:{kind:"reaction",state:"done",ms,early}});conn.send({type:"zgReaction",name,ms,early});};return;}}
 
 function norm(s){return String(s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]/g,"");}
 function editDistance(a,b){
@@ -2430,10 +2070,6 @@ function acceptCategory(t){
   answers={}; renderHost();
 }
 
-
-
-
-
 $("hostBtn").addEventListener("click",()=>{
   const pw=prompt("Spielleiter-Passwort:");
   if(pw===null)return;
@@ -2448,144 +2084,5 @@ $("buzzBtn").addEventListener("click",()=>{if(conn&&role.startsWith("player:")){
 $("screenJoinBtn").addEventListener("click",()=>join("screen"));
 document.querySelectorAll("[data-team]").forEach(b=>b.addEventListener("click",()=>join(b.dataset.team)));
 document.querySelectorAll("[data-mode]").forEach(b=>b.addEventListener("click",()=>setMode(b.dataset.mode)));
-
-
-/* ===================== QUOTEN-KOMA ===================== */
-const QK_MARKETS=[
- {id:"result",cat:"Spielausgang",name:"Spielausgang",o:[["de","Deutschland gewinnt",2.20],["draw","Unentschieden",3.50],["nl","Niederlande gewinnt",2.90]]},
- {id:"dc",cat:"Doppelte Chance",name:"Doppelte Chance",o:[["1x","Deutschland oder Unentschieden",1.40],["12","Deutschland oder Niederlande",1.27],["x2","Unentschieden oder Niederlande",1.55]]},
- {id:"ht",cat:"Halbzeit",name:"Halbzeit-Ergebnis",o:[["de","Deutschland führt zur Halbzeit",2.75],["draw","Unentschieden zur Halbzeit",2.20],["nl","Niederlande führt zur Halbzeit",3.40]]},
- {id:"goals15",cat:"Tore",name:"Tore gesamt 1,5",o:[["over","Über 1,5 Tore",1.30],["under","Unter 1,5 Tore",3.60]]},
- {id:"goals25",cat:"Tore",name:"Tore gesamt 2,5",o:[["over","Über 2,5 Tore",1.85],["under","Unter 2,5 Tore",1.90]]},
- {id:"goals35",cat:"Tore",name:"Tore gesamt 3,5",o:[["over","Über 3,5 Tore",3.00],["under","Unter 3,5 Tore",1.35]]},
- {id:"goals45",cat:"Tore",name:"Tore gesamt 4,5",o:[["over","Über 4,5 Tore",5.50],["under","Unter 4,5 Tore",1.12]]},
- {id:"btts",cat:"Tore",name:"Beide Teams treffen",o:[["yes","Ja",1.65],["no","Nein",2.10]]},
- {id:"degoals",cat:"Deutschland",name:"Deutschland Tore",o:[["o05","Über 0,5",1.25],["o15","Über 1,5",2.15],["o25","Über 2,5",4.75],["zero","Ohne Tor",4.00]]},
- {id:"nlgoals",cat:"Niederlande",name:"Niederlande Tore",o:[["o05","Über 0,5",1.35],["o15","Über 1,5",2.50],["o25","Über 2,5",5.50],["zero","Ohne Tor",3.00]]},
- {id:"firstgoal",cat:"Tore",name:"Erstes Tor",o:[["de","Deutschland erzielt das 1. Tor",1.85],["nl","Niederlande erzielt das 1. Tor",2.20],["none","Kein Tor",11.00]]},
- {id:"goal1_15",cat:"Torzeit",name:"Tor in Minute 1–15",o:[["yes","Ja",3.00],["no","Nein",1.35]]},
- {id:"goal1_30",cat:"Torzeit",name:"Tor in Minute 1–30",o:[["yes","Ja",1.75],["no","Nein",1.95]]},
- {id:"goal76",cat:"Torzeit",name:"Tor ab Minute 76",o:[["yes","Ja",1.85],["no","Nein",1.85]]},
- {id:"stoppagegoal",cat:"Torzeit",name:"Tor in der Nachspielzeit (1. oder 2. HZ)",o:[["yes","Ja",3.25],["no","Nein",1.28]]},
- {id:"bothhalves",cat:"Halbzeiten",name:"Tor in beiden Halbzeiten",o:[["yes","Ja",1.60],["no","Nein",2.15]]},
- {id:"debothhalves",cat:"Halbzeiten",name:"Deutschland trifft in beiden Halbzeiten",o:[["yes","Ja",3.40],["no","Nein",1.25]]},
- {id:"nlbothhalves",cat:"Halbzeiten",name:"Niederlande trifft in beiden Halbzeiten",o:[["yes","Ja",4.25],["no","Nein",1.18]]},
- {id:"secondmore",cat:"Halbzeiten",name:"2. Halbzeit hat mehr Tore als 1. Halbzeit",o:[["yes","Ja",2.05],["no","Nein",1.70]]},
- {id:"dewin_o25",cat:"Sieg & Tore",name:"Deutschland gewinnt & über 2,5 Tore",o:[["yes","Ja",3.10],["no","Nein",1.30]]},
- {id:"nlwin_o25",cat:"Sieg & Tore",name:"Niederlande gewinnt & über 2,5 Tore",o:[["yes","Ja",4.20],["no","Nein",1.18]]},
- {id:"decleanwin",cat:"Sieg & Tore",name:"Deutschland gewinnt zu Null",o:[["yes","Ja",4.75],["no","Nein",1.15]]},
- {id:"nlcleanwin",cat:"Sieg & Tore",name:"Niederlande gewinnt zu Null",o:[["yes","Ja",6.00],["no","Nein",1.10]]},
- {id:"score",cat:"Exaktes Ergebnis",name:"Exaktes Ergebnis",o:[["00","0:0",10],["10","1:0",8],["01","0:1",9],["11","1:1",6],["20","2:0",10],["02","0:2",12],["21","2:1",8.5],["12","1:2",9.5],["22","2:2",11],["31","3:1",15],["13","1:3",17],["other","Anderes Ergebnis",5.5]]},
- {id:"cornermore",cat:"Ecken",name:"Mehr Ecken",o:[["de","Deutschland",1.85],["nl","Niederlande",2.20],["same","Gleich viele",7.00]]},
- {id:"corners85",cat:"Ecken",name:"Ecken gesamt 8,5",o:[["over","Über 8,5",1.85],["under","Unter 8,5",1.85]]},
- {id:"corners105",cat:"Ecken",name:"Ecken gesamt 10,5",o:[["over","Über 10,5",2.75],["under","Unter 10,5",1.40]]},
- {id:"decorners45",cat:"Ecken",name:"Deutschland Ecken 4,5",o:[["over","Über 4,5",2.00],["under","Unter 4,5",1.70]]},
- {id:"nlcorners45",cat:"Ecken",name:"Niederlande Ecken 4,5",o:[["over","Über 4,5",2.25],["under","Unter 4,5",1.55]]},
- {id:"firstcorner",cat:"Ecken",name:"Erste Ecke",o:[["de","Deutschland",1.80],["nl","Niederlande",1.95]]},
- {id:"cards25",cat:"Karten",name:"Karten gesamt 2,5",o:[["over","Über 2,5",1.65],["under","Unter 2,5",2.10]]},
- {id:"cards35",cat:"Karten",name:"Karten gesamt 3,5",o:[["over","Über 3,5",2.20],["under","Unter 3,5",1.55]]},
- {id:"cards45",cat:"Karten",name:"Karten gesamt 4,5",o:[["over","Über 4,5",3.20],["under","Unter 4,5",1.28]]},
- {id:"firstcard",cat:"Karten",name:"Erste Karte",o:[["de","Deutschland",1.95],["nl","Niederlande",1.80]]},
- {id:"bothcard",cat:"Karten",name:"Beide Teams erhalten eine Karte",o:[["yes","Ja",1.55],["no","Nein",2.25]]},
- {id:"red",cat:"Karten",name:"Rote Karte im Spiel",o:[["yes","Ja",6.50],["no","Nein",1.08]]},
- {id:"penalty",cat:"Spielereignisse",name:"Elfmeter im Spiel",o:[["yes","Ja",3.75],["no","Nein",1.22]]},
- {id:"var",cat:"Spielereignisse",name:"VAR korrigiert eine Schiedsrichterentscheidung",o:[["yes","Ja",3.25],["no","Nein",1.28]]},
- {id:"own",cat:"Spielereignisse",name:"Eigentor",o:[["yes","Ja",8.00],["no","Nein",1.05]]},
- {id:"wood",cat:"Spielereignisse",name:"Pfosten-/Lattentreffer",o:[["yes","Ja",2.25],["no","Nein",1.55]]},
- {id:"disallowed",cat:"Spielereignisse",name:"Tor wird aberkannt",o:[["yes","Ja",3.00],["no","Nein",1.32]]},
- {id:"added4",cat:"Spielereignisse",name:"Mindestens 4 Min. Nachspielzeit in HZ 2",o:[["yes","Ja",1.70],["no","Nein",2.00]]},
- {id:"boost_kevin_fluessiggold",cat:"🔥 SAUFY-NAUTEN BOOSTS",name:"Schafft Kevin von Anpfiff bis Abpfiff 3 Liter Flüssiggold?",boost:true,o:[["yes","JA",7.50],["no","NEIN",1.10]]},
-{id:"boost_patrick_sprit",cat:"🔥 SAUFY-NAUTEN BOOSTS",name:"Schafft Patrick von Anpfiff bis Abpfiff 0,5 Liter Sprit?",boost:true,o:[["yes","JA",7.50],["no","NEIN",1.10]]},
-{id:"boost_swen",cat:"🔥 SAUFY-NAUTEN BOOSTS",name:"Schafft Swen von Anpfiff bis Abpfiff 100 Liegestütze?",boost:true,o:[["yes","JA",7.50],["no","NEIN",1.10]]}
-];
-const QK_KEY="quotenkoma_v1";
-function qkDefault(){return {open:true,published:false,bets:{team1:[],team2:[],team3:[]},settled:{},finished:false,awards:null};}
-let qk=qkLoad(); let qkSlip=[];
-function qkLoad(){try{return Object.assign(qkDefault(),JSON.parse(localStorage.getItem(QK_KEY)||"null")||{});}catch(e){return qkDefault();}}
-function qkSave(){try{localStorage.setItem(QK_KEY,JSON.stringify(qk));}catch(e){} qkBroadcast();}
-function qkMoney(n){return Number(n||0).toFixed(2).replace(".",",")+" €";}
-function qkMarket(id){return QK_MARKETS.find(x=>x.id===id);}
-function qkOpt(mid,oid){const m=qkMarket(mid);return m&&m.o.find(x=>x[0]===oid);}
-function qkStake(t){return (qk.bets[t]||[]).reduce((a,b)=>a+b.stake,0);}
-function qkBalance(t){return 100-qkStake(t);}
-function qkPayout(t){return (qk.bets[t]||[]).reduce((a,b)=>a+(b.status==="win"?b.stake*b.odds:(b.status==="void"?b.stake:0)),0);}
-function qkFinal(t){return qk.finished?qkBalance(t)+qkPayout(t):qkBalance(t);}
-function qkPublicState(){return {open:qk.open,published:qk.published,bets:qk.bets,settled:qk.settled,finished:qk.finished,awards:qk.awards};}
-function qkSendTo(roleKey){const c=conns[roleKey];if(c)try{c.send({type:"qkState",state:qkPublicState(),markets:QK_MARKETS})}catch(e){}}
-function qkBroadcast(){["team1","team2","team3","screen"].forEach(qkSendTo);}
-function qkSubmit(team,bets,c){
- const reply=(ok,msg)=>{try{if(c)c.send({type:"qkBetAck",ok,msg});}catch(e){}};
- if(!qk.open||qk.finished){reply(false,"Die Wettannahme ist geschlossen.");return;}
- if(!["team1","team2","team3"].includes(team)){reply(false,"Team konnte nicht erkannt werden.");return;}
- if(!Array.isArray(bets)||!bets.length){reply(false,"Der Wettschein ist leer.");return;}
- const used=new Set((qk.bets[team]||[]).map(b=>b.market)); let bal=qkBalance(team),accepted=0;
- for(const x of bets){
-   const m=qkMarket(x.market),o=m&&qkOpt(x.market,x.option),st=Number(x.stake);
-   if(!m||!o||used.has(x.market)||!Number.isInteger(st)||st<1||st>20||st>bal)continue;
-   qk.bets[team].push({id:Date.now()+"_"+Math.random().toString(36).slice(2),market:m.id,marketName:m.name,option:o[0],label:o[1],odds:o[2],stake:st,status:"open"});
-   used.add(m.id);bal-=st;accepted++;
- }
- if(!accepted){reply(false,"Keine Wette konnte angenommen werden. Prüfe Einsatz, Guthaben und bereits gespielte Märkte.");qkSendTo(team);return;}
- qkSave();renderHost();reply(true,accepted+" Wette"+(accepted===1?"":"n")+" erfolgreich abgegeben.");qkSendTo(team);
-}
-function qkSettle(mid,winner){qk.settled[mid]=winner;["team1","team2","team3"].forEach(t=>(qk.bets[t]||[]).forEach(b=>{if(b.market===mid)b.status=winner==="void"?"void":(b.option===winner?"win":"lose");}));qkSave();renderHost();}
-function qkUndo(mid){delete qk.settled[mid];["team1","team2","team3"].forEach(t=>(qk.bets[t]||[]).forEach(b=>{if(b.market===mid)b.status="open";}));qk.finished=false;qk.awards=null;qkSave();renderHost();}
-function qkFinish(){
- const open=[];QK_MARKETS.forEach(m=>{if(["team1","team2","team3"].some(t=>(qk.bets[t]||[]).some(b=>b.market===m.id&&b.status==="open")))open.push(m.name)});
- if(open.length&&!confirm(open.length+" bespielte Märkte sind noch offen. Trotzdem Endabrechnung erstellen?"))return;
- qk.finished=true; const order=["team1","team2","team3"].sort((a,b)=>qkFinal(b)-qkFinal(a)); qk.awards={}; const pts=[5,3,1];order.forEach((t,i)=>qk.awards[t]=pts[i]);qkSave();renderHost();
-}
-function qkBetsHtml(team,showAll){
- const teams=showAll?["team1","team2","team3"]:[team];
- return teams.map(t=>{const bs=qk.bets[t]||[];return "<div class='qk-tv-team'><h3>"+D.teams[t].name+"</h3><div><b>Einsatz:</b> "+qkMoney(qkStake(t))+" · <b>Rest:</b> "+qkMoney(qkBalance(t))+(qk.finished?" · <b>Endstand:</b> "+qkMoney(qkFinal(t)):"")+"</div>"+(bs.length?"<table class='qk-table'>"+bs.map(b=>"<tr class='"+(b.status==="win"?"qk-win":b.status==="lose"?"qk-lose":"")+"'><td>"+b.marketName+"<br><span class='qk-small'>"+b.label+"</span></td><td>"+qkMoney(b.stake)+"</td><td>@ "+Number(b.odds).toFixed(2).replace(".",",")+"</td><td>"+(b.status==="win"?"✅ "+qkMoney(b.stake*b.odds):b.status==="lose"?"❌":b.status==="void"?"↩️":"⏳")+"</td></tr>").join("")+"</table>":"<p class='muted'>Noch keine Wetten.</p>")+"</div>"}).join("");
-}
-function qkRankHtml(){if(!qk.finished)return "";const order=["team1","team2","team3"].sort((a,b)=>qkFinal(b)-qkFinal(a));return "<div class='card'><h2>🏆 QUOTEN-KOMA · ENDABRECHNUNG</h2>"+order.map((t,i)=>"<div class='status qk-rank'>"+["🥇","🥈","🥉"][i]+" "+D.teams[t].name+" · "+qkMoney(qkFinal(t))+" · <b>+"+qk.awards[t]+" Olympiade-Punkte</b></div>").join("")+"</div>";}
-function qkHostHtml(){
- const used=QK_MARKETS.filter(m=>["team1","team2","team3"].some(t=>(qk.bets[t]||[]).some(b=>b.market===m.id)));
- return "<div class='qk-head'><h2>🎰 QUOTEN-KOMA</h2><div>🇩🇪 Deutschland – Niederlande 🇳🇱 · 90 Minuten inkl. Nachspielzeit</div><div class='qk-status'>"+(qk.finished?"ABGERECHNET":qk.open?"WETTEN GEÖFFNET":qk.published?"TIPPS VERÖFFENTLICHT":"WETTSCHLUSS")+"</div></div>"+
- "<div class='card'><div class='grid'><button id='qkToggle' class='"+(qk.open?"danger":"good")+"'>"+(qk.open?"🔒 WETTSCHLUSS":"🔓 WETTEN WIEDER ÖFFNEN")+"</button><button id='qkPublish' "+(qk.open?"disabled":"")+">📺 TIPPS VERÖFFENTLICHEN</button><button id='qkFinish' class='good'>🏆 ENDABRECHNUNG</button><button id='qkReset' class='danger'>♻️ QUOTEN-KOMA RESET</button></div></div>"+
- qkRankHtml()+qkBetsHtml(null,true)+
- "<div class='card'><h2>⚖️ Märkte auswerten</h2><p class='muted'>Gewinnende Auswahl anklicken. Alle Wetten dieses Marktes werden automatisch abgerechnet. ↩️ macht eine Auswertung rückgängig.</p>"+(used.length?used.map(m=>"<div class='qk-market "+(m.boost?"qk-boost":"")+"'><h3>"+m.name+"</h3><div class='qk-odds'>"+m.o.map(o=>"<button class='qkSettle "+(qk.settled[m.id]===o[0]?"good":"secondary")+"' data-m='"+m.id+"' data-o='"+o[0]+"'>"+o[1]+"</button>").join("")+"<button class='qkUndo secondary' data-m='"+m.id+"'>↩️ Undo</button></div></div>").join(""):"<p>Noch keine Wetten abgegeben.</p>")+"</div>";
-}
-function qkClientRender(m){
- const state=m.state,markets=m.markets||QK_MARKETS; qk=Object.assign(qkDefault(),state); const team=(role||"").startsWith("team")?role:null;
- if(role==="screen"){$("screenTitle").textContent="🎰 QUOTEN-KOMA";$('screenTimer').textContent="";$("screenStatus").innerHTML="<div class='qk-head'><h2>🎰 QUOTEN-KOMA</h2><div>🇩🇪 Deutschland – Niederlande 🇳🇱</div></div>"+(state.published||state.finished?qkBetsHtml(null,true):"<div class='card'><h2>🔒 Wettscheine noch geheim</h2><p>Die Tipps werden nach Wettschluss von Jan veröffentlicht.</p></div>")+qkRankHtml();return;}
- if(!team)return;
- qkSlip=qkSlip.filter(x=>!((state.bets[team]||[]).some(b=>b.market===x.market)));
- const locked=new Set((state.bets[team]||[]).map(b=>b.market));
- let h="<div class='qk-head'><h2>🎰 QUOTEN-KOMA</h2><div class='qk-balance'>"+qkMoney(qkBalance(team))+"</div><div>verfügbares Guthaben · <span style='display:inline-block;margin-top:8px;padding:8px 12px;border:3px solid #b00020;border-radius:12px;background:#fff3f3;color:#8b0018;font-size:20px;font-weight:1000'>⚠️ MAXIMAL 20 € PRO WETTE</span></div><div class='qk-status'>"+(state.finished?"ABGERECHNET":state.open?"WETTEN GEÖFFNET":"WETTSCHLUSS")+"</div></div>";
- if(state.published||state.finished)h+=qkBetsHtml(null,true)+qkRankHtml(); else h+=qkBetsHtml(team,false);
- if(state.open&&!state.finished){
-   const cats=[...new Set(markets.map(x=>x.cat))];h+="<div class='card'><h2>Wettangebot</h2>"+cats.map(cat=>"<h2>"+cat+"</h2>"+markets.filter(x=>x.cat===cat).map(mm=>"<div class='qk-market "+(mm.boost?"qk-boost":"")+"'><h3>"+mm.name+(locked.has(mm.id)?" 🔒":"")+"</h3><div class='qk-odds'>"+mm.o.map(o=>"<button class='qk-pick "+(qkSlip.some(x=>x.market===mm.id&&x.option===o[0])?"sel":"")+"' data-m='"+mm.id+"' data-o='"+o[0]+"' "+(locked.has(mm.id)?"disabled":"")+">"+o[1]+" <b>"+Number(o[2]).toFixed(2).replace(".",",")+"</b></button>").join("")+"</div></div>").join("")).join("")+"</div>";
-   h+="<div class='qk-slip'><h3>🧾 Wettschein</h3><div id='qkSlipRows'>"+(qkSlip.length?qkSlip.map((x,i)=>{const mm=markets.find(z=>z.id===x.market),o=mm.o.find(z=>z[0]===x.option);return "<div class='status'><b>"+o[1]+" @ "+o[2].toFixed(2).replace(".",",")+"</b><br>"+mm.name+" · Einsatz <input class='qkStake' data-i='"+i+"' type='number' min='1' max='20' step='1' value='"+(x.stake||5)+"'> € <button class='qkRemove danger' data-i='"+i+"'>×</button></div>"}).join(""):"Noch nichts ausgewählt.")+"</div><button id='qkSubmit' class='good' style='width:100%' "+(!qkSlip.length?"disabled":"")+">WETTEN VERBINDLICH ABGEBEN</button></div>";
- }
- $("capGame").innerHTML=h; qkBindClient();
-}
-function qkBindClient(){
- document.querySelectorAll(".qk-pick").forEach(b=>b.onclick=()=>{const mid=b.dataset.m,oid=b.dataset.o; qkSlip=qkSlip.filter(x=>x.market!==mid);qkSlip.push({market:mid,option:oid,stake:5});qkClientRender({state:qkPublicState(),markets:QK_MARKETS});});
- document.querySelectorAll(".qkStake").forEach(e=>{
-   const clampStake=()=>{let raw=Number(e.value),over=raw>20,v=Math.max(1,Math.min(20,Math.round(raw||1)));qkSlip[+e.dataset.i].stake=v;e.value=v;if(over)alert("Maximal 20 € pro Wette. Der Einsatz wurde automatisch auf 20 € reduziert.");};
-   e.onchange=clampStake;e.onblur=clampStake;
- });
- document.querySelectorAll(".qkRemove").forEach(b=>b.onclick=()=>{qkSlip.splice(+b.dataset.i,1);qkClientRender({state:qkPublicState(),markets:QK_MARKETS});});
- const sub=$("qkSubmit");if(sub)sub.onclick=()=>{
-   document.querySelectorAll(".qkStake").forEach(e=>{qkSlip[+e.dataset.i].stake=Math.max(1,Math.min(20,Math.round(Number(e.value)||1)));});
-   if(!qkSlip.length){alert("Der Wettschein ist leer.");return;}
-   const total=qkSlip.reduce((a,x)=>a+x.stake,0);
-   if(total>qkBalance(role)){alert("Nicht genug Guthaben. Verfügbar: "+qkMoney(qkBalance(role)));return;}
-   if(!conn||!conn.open){alert("Keine Verbindung zum Spielleiter. Bitte Seite/Verbindung prüfen und erneut versuchen.");return;}
-   if(!confirm("Diese "+qkSlip.length+" Einzelwetten verbindlich abgeben? Danach können sie nicht mehr geändert werden."))return;
-   sub.disabled=true;sub.textContent="WIRD ABGEGEBEN …";
-   try{conn.send({type:"qkBet",team:role,bets:qkSlip.map(x=>({...x}))});}catch(e){sub.disabled=false;sub.textContent="WETTEN VERBINDLICH ABGEBEN";alert("Senden fehlgeschlagen: "+e.message);}
- };
-}
-function qkBindHost(){
- const a=$("qkToggle");if(a)a.onclick=()=>{qk.open=!qk.open;if(qk.open)qk.published=false;qkSave();renderHost();};
- const p=$("qkPublish");if(p)p.onclick=()=>{qk.published=true;qk.open=false;qkSave();renderHost();};
- const f=$("qkFinish");if(f)f.onclick=qkFinish;
- const r=$("qkReset");if(r)r.onclick=()=>{if(confirm("Wirklich ALLE Quoten-Koma-Wetten und Ergebnisse löschen?")){qk=qkDefault();qkSave();renderHost();}};
- document.querySelectorAll(".qkSettle").forEach(b=>b.onclick=()=>qkSettle(b.dataset.m,b.dataset.o));document.querySelectorAll(".qkUndo").forEach(b=>b.onclick=()=>qkUndo(b.dataset.m));
-}
-/* =================== /QUOTEN-KOMA ===================== */
 </script>
 </body></html>
